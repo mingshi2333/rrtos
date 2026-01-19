@@ -1,0 +1,40 @@
+# Build directories
+build/
+debug_build/
+.pixi/
+.mamba/
+
+# Temporary files
+*.log
+*.tmp
+temp_test/
+/tmp/
+
+# IDE/Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# AI Agent Specific (Do not commit)
+.serena/
+openspec/
+AGENTS.md
+.cursorrules
+.opencode/
+
+# Generated Model Artifacts (Optional - keep if you want to ship models)
+# zoo/iree_static/*.o
+# zoo/iree_static/*.h
+# zoo/iree_static/*.vmfb
+
+# But do ignore intermediate files
+zoo/iree_static/*.c
+zoo/iree_static/*_rv64.o
+
+# Large Model Files (TFLite) - usually too big for git
+zoo/models/**/*.tflite
+
+# Third Party (Managed by submodules)
+third_party/iree/third_party/
+third_party/flatcc/

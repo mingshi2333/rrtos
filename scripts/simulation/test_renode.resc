@@ -1,0 +1,14 @@
+:name: riscv_virt
+:description: RISC-V 64-bit virt machine
+
+$bin?=@build/iree_simple_test
+
+mach create "riscv-virt"
+
+machine LoadPlatformDescription @test_platform.repl
+
+sysbus.uart0 CreateFileBackend @/home/mingshi/Project/PF/rtos/renode_uart.log
+sysbus LoadELF $bin
+sysbus.cpu PC 0x80000000
+
+start

@@ -1,0 +1,14 @@
+:name: mobilenet_test_virt_rv64
+:description: RISC-V 64-bit virt machine
+
+$bin?=@build/mobilenet_test
+
+mach create "riscv64-virt"
+
+machine LoadPlatformDescription @scripts/simulation/riscv64_virt.repl
+
+showAnalyzer sysbus.uart0
+
+sysbus LoadELF $bin
+sysbus.cpu PC 0x80000000
+start

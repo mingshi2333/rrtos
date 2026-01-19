@@ -1,0 +1,76 @@
+[workspace]
+authors = ["mingshi2333 <akashi_asuka@outlook.com>"]
+channels = ["conda-forge"]
+name = "rtos"
+platforms = ["linux-64"]
+version = "0.1.0"
+preview = ["pixi-build"]                             # 启用 Source Build 预览功能
+
+[dependencies]
+cmake = "*"
+ninja = "*"
+clang = ">=18"
+lld = "*"
+llvm-tools = "*"  # 提供 llvm-ar, llvm-strip 等
+python = ">=3.11"
+meson = ">=0.61"
+
+[target.linux-64.dependencies]
+# GCC cross-compiler is not available on conda-forge, using Clang
+
+
+[tasks]
+# === 依赖管理任务 ===
+# 初始化 IREE submodule
+init-iree = "test -d third_party/iree/.git || git submodule update --init --recursive third_party/iree"
+
+# 构建 Picolibc 包（pixi build 会自动选择正确的包）
+build-picolibc = "pixi build"
+
+# 旧的构建脚本（已废弃，保留用于向后兼容）
+build-picolibc-legacy = "sh scripts/build_picolibc.sh"
+
+clean = "rm -rf build"
+
+# === 模型转换任务 ===
+# 用法: pixi run convert-model <tflite_path> <output_name>
+# 例: pixi run convert-model zoo/models/medium/mobilenet_v2_0.35_128_int8.tflite mobilenet_v2_035_128
+convert-model = "cd zoo/scripts && ./tflite_to_iree_c.sh -a rv32"
+size = "llvm-size -A -x build/mobilenet_test"
+rebuild = { depends-on = ["clean", "configure", "build"] }
+
+sim-simple = "qemu-system-riscv64 -machine virt -nographic -bios none -kernel build/iree_simple_test"
+sim-mobilenet = "qemu-system-riscv64 -machine virt -nographic -bios none -kernel build/mobilenet_test"
+sim-renode = "renode --disable-xwt --console -e 's @test_renode.resc; sleep 5; quit'"
+
+verify = { depends-on = ["build", "sim-simple"] }
+
+[feature.rv64.dependencies]
+picolibc-rv64 = { path = "packages/picolibc-rv64" }
+
+[feature.rv64.tasks]
+configure = "cmake -B build -DCMAKE_TOOLCHAIN_FILE=cmake/riscv64-pixi.cmake -DCMAKE_BUILD_TYPE=MinSizeRel"
+build = "cmake --build build"
+sim-mobilenet = "qemu-system-riscv64 -machine virt -nographic -bios none -kernel build/mobilenet_test"
+sim-renode = "renode --console --disable-xwt scripts/simulation/mobilenet_test.resc"
+
+[feature.rv32.dependencies]
+picolibc-rv32 = { path = "packages/picolibc-rv32" }
+compiler-rt = ">=21.1.8,<22"
+
+[feature.rv32.tasks]
+configure = "cmake -B build -DCMAKE_TOOLCHAIN_FILE=cmake/riscv32-pixi.cmake -DARCH_BITS=32 -DARCH=riscv -DCMAKE_BUILD_TYPE=MinSizeRel"
+configure-flash = "cmake -B build -DCMAKE_TOOLCHAIN_FILE=cmake/riscv32-pixi.cmake -DARCH_BITS=32 -DARCH=riscv -DCMAKE_BUILD_TYPE=MinSizeRel -DLINKER_SCRIPT=arch/riscv/link_flash.ld"
+sim-flash = "renode --console --disable-xwt scripts/simulation/mobilenet_test_flash.resc"
+build = "cmake --build build"
+sim-qemu = "qemu-system-riscv32 -machine virt -nographic -bios none -kernel build/mobilenet_test"
+sim-renode-ram = "renode --console --disable-xwt scripts/simulation/mobilenet_test_rv32.resc"
+sim-renode-flash = "renode --console --disable-xwt scripts/simulation/mobilenet_test_flash.resc"
+
+# Alias for backward compatibility
+sim-mobilenet = "pixi run sim-qemu"
+
+[environments]
+default = ["rv64"]
+rv64 = ["rv64"]
+rv32 = ["rv32"]

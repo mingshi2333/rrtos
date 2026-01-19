@@ -1,0 +1,14 @@
+:name: mobilenet_test_virt_rv32
+:description: RISC-V 32-bit virt machine
+
+$bin?=@/home/mingshi/Project/PF/rtos/build/mobilenet_test
+
+mach create "riscv32-virt"
+
+machine LoadPlatformDescription @/home/mingshi/Project/PF/rtos/scripts/simulation/riscv32_virt.repl
+
+showAnalyzer sysbus.uart0
+
+sysbus LoadELF $bin
+sysbus.cpu PC 0x20000000
+start

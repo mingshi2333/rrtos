@@ -1,0 +1,51 @@
+#!/bin/bash
+set -e
+
+# Define paths
+SRC_DIR="third_party/picolibc_src"
+BUILD_DIR="build/picolibc"
+INSTALL_DIR="third_party/picolibc_pixi"
+
+# Ensure source exists
+if [ ! -d "$SRC_DIR" ]; then
+    echo "Picolibc source not found. Run 'pixi run get-picolibc' first."
+    exit 1
+fi
+
+# Create cross-file for Meson (CLANG)
+cat > cross_riscv64.txt <<EOF
+[binaries]
+c = 'clang'
+cpp = 'clang++'
+ar = 'llvm-ar'
+strip = 'llvm-strip'
+nm = 'llvm-nm'
+objcopy = 'llvm-objcopy'
+
+[host_machine]
+system = 'unknown'
+cpu_family = 'riscv64'
+cpu = 'riscv64'
+endian = 'little'
+
+[built-in options]
+c_args = ['--target=riscv64-unknown-elf', '-march=rv64imac', '-mabi=lp64']
+cpp_args = ['--target=riscv64-unknown-elf', '-march=rv64imac', '-mabi=lp64']
+c_link_args = ['--target=riscv64-unknown-elf', '-march=rv64imac', '-mabi=lp64', '-fuse-ld=lld']
+cpp_link_args = ['--target=riscv64-unknown-elf', '-march=rv64imac', '-mabi=lp64', '-fuse-ld=lld']
+
+[properties]
+skip_sanity_check = true
+EOF
+
+# Configure and Build
+meson setup "$BUILD_DIR" "$SRC_DIR" \
+    --cross-file cross_riscv64.txt \
+    --prefix="$(pwd)/$INSTALL_DIR" \
+    -Dmultilib=false \
+    -Dtests=false 
+
+ninja -C "$BUILD_DIR"
+ninja -C "$BUILD_DIR" install
+
+echo "Picolibc installed to $INSTALL_DIR"

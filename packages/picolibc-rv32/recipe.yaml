@@ -1,0 +1,76 @@
+context:
+  version: "1.8.10"
+  arch: "rv32"
+  target_triple: "riscv32-unknown-elf"
+  march: "rv32imac"
+  mabi: "ilp32"
+
+package:
+  name: "picolibc-${{ arch }}"
+  version: "${{ version }}"
+
+source:
+  # 从 GitHub 官方 release 下载指定版本（避免重复编译问题）
+  url: https://github.com/picolibc/picolibc/releases/download/${{ version }}/picolibc-${{ version }}.tar.xz
+  sha256: 0ce5ee3bde81256633644d7b3bd25f5a6ccfd8b0590fd4ee543df2c3ede6e27e
+
+build:
+  number: 0
+  script:
+    - |
+      # 动态生成 Meson cross-file（基于 Picolibc 官方推荐）
+      cat > cross_${{ arch }}.txt <<'EOF'
+      [binaries]
+      c = ['clang', '-target', '${{ target_triple }}', '-mcmodel=medany', '-fuse-ld=lld', '-nostdlib', '-nodefaultlibs']
+      ar = 'llvm-ar'
+      strip = 'llvm-strip'
+      objcopy = 'llvm-objcopy'
+      ranlib = 'llvm-ranlib'
+      
+      [host_machine]
+      system = 'unknown'
+      cpu_family = 'riscv32'
+      cpu = 'riscv32'
+      endian = 'little'
+      
+      [properties]
+      skip_sanity_check = true
+      
+      [built-in options]
+      c_args = ['-march=${{ march }}', '-mabi=${{ mabi }}']
+      c_link_args = ['-march=${{ march }}', '-mabi=${{ mabi }}']
+      EOF
+      
+      # 配置 Meson（关键选项参考官方文档和调研结果）
+      meson setup build \
+        --cross-file cross_${{ arch }}.txt \
+        --prefix=$PREFIX \
+        -Dmultilib=false \
+        -Dtests=false \
+        -Dpicocrt=true \
+        -Dtests-enable-stack-protector=false \
+        -Dformat-default=integer \
+        -Dthread-local-storage=false
+      
+      # 构建和安装
+      ninja -C build install
+
+requirements:
+  build:
+    - clang >=18
+    - lld
+    - llvm-tools  # 提供 llvm-ar, llvm-strip 等
+    - meson >=0.61
+    - ninja
+  # host 和 run 留空（这是交叉编译的工具链库）
+
+# 测试暂时禁用，因为 rattler-build 的路径匹配问题
+# tests:
+#   - package_contents:
+#       files:
+#         - "lib/libc.a"
+
+about:
+  homepage: https://github.com/picolibc/picolibc
+  license: BSD-3-Clause
+  summary: "Picolibc C library for ${{ target_triple }}"

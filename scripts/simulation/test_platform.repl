@@ -1,0 +1,14 @@
+cpu: CPU.RiscV64 @ sysbus
+    cpuType: "rv64gc"
+    hartId: 0
+    privilegeArchitecture: PrivilegeArchitecture.Priv1_10
+
+clint: IRQControllers.CoreLevelInterruptor @ sysbus 0x2000000
+    frequency: 10000000
+    [0, 1] -> cpu@[3, 7]
+
+uart0: UART.NS16550 @ sysbus 0x10000000
+    wideRegisters: true
+
+mem: Memory.MappedMemory @ sysbus 0x80000000
+    size: 0x08000000

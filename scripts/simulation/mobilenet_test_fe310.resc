@@ -1,0 +1,17 @@
+:name: mobilenet_test_fe310
+:description: SiFive FE310 platform (RV32) running mobilenet_test from QSPI XIP
+
+# $bin is expected to be set by the caller
+# e.g. -e '$bin=@build/mobilenet_test'
+
+mach create "sifive-fe310"
+
+machine LoadPlatformDescription @scripts/simulation/sifive-fe310-no-svd.repl
+
+showAnalyzer sysbus.uart0
+
+sysbus LoadELF $bin
+# FE310 QSPI XIP starts at 0x20000000
+sysbus.cpu PC 0x20000000
+
+start

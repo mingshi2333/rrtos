@@ -1,0 +1,14 @@
+:name: ai_demo_virt_rv64
+:description: RISC-V 64-bit virt machine for ai_demo
+
+$bin?=@/home/mingshi/Project/PF/rtos/build/ai_demo
+
+mach create "riscv64-virt"
+
+machine LoadPlatformDescription @/home/mingshi/Project/PF/rtos/scripts/simulation/riscv64_virt.repl
+
+showAnalyzer sysbus.uart0
+
+sysbus LoadELF $bin
+# Entry point is set automatically by LoadELF
+start

@@ -1,0 +1,4 @@
+[submodule "third_party/iree"]
+	path = third_party/iree
+	url = https://github.com/iree-org/iree.git
+	# branch = main # Or tag if preferred, but commit hash is stored in git tree

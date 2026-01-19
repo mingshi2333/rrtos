@@ -1,0 +1,24 @@
+:name: mobilenet_test_polarfire
+:description: RISC-V 64-bit PolarFire SoC for MobileNet test
+
+$bin?=@build/mobilenet_test
+
+# Create machine (PolarFire SoC Icicle Kit)
+mach create "polarfire-soc"
+machine LoadPlatformDescription @platforms/boards/polarfire-soc-icicle-kit.repl
+
+# Configure UART output
+showAnalyzer sysbus.mmuart0
+
+# Load ELF file
+sysbus LoadELF $bin
+
+# Our program links to 0x80000000 (DDR)
+# PolarFire SoC usually starts from e51 (0x20220000) and jumps to DDR
+# For simplicity, we set the PC pointer of the u54_1 core directly
+sysbus.u54_1 PC 0x80000000
+
+# Start u54_1 core
+sysbus.u54_1 Start
+
+# If needed, other cores can be started, but only one is required for single-core RTOS mode

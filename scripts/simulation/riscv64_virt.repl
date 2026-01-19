@@ -1,0 +1,14 @@
+cpu: CPU.RiscV64 @ sysbus
+    cpuType: "rv64imafdcv_zicsr"
+    hartId: 0
+    allowUnalignedAccesses: true
+
+clint: IRQControllers.CoreLevelInterruptor @ sysbus 0x2000000
+    frequency: 10000000
+    [0, 1] -> cpu@[3, 7]
+
+uart0: UART.NS16550 @ sysbus 0x10000000
+    wideRegisters: true
+    
+ram: Memory.MappedMemory @ sysbus 0x80000000
+    size: 0x08000000

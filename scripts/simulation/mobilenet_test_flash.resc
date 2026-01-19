@@ -1,0 +1,16 @@
+:name: mobilenet_test_flash_rv32
+:description: RISC-V 32-bit virt machine (XIP from Flash)
+
+# $bin is expected to be set by the caller
+# e.g. -e '$bin=@build/mobilenet_test'
+
+mach create "riscv32-flash"
+
+machine LoadPlatformDescription @scripts/simulation/riscv32_flash.repl
+
+showAnalyzer sysbus.uart0
+
+sysbus LoadELF @/home/mingshi/Project/PF/rtos/build/mobilenet_test
+# Set PC to Flash start
+sysbus.cpu PC 0x20000000
+start

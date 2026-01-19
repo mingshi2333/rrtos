@@ -1,0 +1,28 @@
+:name: mobilenet_test_k210
+:description: RISC-V 64-bit Kendryte K210 for MobileNet test
+
+$bin?=@build/mobilenet_test
+
+# Create machine
+mach create "k210"
+
+# Load platform description
+machine LoadPlatformDescription @/opt/renode/platforms/cpus/kendryte_k210.repl
+
+# Add UART1 (NS16550)
+machine LoadPlatformDescription @/home/mingshi/Project/PF/rtos/k210_uart1.repl
+
+# Configure UART output
+# showAnalyzer sysbus.uart1
+sysbus.uart1 CreateFileBackend @/home/mingshi/Project/PF/rtos/k210_uart.log
+
+# Load ELF file
+sysbus LoadELF $bin
+
+# K210 has two cores (cpu1, cpu2), usually starting from cpu1
+# Set PC pointer
+sysbus.cpu1 PC 0x80000000
+sysbus.cpu2 PC 0x80000000
+
+# Start
+start
