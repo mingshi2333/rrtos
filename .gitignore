@@ -3,7 +3,7 @@ build/
 debug_build/
 .pixi/
 .mamba/
-
+.cache/
 # Temporary files
 *.log
 *.tmp

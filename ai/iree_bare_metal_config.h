@@ -47,11 +47,11 @@
 // ============================================================================
 // IREE Time Interface
 // ============================================================================
-#include "iree/base/api.h"
-#include "iree/base/time.h"
+// #include "iree/base/api.h"
+// #include "iree/base/time.h"
 
-extern iree_time_t os_time_now(void);
-#define IREE_TIME_NOW_FN return os_time_now();
+// extern iree_time_t os_time_now(void);
+// #define IREE_TIME_NOW_FN return os_time_now();
 
 #define IREE_WAIT_UNTIL_FN(deadline_ns) \
   (((void)(deadline_ns)), false)

@@ -1,6 +1,0 @@
-#!/bin/bash
-if [ ! -d 'third_party/picolibc_src' ]; then
-    git clone --depth 1 https://github.com/picolibc/picolibc.git third_party/picolibc_src
-else
-    echo "Picolibc source already exists."
-fi

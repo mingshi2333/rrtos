@@ -68,122 +68,84 @@ else()
     set(ARCH "riscv")
 endif()
 
-# IREE Configuration
-set(IREE_RUNTIME_ROOT ${CMAKE_SOURCE_DIR}/third_party/iree/runtime/src)
-set(IREE_INCLUDE_DIRS
-    ${IREE_RUNTIME_ROOT}
-    ${CMAKE_SOURCE_DIR}/third_party/iree/third_party/flatcc/include
-)
+# ============================================================================
+# IREE Configuration (Integrated)
+# ============================================================================
 
-# Base
-file(GLOB_RECURSE IREE_BASE_SOURCES ${IREE_RUNTIME_ROOT}/iree/base/*.c)
-list(FILTER IREE_BASE_SOURCES EXCLUDE REGEX ".*synchronization.*")
-list(FILTER IREE_BASE_SOURCES EXCLUDE REGEX ".*threading.*")
+# IREE Build Options
+set(IREE_BUILD_COMPILER OFF CACHE BOOL "" FORCE)
+set(IREE_ENABLE_MLIR OFF CACHE BOOL "" FORCE)
+set(IREE_BUILD_SAMPLES OFF CACHE BOOL "" FORCE)
+set(IREE_ENABLE_THREADING OFF CACHE BOOL "" FORCE)
+set(IREE_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(IREE_BUILD_BINDINGS_TFLITE OFF CACHE BOOL "" FORCE)
+set(IREE_HAL_DRIVER_DEFAULTS OFF CACHE BOOL "" FORCE)
+set(IREE_HAL_EXECUTABLE_LOADER_DEFAULTS OFF CACHE BOOL "" FORCE)
+set(IREE_HAL_EXECUTABLE_PLUGIN_DEFAULTS OFF CACHE BOOL "" FORCE)
+set(IREE_HAL_EXECUTABLE_PLUGIN_EMBEDDED_ELF ON CACHE BOOL "" FORCE)
 
-# VM (Core only, exclude bytecode/dynamic if using EmitC)
-file(GLOB IREE_VM_SOURCES ${IREE_RUNTIME_ROOT}/iree/vm/*.c)
+# Enable specific drivers/loaders
+set(IREE_HAL_DRIVER_LOCAL_SYNC ON CACHE BOOL "" FORCE)
+set(IREE_HAL_EXECUTABLE_LOADER_STATIC_LIBRARY ON CACHE BOOL "" FORCE)
 
-if(AI_MODE_BYTECODE)
-    file(GLOB IREE_VM_BYTECODE_SOURCES ${IREE_RUNTIME_ROOT}/iree/vm/bytecode/*.c)
-else()
-    set(IREE_VM_BYTECODE_SOURCES "")
-endif()
+set(IREE_BUILD_WARNINGS_AS_ERRORS OFF CACHE BOOL "" FORCE)
+set(IREE_ENABLE_WERROR_FLAG OFF CACHE BOOL "" FORCE)
 
-# HAL (Core only)
-file(GLOB IREE_HAL_CORE_SOURCES ${IREE_RUNTIME_ROOT}/iree/hal/*.c)
-file(GLOB IREE_HAL_UTILS_SOURCES ${IREE_RUNTIME_ROOT}/iree/hal/utils/*.c)
+# Global compiler options
+add_compile_options(-Wno-error)
 
-# HAL Local (CPU execution)
-file(GLOB IREE_HAL_LOCAL_SOURCES ${IREE_RUNTIME_ROOT}/iree/hal/local/*.c)
-list(FILTER IREE_HAL_LOCAL_SOURCES EXCLUDE REGEX ".*benchmark.*")
-list(FILTER IREE_HAL_LOCAL_SOURCES EXCLUDE REGEX ".*test.*")
-list(FILTER IREE_HAL_LOCAL_SOURCES EXCLUDE REGEX ".*demo.*")
+# Skip submodule checks
+set(IREE_ERROR_ON_MISSING_SUBMODULES OFF CACHE BOOL "" FORCE)
 
-# HAL Local Loaders
-set(IREE_HAL_STATIC_LIBRARY_LOADER_SOURCES
-    ${IREE_RUNTIME_ROOT}/iree/hal/local/loaders/static_library_loader.c
-)
+# Explicitly disable external drivers to avoid dependency checks
+set(IREE_HAL_DRIVER_CUDA OFF CACHE BOOL "" FORCE)
+set(IREE_HAL_DRIVER_HIP OFF CACHE BOOL "" FORCE)
+set(IREE_HAL_DRIVER_VULKAN OFF CACHE BOOL "" FORCE)
+set(IREE_HAL_DRIVER_METAL OFF CACHE BOOL "" FORCE)
+set(IREE_EXTERNAL_HAL_DRIVERS "" CACHE STRING "" FORCE)
 
-# HAL Drivers (Sync)
-file(GLOB IREE_HAL_DRIVER_SYNC_SOURCES
-    ${IREE_RUNTIME_ROOT}/iree/hal/drivers/local_sync/*.c
-    ${IREE_RUNTIME_ROOT}/iree/hal/drivers/local_sync/registration/*.c
-)
+# Global Definitions for IREE
+add_compile_definitions(IREE_PLATFORM_GENERIC)
+add_compile_definitions(IREE_SYNCHRONIZATION_DISABLE_UNSAFE=1)
+add_compile_definitions(IREE_STATUS_FEATURES=0)
+add_compile_definitions(IREE_FILE_IO_ENABLE=0)
+add_compile_definitions(IREE_HAVE_POSIX_MEMALIGN=0)
+add_compile_definitions(IREE_HAVE_STDIO=0)
+add_compile_definitions(_POSIX_C_SOURCE=0)
+add_compile_definitions(_ISOC11_SOURCE=0)
 
-# HAL Modules
-file(GLOB IREE_MODULES_HAL_SOURCES ${IREE_RUNTIME_ROOT}/iree/modules/hal/*.c)
-file(GLOB IREE_MODULES_HAL_UTILS_SOURCES ${IREE_RUNTIME_ROOT}/iree/modules/hal/utils/*.c)
+# Custom Config Header
+include_directories(${CMAKE_SOURCE_DIR}/ai/include)
+add_definitions(-DIREE_USER_CONFIG_H=\"iree_config_custom.h\")
 
-# IO sources (exclude stdio_stream which requires file system)
-set(IREE_IO_SOURCES
-    ${IREE_RUNTIME_ROOT}/iree/io/file_handle.c
-    ${IREE_RUNTIME_ROOT}/iree/io/memory_stream.c
-    ${IREE_RUNTIME_ROOT}/iree/io/stream.c
-    ${IREE_RUNTIME_ROOT}/iree/io/vec_stream.c
-)
+# Add IREE Subdirectory
+add_subdirectory(third_party/iree EXCLUDE_FROM_ALL)
 
-set(IREE_RUNTIME_SOURCES
-    ${IREE_BASE_SOURCES}
-    ${IREE_VM_SOURCES}
-    ${IREE_VM_BYTECODE_SOURCES}
-    ${IREE_HAL_CORE_SOURCES}
-    ${IREE_HAL_UTILS_SOURCES}
-    ${IREE_HAL_LOCAL_SOURCES}
-    ${IREE_HAL_STATIC_LIBRARY_LOADER_SOURCES}
-    ${IREE_HAL_DRIVER_SYNC_SOURCES}
-    ${IREE_MODULES_HAL_SOURCES}
-    ${IREE_MODULES_HAL_UTILS_SOURCES}
-    ${IREE_IO_SOURCES}
-)
-
-list(FILTER IREE_RUNTIME_SOURCES EXCLUDE REGEX ".*module_impl_emitc.c")
-list(FILTER IREE_RUNTIME_SOURCES EXCLUDE REGEX ".*executable_debug_info.c")
-list(FILTER IREE_RUNTIME_SOURCES EXCLUDE REGEX ".*executable_header.c")
-list(FILTER IREE_RUNTIME_SOURCES EXCLUDE REGEX ".*libmpi.c")
-list(FILTER IREE_RUNTIME_SOURCES EXCLUDE REGEX ".*mpi_channel_provider.c")
-list(FILTER IREE_RUNTIME_SOURCES EXCLUDE REGEX ".*mimalloc.*")
-list(FILTER IREE_RUNTIME_SOURCES EXCLUDE REGEX ".*flags.c.*")
-list(FILTER IREE_RUNTIME_SOURCES EXCLUDE REGEX ".*flags_demo.c.*")
-
-# list(FILTER IREE_RUNTIME_SOURCES EXCLUDE REGEX ".*file_io.*")
-# list(FILTER IREE_RUNTIME_SOURCES EXCLUDE REGEX ".*file_path.*")
-list(FILTER IREE_RUNTIME_SOURCES EXCLUDE REGEX ".*wait_scope.c.*")
-
+# ============================================================================
 # AI Library
+# ============================================================================
 set(AI_SOURCES
     ai/src/ai_runtime.c
     ai/src/ai_backend.c
-    ai/src/iree_rtos_sync.c
-
-    # Small models (Pure EmitC - no .o needed):
     ai/mobilenet_test_module_c.c
-
-    # Large models (EmitC + .o) - disabled due to llvm.round.f32 issue:
-    # zoo/iree_static/efficientnet_lc_128_c_module.c
-    ${IREE_RUNTIME_SOURCES}
 )
 
-# Large models require linked .o files (disabled for st_mnist test)
-# if(ARCH_BITS EQUAL 64)
-# message(STATUS "Linking RV64 model object: efficientnet_lc_128.o")
-# list(APPEND AI_SOURCES ${CMAKE_SOURCE_DIR}/zoo/iree_static/efficientnet_lc_128.o)
-# else()
-# message(STATUS "Linking RV32 model object: efficientnet_lc_128.o")
-# list(APPEND AI_SOURCES ${CMAKE_SOURCE_DIR}/zoo/iree_static/efficientnet_lc_128.o)
-# endif()
 add_library(rv_aios_ai STATIC ${AI_SOURCES})
+
+# Link against IREE targets
+target_link_libraries(rv_aios_ai PUBLIC
+    iree::base
+    iree::vm
+    iree::hal
+    iree::hal::drivers::local_sync::sync_driver
+    iree::hal::local::loaders::static_library_loader
+    iree::modules::hal
+)
+
 target_compile_definitions(rv_aios_ai PUBLIC
-    IREE_STATUS_FEATURES=0
-    IREE_FILE_IO_ENABLE=0
-    IREE_HAVE_POSIX_MEMALIGN=0
-    IREE_HAVE_STDIO=0
-    IREE_PLATFORM_GENERIC=1
-    IREE_SYNCHRONIZATION_DISABLE_UNSAFE=1
-    IREE_HAL_HAVE_STATIC_LIBRARY_LOADER=1
-    _POSIX_C_SOURCE=0
-    _ISOC11_SOURCE=0
     EMITC_IMPLEMENTATION
 )
+
 target_compile_options(rv_aios_ai PRIVATE
     -Wno-error
     -Wno-type-limits
@@ -193,9 +155,9 @@ target_compile_options(rv_aios_ai PRIVATE
     -Wno-cast-function-type
     -include${CMAKE_SOURCE_DIR}/ai/iree_bare_metal_config.h
 )
+
 target_include_directories(rv_aios_ai PRIVATE
     ${CMAKE_SOURCE_DIR}/ai/include
-    ${IREE_INCLUDE_DIRS}
     ${CMAKE_SOURCE_DIR}/kernel/include
     ${CMAKE_SOURCE_DIR}/config
     ${CMAKE_SOURCE_DIR}/memory/include
@@ -203,7 +165,9 @@ target_include_directories(rv_aios_ai PRIVATE
     ${CMAKE_SOURCE_DIR}/hal/include
 )
 
+# ============================================================================
 # Memory Library
+# ============================================================================
 file(GLOB_RECURSE MEMORY_SOURCES memory/src/*.c)
 add_library(rv_aios_memory STATIC ${MEMORY_SOURCES})
 target_include_directories(rv_aios_memory PRIVATE
@@ -249,6 +213,26 @@ else()
 endif()
 
 # ============================================================================
+# LibC Shim Library (Wrappers for malloc/stdio + RTOS impl)
+# Compiled as OBJECT library to ensure symbols are linked
+# ============================================================================
+add_library(rv_aios_libc_shim OBJECT
+    ai/src/malloc_wrapper.c
+    ai/src/stdio_wrapper.c
+    ai/src/iree_rtos_sync.c
+)
+target_include_directories(rv_aios_libc_shim PRIVATE
+    ${CMAKE_SOURCE_DIR}/memory/include
+    ${CMAKE_SOURCE_DIR}/config
+    ${CMAKE_SOURCE_DIR}/kernel/include
+    ${CMAKE_SOURCE_DIR}/hal/include
+    ${CMAKE_SOURCE_DIR}/arch/${ARCH}/include
+    ${CMAKE_SOURCE_DIR}/ai/include # For iree_config_custom.h
+    ${CMAKE_SOURCE_DIR}/third_party/iree/runtime/src # For iree/base/api.h
+)
+# Note: No -include iree_bare_metal_config.h here!
+
+# ============================================================================
 # AI Demo - STM32CubeAI Style Template
 # ============================================================================
 option(AI_MODE_BYTECODE "Use IREE VM Bytecode mode" OFF)
@@ -269,6 +253,7 @@ else()
         apps/ai_demo/ai_model.c
         apps/ai_demo/model_impl.c
         zoo/iree_static/st_yolo_lc_v1_192.h
+        # Shim sources handled by object lib
     )
 endif()
 
@@ -281,7 +266,6 @@ target_include_directories(ai_demo PRIVATE
     ${CMAKE_SOURCE_DIR}/ai/include
     ${CMAKE_SOURCE_DIR}/zoo/iree_static
     ${CMAKE_SOURCE_DIR}
-    ${IREE_INCLUDE_DIRS}
     ${CMAKE_SOURCE_DIR}/third_party/iree/third_party/flatcc/include
 )
 target_compile_options(ai_demo PRIVATE
@@ -308,7 +292,7 @@ else()
 
     target_link_libraries(ai_demo
         ${CMAKE_SOURCE_DIR}/zoo/iree_static/${MODEL_OBJ}
-        rv_aios_ai rv_aios_kernel rv_aios_drivers rv_aios_memory
+        rv_aios_ai rv_aios_kernel rv_aios_drivers rv_aios_memory rv_aios_libc_shim
         rv_aios_drivers
         c m gcc gcc
     )
