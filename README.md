@@ -259,7 +259,10 @@ pixi list -e rv64
 
 ## License
 
-[Your License Here]
+This project includes source code from IREE, which is licensed under the Apache
+License 2.0 with LLVM Exceptions. Accordingly, this project is provided under
+the Apache License 2.0 with LLVM Exceptions. See `third_party/iree/LICENSE` for
+details.
 
 ## References
 
