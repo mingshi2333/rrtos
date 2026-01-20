@@ -1,9 +1,6 @@
 #!/bin/bash
 # tflite_to_iree_c.sh
-# Automates the conversion of TFLite models to IREE Bare-Metal C modules (EmitC + Embedded Object)
-#
-# Usage: ./tflite_to_iree_c.sh [-a rv32|rv64] <model.tflite> <output_name>
-# Example: ./tflite_to_iree_c.sh -a rv32 ../models/tiny/st_mnist_28_int8.tflite st_mnist_28
+# Automates the conversion of TFLite models to IREE Bare-Metal C modules AND VM Bytecode modules
 
 set -e
 
@@ -12,15 +9,9 @@ IREE_TOOLCHAIN_ROOT="/home/mingshi/.mamba/envs/iree-toolchain310/bin"
 OUTPUT_DIR="../iree_static"
 TEMP_DIR="/tmp/iree_build_temp"
 
-# Default configuration (RV32)
 ARCH="rv32"
-TARGET_TRIPLE="riscv32-unknown-elf"
-TARGET_ABI="ilp32"
-CPU_FEATURES="+m,+a,+c,+v,+zicsr"
-VM_INDEX_BITS=32
 # =================================================
 
-# Parse arguments
 while getopts "a:" opt; do
   case $opt in
     a) ARCH=$OPTARG ;;
@@ -37,7 +28,13 @@ fi
 INPUT_TFLITE=$1
 OUTPUT_NAME=$2
 
-# Architecture configuration
+# Create necessary directories based on OUTPUT_NAME structure
+OUTPUT_SUBDIR=$(dirname "$OUTPUT_NAME")
+if [ "$OUTPUT_SUBDIR" != "." ]; then
+    mkdir -p "$TEMP_DIR/$OUTPUT_SUBDIR"
+    mkdir -p "$OUTPUT_DIR/$OUTPUT_SUBDIR"
+fi
+
 if [ "$ARCH" = "rv64" ]; then
     echo "Configuring for RV64..."
     TARGET_TRIPLE="riscv64-unknown-elf"
@@ -45,43 +42,34 @@ if [ "$ARCH" = "rv64" ]; then
     CPU_FEATURES="+m,+a,+f,+d,+c,+v,+zicsr"
     VM_INDEX_BITS=64
     OUTPUT_OBJ_NAME="${OUTPUT_NAME}_rv64.o"
+    BYTECODE_OBJ_NAME="${OUTPUT_NAME}_bytecode_rv64.o"
 else
     echo "Configuring for RV32..."
     TARGET_TRIPLE="riscv32-unknown-elf"
-    TARGET_ABI="ilp32"
-    CPU_FEATURES="+m,+a,+c,+zicsr"
+    TARGET_ABI="ilp32d"
+    CPU_FEATURES="+m,+a,+f,+d,+c,+zicsr"
     VM_INDEX_BITS=32
     OUTPUT_OBJ_NAME="${OUTPUT_NAME}.o"
+    BYTECODE_OBJ_NAME="${OUTPUT_NAME}_bytecode.o"
 fi
-INPUT_BASENAME=$(basename "$INPUT_TFLITE")
 
+# Ensure base directories exist
 mkdir -p "$OUTPUT_DIR"
 mkdir -p "$TEMP_DIR"
 
 echo "=== Starting Conversion: $INPUT_TFLITE -> $OUTPUT_NAME ==="
 
-# Step 1: Import TFLite -> MLIR (TOSA)
 echo "[1/3] Importing TFLite to MLIR..."
 "$IREE_TOOLCHAIN_ROOT/iree-import-tflite" \
     "$INPUT_TFLITE" \
     -o "$TEMP_DIR/$OUTPUT_NAME.mlir"
 
-# Step 2: Optimize & Strip Signedness (Handles INT8 ui8 issues)
 echo "[2/3] Optimizing & Stripping Signedness (ui8 -> i8)..."
 "$IREE_TOOLCHAIN_ROOT/iree-opt" \
     --pass-pipeline='builtin.module(func.func(iree-tosa-strip-signedness))' \
     "$TEMP_DIR/$OUTPUT_NAME.mlir" \
     -o "$TEMP_DIR/${OUTPUT_NAME}_opt.mlir"
 
-# Step 3: Compile to EmitC (.h) + Embedded Object (.o)
-# Parameters explanation:
-# --output-format=vm-c : Generates C language control flow (EmitC)
-# --iree-llvmcpu-link-embedded=false : Do not link internally; generate a standalone .o file
-# --iree-llvmcpu-static-library-output-path : Specifies the .o output path
-# Optimization flags:
-# --compilation_mode=optimize_size : Use -Oz (smallest code size)
-# --iree-llvmcpu-loop-unrolling=false : Disable loop unrolling (reduce code size)
-# --iree-llvmcpu-enable-ukernels=all : Try to use shared microkernels instead of inlining
 echo "[3/3] Compiling to EmitC + Object ($ARCH) [Optimized]..."
 "$IREE_TOOLCHAIN_ROOT/iree-compile" \
     --iree-hal-target-backends=llvm-cpu \
@@ -94,10 +82,12 @@ echo "[3/3] Compiling to EmitC + Object ($ARCH) [Optimized]..."
     --iree-llvmcpu-link-static \
     --iree-llvmcpu-static-library-output-path="$OUTPUT_DIR/$OUTPUT_OBJ_NAME" \
     --iree-llvmcpu-loop-unrolling=false \
+    --iree-llvmcpu-enable-ukernels=all \
+    --iree-flow-inline-constants-max-byte-length=0 \
+    --iree-llvmcpu-debug-symbols=false \
     "$TEMP_DIR/${OUTPUT_NAME}_opt.mlir" \
     -o "$OUTPUT_DIR/$OUTPUT_NAME.h"
 
-# Step 4: Compile to VM Bytecode (.vmfb) + Static Library (.o)
 echo "[4/4] Compiling to VM Bytecode + Static Library..."
 "$IREE_TOOLCHAIN_ROOT/iree-compile" \
     --iree-hal-target-backends=llvm-cpu \
@@ -107,28 +97,36 @@ echo "[4/4] Compiling to VM Bytecode + Static Library..."
     --output-format=vm-bytecode \
     --iree-vm-target-index-bits=$VM_INDEX_BITS \
     --iree-llvmcpu-link-embedded=false \
-    --iree-llvmcpu-static-library-output-path="$OUTPUT_DIR/${OUTPUT_NAME}_bytecode.o" \
+    --iree-llvmcpu-static-library-output-path="$OUTPUT_DIR/$BYTECODE_OBJ_NAME" \
+    --iree-llvmcpu-loop-unrolling=false \
+    --iree-llvmcpu-enable-ukernels=all \
+    --iree-llvmcpu-debug-symbols=false \
     "$TEMP_DIR/${OUTPUT_NAME}_opt.mlir" \
     -o "$OUTPUT_DIR/${OUTPUT_NAME}.vmfb"
 
-# Step 5: Convert .vmfb to C header array
 echo "Converting .vmfb to C array..."
 xxd -i "$OUTPUT_DIR/${OUTPUT_NAME}.vmfb" > "$OUTPUT_DIR/${OUTPUT_NAME}_vmfb.h"
 
-# Normalize variable names
-sed -i "s/^unsigned char.*\[\]/const unsigned char ${OUTPUT_NAME}_vmfb[]/" "$OUTPUT_DIR/${OUTPUT_NAME}_vmfb.h"
-sed -i "s/^unsigned int.*len/unsigned int ${OUTPUT_NAME}_vmfb_len/" "$OUTPUT_DIR/${OUTPUT_NAME}_vmfb.h"
+# Sanitize variable name: replace any non-alphanumeric chars (like /) with _
+SAFE_NAME=$(echo "$OUTPUT_NAME" | sed 's/[^a-zA-Z0-9_]/_/g')
 
-# Clean up temporary files
+sed -i "s/^unsigned char.*\[\]/const unsigned char ${SAFE_NAME}_vmfb[]/" "$OUTPUT_DIR/${OUTPUT_NAME}_vmfb.h"
+sed -i "s/^unsigned int.*len/unsigned int ${SAFE_NAME}_vmfb_len/" "$OUTPUT_DIR/${OUTPUT_NAME}_vmfb.h"
+
 rm -rf "$TEMP_DIR"
 
 echo "=== Conversion Successful! ==="
-echo "Generated EmitC Header: $OUTPUT_DIR/$OUTPUT_NAME.h"
-echo "Generated Static Object: $OUTPUT_DIR/$OUTPUT_OBJ_NAME"
-echo "Generated Bytecode VMFB: $OUTPUT_DIR/${OUTPUT_NAME}.vmfb"
-echo "Generated Bytecode Header: $OUTPUT_DIR/${OUTPUT_NAME}_vmfb.h"
-echo ""
+echo "--------------------------------------------------------"
+echo "MODE 1: EmitC (C Code Generation)"
+echo "  Header: $OUTPUT_DIR/$OUTPUT_NAME.h"
+echo "  Object: $OUTPUT_DIR/$OUTPUT_OBJ_NAME"
+echo "--------------------------------------------------------"
+echo "MODE 2: VM Bytecode (Runtime Interpretation)"
+echo "  VMFB:   $OUTPUT_DIR/${OUTPUT_NAME}.vmfb"
+echo "  Header: $OUTPUT_DIR/${OUTPUT_NAME}_vmfb.h"
+echo "  Object: $OUTPUT_DIR/$BYTECODE_OBJ_NAME"
+echo "--------------------------------------------------------"
 echo "Next Steps:"
-echo "1. Create a C file that includes the header and exposes the 'module_create' function."
-echo "2. Add the .c file to the source list in CMakeLists.txt."
-echo "3. Add '$OUTPUT_NAME.o' to target_link_libraries (or source list) in CMakeLists.txt."
+echo "1. Ensure your linker script handles the .o files correctly."
+echo "2. Link against the matching ukernel bitcode (compiled earlier)."
+echo "3. Use -Wl,--icf=all to deduplicate code."

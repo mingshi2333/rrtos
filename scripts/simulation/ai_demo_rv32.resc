@@ -1,11 +1,11 @@
 :name: ai_demo_virt_rv32
 :description: RISC-V 32-bit virt machine for ai_demo
 
-$bin?=@/home/mingshi/Project/PF/rtos/build/ai_demo
+$bin?=@build/ai_demo
 
 mach create "riscv32-virt"
 
-machine LoadPlatformDescription @/home/mingshi/Project/PF/rtos/scripts/simulation/riscv32_virt.repl
+machine LoadPlatformDescription @scripts/simulation/riscv32_virt.repl
 
 showAnalyzer sysbus.uart0
 
