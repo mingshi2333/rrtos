@@ -14700,28 +14700,28 @@ label37:
   v314 = &v313;
   v315 = sizeof(iree_vm_ref_t);
   memset(v314, 0, v315);
-  iree_vm_ref_retain(v18, v314);
+  iree_vm_ref_retain(v30, v314);
   ;
   v317 = &v316;
   v318 = sizeof(iree_vm_ref_t);
   memset(v317, 0, v318);
-  iree_vm_ref_retain(v30, v317);
-  iree_vm_ref_assign(v314, v15);
-  iree_vm_ref_assign(v317, v18);
+  iree_vm_ref_retain(v18, v317);
+  iree_vm_ref_assign(v314, v18);
+  iree_vm_ref_assign(v317, v15);
   goto label39;
 label38:
   ;
   v320 = &v319;
   v321 = sizeof(iree_vm_ref_t);
   memset(v320, 0, v321);
-  iree_vm_ref_retain(v27, v320);
+  iree_vm_ref_retain(v15, v320);
   ;
   v323 = &v322;
   v324 = sizeof(iree_vm_ref_t);
   memset(v323, 0, v324);
-  iree_vm_ref_retain(v15, v323);
-  iree_vm_ref_assign(v320, v15);
-  iree_vm_ref_assign(v323, v18);
+  iree_vm_ref_retain(v27, v323);
+  iree_vm_ref_assign(v320, v18);
+  iree_vm_ref_assign(v323, v15);
   goto label39;
 label39:
   ;
@@ -14864,7 +14864,7 @@ label53:
   iree_vm_ref_release(v18);
   iree_vm_ref_release(v24);
   iree_vm_ref_release(v30);
-  v347 = iree_make_cstring_view("HAL device `__device_0` not found or unavailable: #hal.device.target<\"local\", [#hal.executable.target<\"llvm-cpu\", \"static\", {cpu = \"\", cpu_features = \"+m,+a,+f,+d,+c,+zicsr\", data_layout = \"e-m:e-p:32:32-i64:64-n32-S128\", debug_symbols = false, link_embedded = false, link_static = true, native_vector_size = 16 : i64, static_library_output = \"../iree_static/st_yolo_lc_v1_192_int_beta.o\", target_abi = \"ilp32d\", target_triple = \"riscv32-unknown-elf\", ukernels = \"all\"}>]>");
+  v347 = iree_make_cstring_view("HAL device `__device_0` not found or unavailable: #hal.device.target<\"local\", [#hal.executable.target<\"llvm-cpu\", \"static\", {cpu = \"\", cpu_features = \"+m,+a,+f,+d,+zicsr\", data_layout = \"e-m:e-p:32:32-i64:64-n32-S128\", debug_symbols = false, link_embedded = false, link_static = true, native_vector_size = 16 : i64, static_library_output = \"../iree_static/st_yolo_lc_v1_192_int_beta.o\", target_abi = \"ilp32d\", target_triple = \"riscv32-unknown-elf\", ukernels = \"all\"}>]>");
   ;
   v348 = v347;
   v349 = v348.size;

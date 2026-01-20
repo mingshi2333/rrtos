@@ -39,7 +39,7 @@ if [ "$ARCH" = "rv64" ]; then
     echo "Configuring for RV64..."
     TARGET_TRIPLE="riscv64-unknown-elf"
     TARGET_ABI="lp64d"
-    CPU_FEATURES="+m,+a,+f,+d,+c,+v,+zicsr"
+    CPU_FEATURES="+m,+a,+f,+d,+zicsr"
     VM_INDEX_BITS=64
     OUTPUT_OBJ_NAME="${OUTPUT_NAME}_rv64.o"
     BYTECODE_OBJ_NAME="${OUTPUT_NAME}_bytecode_rv64.o"
@@ -47,7 +47,7 @@ else
     echo "Configuring for RV32..."
     TARGET_TRIPLE="riscv32-unknown-elf"
     TARGET_ABI="ilp32d"
-    CPU_FEATURES="+m,+a,+f,+d,+c,+zicsr"
+    CPU_FEATURES="+m,+a,+f,+d,+zicsr"
     VM_INDEX_BITS=32
     OUTPUT_OBJ_NAME="${OUTPUT_NAME}.o"
     BYTECODE_OBJ_NAME="${OUTPUT_NAME}_bytecode.o"

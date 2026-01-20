@@ -2,7 +2,7 @@ context:
   version: "1.8.10"
   arch: "rv32"
   target_triple: "riscv32-unknown-elf"
-  march: "rv32imafdcv"
+  march: "rv32imafd"
   mabi: "ilp32d"
 
 package:
@@ -26,21 +26,21 @@ build:
       strip = 'llvm-strip'
       objcopy = 'llvm-objcopy'
       ranlib = 'llvm-ranlib'
-      
+
       [host_machine]
       system = 'unknown'
       cpu_family = 'riscv32'
       cpu = 'riscv32'
       endian = 'little'
-      
+
       [properties]
       skip_sanity_check = true
-      
+
       [built-in options]
       c_args = ['-march=${{ march }}', '-mabi=${{ mabi }}']
       c_link_args = ['-march=${{ march }}', '-mabi=${{ mabi }}']
       EOF
-      
+
       # 配置 Meson（关键选项参考官方文档和调研结果）
       meson setup build \
         --cross-file cross_${{ arch }}.txt \
@@ -51,7 +51,7 @@ build:
         -Dtests-enable-stack-protector=false \
         -Dformat-default=integer \
         -Dthread-local-storage=false
-      
+
       # 构建和安装
       ninja -C build install
 
@@ -59,7 +59,7 @@ requirements:
   build:
     - clang >=18
     - lld
-    - llvm-tools  # 提供 llvm-ar, llvm-strip 等
+    - llvm-tools # 提供 llvm-ar, llvm-strip 等
     - meson >=0.61
     - ninja
   # host 和 run 留空（这是交叉编译的工具链库）

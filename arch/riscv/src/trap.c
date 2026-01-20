@@ -2,6 +2,7 @@
 #include "riscv_csr.h"
 #include "hal_clint.h"
 #include "hal_plic.h"
+#include "hal_uart.h"
 
 #include "os_config.h"
 
@@ -50,7 +51,10 @@ void os_trap_handler(void *sp) {
         }
     } else {
         // Exception occurred (not interrupt)
-        // Infinite loop to catch it (better than retrying instruction forever)
+        // Exception occurred (not interrupt)
+        os_reg_t mepc = csr_read(mepc);
+        os_reg_t mtval = csr_read(mtval);
+        os_print("\nEXCEPTION: mcause=0x%x, mepc=0x%x, mtval=0x%x\n", mcause, mepc, mtval);
         while(1);
     }
 }

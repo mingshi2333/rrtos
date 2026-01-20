@@ -54,7 +54,8 @@ _start:
     csrw    mtvec, t0
 
     # Set mstatus: MPP=Machine(11) | FS=Initial(01)
-    li      t0, 0x00003800
+    # Set mstatus: MPP=Machine(11) | FS=Initial(01) | VS=Initial(01)
+    li      t0, 0x00003A00
     csrw    mstatus, t0
 
     la      t0, os_kernel_main
@@ -86,7 +87,8 @@ _secondary_wait:
     csrw    mtvec, t0
 
     # Set mstatus: MPP=Machine(11) | FS=Initial(01)
-    li      t0, 0x00003800
+    # Set mstatus: MPP=Machine(11) | FS=Initial(01) | VS=Initial(01)
+    li      t0, 0x00003A00
     csrw    mstatus, t0
 
     la      t0, os_smp_secondary_start

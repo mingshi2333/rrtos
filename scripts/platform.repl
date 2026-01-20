@@ -1,0 +1,26 @@
+// Renode Platform Description for QEMU 'virt' compatible RISC-V 32-bit
+
+cpu: CPU.RiscV32 @ sysbus
+    cpuType: "rv32imafdc_zicsr"
+    privilegeArchitecture: PrivilegeArchitecture.Priv1_10
+    timeProvider: clint
+
+ram: Memory.MappedMemory @ sysbus 0x80000000
+    size: 0x08000000
+
+plic: IRQControllers.PlatformLevelInterruptController @ sysbus 0x0c000000
+    // Connect Context 0 to CPU Machine External Interrupt (11) and Supervisor (9)
+    0 -> cpu@11
+    1 -> cpu@9
+    numberOfSources: 96
+    numberOfContexts: 2
+    prioritiesEnabled: true
+
+uart0: UART.NS16550 @ sysbus 0x10000000
+    wideRegisters: true
+    IRQ -> plic@10
+
+clint: IRQControllers.CoreLevelInterruptor @ sysbus 0x02000000
+    frequency: 10000000
+    // Connect M-mode software interrupt (3) and timer interrupt (7)
+    [0, 1] -> cpu@[3, 7]

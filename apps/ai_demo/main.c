@@ -12,6 +12,7 @@
 #include <string.h>
 #include "ai_model.h"
 #include "os_kernel.h"
+#include "hal_clint.h"
 
 static inline uint64_t get_cycles(void) {
 #if __riscv_xlen == 64
@@ -31,6 +32,7 @@ static inline uint64_t get_cycles(void) {
 /*===========================================================================*/
 
 #define UART0_BASE  0x10000000
+#define CLINT_BASE  0x02000000
 
 /*===========================================================================*/
 /*                        任务配置                                            */
@@ -44,7 +46,7 @@ static uint64_t ai_stack[4096];
 /*===========================================================================*/
 
 /* 静态分配输入缓冲区 */
-static ai_input_t input_buffer[AI_INPUT_SIZE];
+static ai_input_t input_buffer[AI_INPUT_SIZE] __attribute__((aligned(16)));
 
 /**
  * @brief 初始化测试输入
@@ -179,6 +181,9 @@ void os_kernel_main(void) {
     /* 初始化 UART */
     hal_uart_init(UART0_BASE, 115200);
     printf("Booting RTOS...\n");
+
+    /* 初始化 CLINT (Timer) */
+    hal_clint_init(CLINT_BASE);
     
     /* 初始化内核 */
     os_kernel_init();

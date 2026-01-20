@@ -72,6 +72,55 @@ pixi run sim
 pixi run sim-renode
 ```
 
+## Testing and Simulation
+
+### Build and Run (RV32)
+
+```bash
+pixi run -e rv32 configure
+pixi run -e rv32 build
+
+# QEMU
+./scripts/run_qemu.sh
+
+# Renode
+renode --disable-xwt --console --plain scripts/run_renode.resc
+```
+
+### Performance Data (Renode)
+
+Measured on the latest RV32 build (no C/V extensions):
+
+| Clock | Inference Time |
+| --- | --- |
+| 100 MHz | 5003 ms |
+| 480 MHz | 1042 ms |
+
+Raw log: `/tmp/renode_output.log`
+
+### Model Size Analysis (YOLO)
+
+| Artifact | Path | Size |
+| --- | --- | --- |
+| EmitC header | `zoo/iree_static/st_yolo_lc_v1_192_int_beta.h` | 1.6M |
+| Static object | `zoo/iree_static/st_yolo_lc_v1_192_int_beta.o` | 289K |
+| VM bytecode | `zoo/iree_static/st_yolo_lc_v1_192_int_beta.vmfb` | 535K |
+
+### Model Regeneration
+
+Use the model script to rebuild the YOLO artifacts with the current ISA config:
+
+```bash
+cd zoo/scripts
+./tflite_to_iree_c.sh -a rv32 ../../../iree/zoo/st_yolo_lc_v1_192.tflite st_yolo_lc_v1_192_int_beta
+```
+
+### ISA Configuration
+
+The project uses a centralized ISA config at `cmake/riscv_arch.cmake`. For Renode
+compatibility, RV32 builds default to `rv32imafd` (no C/V). If any linked object
+contains C instructions, Renode will fault with a compressed instruction decode error.
+
 ## Architecture Switching
 
 The project supports both RV32 and RV64 through Pixi environments:

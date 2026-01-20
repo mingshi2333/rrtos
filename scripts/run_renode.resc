@@ -1,0 +1,20 @@
+:name: riscv_virt
+:description: RISC-V 32-bit QEMU-virt compatible simulation
+
+$bin?=@build/apps/ai_demo/ai_demo
+
+using sysbus
+mach create "riscv_virt"
+
+# Load our custom platform description
+machine LoadPlatformDescription @scripts/platform.repl
+
+sysbus LoadELF $bin
+
+# Enable UART output to file
+sysbus.uart0 CreateFileBackend "/tmp/renode_output.log"
+
+# Start simulation
+start
+sleep 10
+quit

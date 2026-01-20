@@ -143,7 +143,11 @@ static void *stack_init(void *stack_base, os_size_t size, os_task_entry_t entry,
     
     sp = (uint8_t *)((os_ubase_t)sp & ~0xF);
     
+    #if OS_CFG_ARCH_BITS == 64
     sp -= 128;
+#else
+    sp -= 64;
+#endif
     
     os_reg_t *frame = (os_reg_t *)sp;
     
@@ -152,7 +156,7 @@ static void *stack_init(void *stack_base, os_size_t size, os_task_entry_t entry,
     }
     
     frame[0] = (os_reg_t)entry;
-    frame[13] = MSTATUS_MPP | MSTATUS_MPIE | MSTATUS_MIE | MSTATUS_FS_INITIAL;
+    frame[13] = MSTATUS_MPP | MSTATUS_MPIE | MSTATUS_MIE | MSTATUS_FS_INITIAL | MSTATUS_VS_INITIAL;
     
     return sp;
 }

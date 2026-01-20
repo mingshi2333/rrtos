@@ -35,6 +35,10 @@
 #define MSTATUS_FS_CLEAN   (2UL << 13)
 #define MSTATUS_FS_DIRTY   (3UL << 13)
 
+#define MSTATUS_VS_INITIAL (1UL << 9)
+#define MSTATUS_VS_CLEAN   (2UL << 9)
+#define MSTATUS_VS_DIRTY   (3UL << 9)
+
 #define MIE_MSIE        (1UL << 3)
 #define MIE_MTIE        (1UL << 7)
 #define MIE_MEIE        (1UL << 11)
