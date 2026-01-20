@@ -3,7 +3,6 @@ cmake_minimum_required(VERSION 3.16)
 # ============================================================================
 # Project Configuration
 # ============================================================================
-
 project(rrtos
     VERSION 1.0.0
     DESCRIPTION "RISC-V AI-RTOS with Federated Learning Support"
@@ -23,12 +22,14 @@ link_libraries(gcc gcc)
 
 # Handle Picolibc include layout (Native vs Cross)
 message(STATUS "Checking Picolibc at: ${PICOLIBC_ROOT}")
+
 if(EXISTS "${PICOLIBC_ROOT}/include/picolibc.h")
     message(STATUS "Found picolibc headers at: ${PICOLIBC_ROOT}/include")
     include_directories(BEFORE SYSTEM ${PICOLIBC_ROOT}/include)
 else()
     # Cross-compiled layout often has includes under architecture tuple (e.g. riscv64-unknown-elf/include)
     file(GLOB_RECURSE PICOLIBC_INCLUDE_DIRS "${PICOLIBC_ROOT}/*/include")
+
     if(PICOLIBC_INCLUDE_DIRS)
         list(GET PICOLIBC_INCLUDE_DIRS 0 FOUND_INC)
         message(STATUS "Found cross-compiled picolibc headers at: ${FOUND_INC}")
@@ -56,7 +57,7 @@ if(ARCH_BITS STREQUAL "32")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=rv32imacv_zicsr -mabi=ilp32 -mcmodel=medany -mno-relax -Wall -Wextra -ffunction-sections -fdata-sections")
     set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -march=rv32imacv_zicsr -mabi=ilp32")
     add_definitions(-DOS_CFG_ARCH_BITS=32)
-    set(ARCH "riscv") 
+    set(ARCH "riscv")
 else()
     # RV64 (Default)
     # Enable Vector (+v), Float (+f/+d), Compressed (+c)
@@ -64,7 +65,7 @@ else()
     set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -march=rv64imafdcv_zicsr -mabi=lp64d -mcmodel=medany")
     add_definitions(-DOS_CFG_ARCH_BITS=64)
     set(ARCH_BITS "64")
-    set(ARCH "riscv") 
+    set(ARCH "riscv")
 endif()
 
 # IREE Configuration
@@ -73,6 +74,7 @@ set(IREE_INCLUDE_DIRS
     ${IREE_RUNTIME_ROOT}
     ${CMAKE_SOURCE_DIR}/third_party/iree/third_party/flatcc/include
 )
+
 # Base
 file(GLOB_RECURSE IREE_BASE_SOURCES ${IREE_RUNTIME_ROOT}/iree/base/*.c)
 list(FILTER IREE_BASE_SOURCES EXCLUDE REGEX ".*synchronization.*")
@@ -80,6 +82,7 @@ list(FILTER IREE_BASE_SOURCES EXCLUDE REGEX ".*threading.*")
 
 # VM (Core only, exclude bytecode/dynamic if using EmitC)
 file(GLOB IREE_VM_SOURCES ${IREE_RUNTIME_ROOT}/iree/vm/*.c)
+
 if(AI_MODE_BYTECODE)
     file(GLOB IREE_VM_BYTECODE_SOURCES ${IREE_RUNTIME_ROOT}/iree/vm/bytecode/*.c)
 else()
@@ -102,7 +105,7 @@ set(IREE_HAL_STATIC_LIBRARY_LOADER_SOURCES
 )
 
 # HAL Drivers (Sync)
-file(GLOB IREE_HAL_DRIVER_SYNC_SOURCES 
+file(GLOB IREE_HAL_DRIVER_SYNC_SOURCES
     ${IREE_RUNTIME_ROOT}/iree/hal/drivers/local_sync/*.c
     ${IREE_RUNTIME_ROOT}/iree/hal/drivers/local_sync/registration/*.c
 )
@@ -110,6 +113,7 @@ file(GLOB IREE_HAL_DRIVER_SYNC_SOURCES
 # HAL Modules
 file(GLOB IREE_MODULES_HAL_SOURCES ${IREE_RUNTIME_ROOT}/iree/modules/hal/*.c)
 file(GLOB IREE_MODULES_HAL_UTILS_SOURCES ${IREE_RUNTIME_ROOT}/iree/modules/hal/utils/*.c)
+
 # IO sources (exclude stdio_stream which requires file system)
 set(IREE_IO_SOURCES
     ${IREE_RUNTIME_ROOT}/iree/io/file_handle.c
@@ -140,6 +144,7 @@ list(FILTER IREE_RUNTIME_SOURCES EXCLUDE REGEX ".*mpi_channel_provider.c")
 list(FILTER IREE_RUNTIME_SOURCES EXCLUDE REGEX ".*mimalloc.*")
 list(FILTER IREE_RUNTIME_SOURCES EXCLUDE REGEX ".*flags.c.*")
 list(FILTER IREE_RUNTIME_SOURCES EXCLUDE REGEX ".*flags_demo.c.*")
+
 # list(FILTER IREE_RUNTIME_SOURCES EXCLUDE REGEX ".*file_io.*")
 # list(FILTER IREE_RUNTIME_SOURCES EXCLUDE REGEX ".*file_path.*")
 list(FILTER IREE_RUNTIME_SOURCES EXCLUDE REGEX ".*wait_scope.c.*")
@@ -149,8 +154,10 @@ set(AI_SOURCES
     ai/src/ai_runtime.c
     ai/src/ai_backend.c
     ai/src/iree_rtos_sync.c
+
     # Small models (Pure EmitC - no .o needed):
     ai/mobilenet_test_module_c.c
+
     # Large models (EmitC + .o) - disabled due to llvm.round.f32 issue:
     # zoo/iree_static/efficientnet_lc_128_c_module.c
     ${IREE_RUNTIME_SOURCES}
@@ -158,13 +165,12 @@ set(AI_SOURCES
 
 # Large models require linked .o files (disabled for st_mnist test)
 # if(ARCH_BITS EQUAL 64)
-#     message(STATUS "Linking RV64 model object: efficientnet_lc_128.o")
-#     list(APPEND AI_SOURCES ${CMAKE_SOURCE_DIR}/zoo/iree_static/efficientnet_lc_128.o)
+# message(STATUS "Linking RV64 model object: efficientnet_lc_128.o")
+# list(APPEND AI_SOURCES ${CMAKE_SOURCE_DIR}/zoo/iree_static/efficientnet_lc_128.o)
 # else()
-#     message(STATUS "Linking RV32 model object: efficientnet_lc_128.o")
-#     list(APPEND AI_SOURCES ${CMAKE_SOURCE_DIR}/zoo/iree_static/efficientnet_lc_128.o)
+# message(STATUS "Linking RV32 model object: efficientnet_lc_128.o")
+# list(APPEND AI_SOURCES ${CMAKE_SOURCE_DIR}/zoo/iree_static/efficientnet_lc_128.o)
 # endif()
-
 add_library(rv_aios_ai STATIC ${AI_SOURCES})
 target_compile_definitions(rv_aios_ai PUBLIC
     IREE_STATUS_FEATURES=0
@@ -178,7 +184,7 @@ target_compile_definitions(rv_aios_ai PUBLIC
     _ISOC11_SOURCE=0
     EMITC_IMPLEMENTATION
 )
-target_compile_options(rv_aios_ai PRIVATE 
+target_compile_options(rv_aios_ai PRIVATE
     -Wno-error
     -Wno-type-limits
     -Wno-unused-variable
@@ -234,51 +240,6 @@ target_include_directories(rv_aios_drivers PRIVATE
     ${CMAKE_SOURCE_DIR}/arch/${ARCH}/include
 )
 
-# Simple IREE Model Test
-add_executable(iree_simple_test apps/iree_simple_test/main.c)
-target_include_directories(iree_simple_test PRIVATE
-    ${CMAKE_SOURCE_DIR}/kernel/include
-    ${CMAKE_SOURCE_DIR}/config
-    ${CMAKE_SOURCE_DIR}/memory/include
-    ${CMAKE_SOURCE_DIR}/hal/include
-)
-target_link_libraries(iree_simple_test rv_aios_kernel rv_aios_drivers rv_aios_memory c m)
-set_target_properties(iree_simple_test PROPERTIES
-    LINK_FLAGS "-T${CMAKE_SOURCE_DIR}/arch/${ARCH}/link.ld -nostartfiles -Wl,--gc-sections"
-)
-
-# MobileNet Test Application (using EfficientNet static library)
-add_executable(mobilenet_test 
-    apps/mobilenet_test/main.c
-    apps/mobilenet_test/fmax_compat.c
-    zoo/iree_static/mobilenet_v2_035_128_c_module.c
-)
-target_include_directories(mobilenet_test PRIVATE
-    ${CMAKE_SOURCE_DIR}/kernel/include
-    ${CMAKE_SOURCE_DIR}/config
-    ${CMAKE_SOURCE_DIR}/hal/include
-    ${CMAKE_SOURCE_DIR}/memory/include
-    ${CMAKE_SOURCE_DIR}/ai/include
-    ${CMAKE_SOURCE_DIR}/zoo/iree_static
-    ${CMAKE_SOURCE_DIR}
-    ${IREE_INCLUDE_DIRS}
-    ${CMAKE_SOURCE_DIR}/third_party/iree/third_party/flatcc/include
-)
-target_compile_options(mobilenet_test PRIVATE
-    -Wno-type-limits
-    -Wno-unused-variable
-    -Wno-unused-function
-    -Wno-unused-parameter
-    -Wno-cast-function-type
-    -include${CMAKE_SOURCE_DIR}/ai/iree_bare_metal_config.h
-)
-
-
-target_link_libraries(mobilenet_test 
-    rv_aios_ai rv_aios_kernel rv_aios_drivers rv_aios_memory 
-    ${CMAKE_SOURCE_DIR}/zoo/iree_static/mobilenet_v2_035_128.o
-    c m gcc gcc
-)
 if(NOT DEFINED LINKER_SCRIPT)
     set(LINKER_SCRIPT "${CMAKE_SOURCE_DIR}/arch/${ARCH}/link.ld")
 else()
@@ -286,117 +247,6 @@ else()
         set(LINKER_SCRIPT "${CMAKE_SOURCE_DIR}/${LINKER_SCRIPT}")
     endif()
 endif()
-
-set_target_properties(mobilenet_test PROPERTIES
-    LINK_FLAGS "-T${LINKER_SCRIPT} -nostartfiles -Wl,--gc-sections"
-)
-
-add_custom_command(TARGET mobilenet_test POST_BUILD
-    COMMAND ${CMAKE_OBJCOPY} -O binary mobilenet_test mobilenet_test.bin
-    COMMAND ${CMAKE_SIZE} mobilenet_test
-)
-
-# Zoo Test Application (Memory Profiling)
-add_executable(zoo_test apps/zoo_test/main.c)
-target_include_directories(zoo_test PRIVATE
-    ${CMAKE_SOURCE_DIR}/kernel/include
-    ${CMAKE_SOURCE_DIR}/config
-    ${CMAKE_SOURCE_DIR}/hal/include
-    ${CMAKE_SOURCE_DIR}/memory/include
-    ${CMAKE_SOURCE_DIR}/ai/include
-    ${IREE_INCLUDE_DIRS}
-)
-target_compile_options(zoo_test PRIVATE
-    -Wno-type-limits
-    -Wno-unused-variable
-    -Wno-unused-function
-    -Wno-unused-parameter
-    -Wno-cast-function-type
-    -include${CMAKE_SOURCE_DIR}/ai/iree_bare_metal_config.h
-)
-target_link_libraries(zoo_test rv_aios_ai rv_aios_kernel rv_aios_drivers rv_aios_memory c m)
-set_target_properties(zoo_test PROPERTIES
-    LINK_FLAGS "-T${CMAKE_SOURCE_DIR}/arch/${ARCH}/link.ld -nostartfiles -Wl,--gc-sections"
-)
-add_custom_command(TARGET zoo_test POST_BUILD
-    COMMAND ${CMAKE_OBJCOPY} -O binary zoo_test zoo_test.bin
-    COMMAND ${CMAKE_SIZE} zoo_test
-)
-
-# Person Detect Static Test
-add_executable(person_detect_test 
-    apps/person_detect_test/main.c
-    apps/person_detect_test/person_detect_static.c
-)
-target_include_directories(person_detect_test PRIVATE
-    ${CMAKE_SOURCE_DIR}/kernel/include
-    ${CMAKE_SOURCE_DIR}/config
-    ${CMAKE_SOURCE_DIR}/hal/include
-    ${CMAKE_SOURCE_DIR}/memory/include
-    ${CMAKE_SOURCE_DIR}/ai/include
-    ${IREE_INCLUDE_DIRS}
-)
-# Define EMITC_IMPLEMENTATION for the static module file
-set_source_files_properties(apps/person_detect_test/person_detect_static.c 
-    PROPERTIES COMPILE_DEFINITIONS "EMITC_IMPLEMENTATION"
-)
-
-target_link_libraries(person_detect_test rv_aios_ai rv_aios_kernel rv_aios_drivers rv_aios_memory c m)
-set_target_properties(person_detect_test PROPERTIES
-    LINK_FLAGS "-T${CMAKE_SOURCE_DIR}/arch/${ARCH}/link.ld -nostartfiles -Wl,--gc-sections"
-)
-add_custom_command(TARGET person_detect_test POST_BUILD
-    COMMAND ${CMAKE_OBJCOPY} -O binary person_detect_test person_detect_test.bin
-    COMMAND ${CMAKE_SIZE} person_detect_test
-)
-
-# Disable Werror for generated file
-set_source_files_properties(apps/person_detect_test/person_detect_static.c 
-    PROPERTIES COMPILE_OPTIONS "-Wno-error"
-)
-
-# Final Fix: Define llabs macro and disable warnings
-set_source_files_properties(apps/person_detect_test/person_detect_static.c 
-    PROPERTIES 
-    COMPILE_DEFINITIONS "EMITC_IMPLEMENTATION;llabs(x)=((x)<0?-(x):(x))"
-    COMPILE_OPTIONS "-Wno-error;-Wno-cast-function-type-mismatch;-Wno-unused-parameter"
-)
-
-# EfficientNet Static Library Test
-add_executable(efficientnet_test 
-    apps/efficientnet_test/main.c
-    zoo/iree_static/efficientnet_lc_128_c_module.c
-)
-target_include_directories(efficientnet_test PRIVATE
-    ${CMAKE_SOURCE_DIR}/kernel/include
-    ${CMAKE_SOURCE_DIR}/config
-    ${CMAKE_SOURCE_DIR}/hal/include
-    ${CMAKE_SOURCE_DIR}/memory/include
-    ${CMAKE_SOURCE_DIR}/ai/include
-    ${CMAKE_SOURCE_DIR}/zoo/iree_static
-    ${IREE_INCLUDE_DIRS}
-)
-target_compile_options(efficientnet_test PRIVATE
-    -Wno-type-limits
-    -Wno-unused-variable
-    -Wno-unused-function
-    -Wno-unused-parameter
-    -Wno-cast-function-type
-    -include${CMAKE_SOURCE_DIR}/ai/iree_bare_metal_config.h
-)
-target_compile_definitions(efficientnet_test PRIVATE EMITC_IMPLEMENTATION)
-target_link_libraries(efficientnet_test 
-    rv_aios_ai rv_aios_kernel rv_aios_drivers rv_aios_memory 
-    ${CMAKE_SOURCE_DIR}/zoo/iree_static/efficientnet_lc_128.o
-    c m
-)
-set_target_properties(efficientnet_test PROPERTIES
-    LINK_FLAGS "-T${LINKER_SCRIPT} -nostartfiles -Wl,--gc-sections"
-)
-add_custom_command(TARGET efficientnet_test POST_BUILD
-    COMMAND ${CMAKE_OBJCOPY} -O binary efficientnet_test efficientnet_test.bin
-    COMMAND ${CMAKE_SIZE} efficientnet_test
-)
 
 # ============================================================================
 # AI Demo - STM32CubeAI Style Template
@@ -414,10 +264,11 @@ if(AI_MODE_BYTECODE)
     target_include_directories(ai_demo PRIVATE ${CMAKE_SOURCE_DIR}/zoo/iree_static)
 else()
     # EmitC mode (Legacy)
-    add_executable(ai_demo 
+    add_executable(ai_demo
         apps/ai_demo/main.c
         apps/ai_demo/ai_model.c
-        zoo/iree_static/st_yolo_lc_v1_192_c_module.c
+        apps/ai_demo/model_impl.c
+        zoo/iree_static/st_yolo_lc_v1_192.h
     )
 endif()
 
@@ -443,8 +294,8 @@ target_compile_options(ai_demo PRIVATE
 )
 
 if(AI_MODE_BYTECODE)
-    target_link_libraries(ai_demo 
-        rv_aios_ai rv_aios_kernel rv_aios_drivers rv_aios_memory 
+    target_link_libraries(ai_demo
+        rv_aios_ai rv_aios_kernel rv_aios_drivers rv_aios_memory
         rv_aios_drivers
         c m gcc gcc
     )
@@ -454,10 +305,10 @@ else()
     else()
         set(MODEL_OBJ "st_yolo_lc_v1_192.o")
     endif()
-    
-    target_link_libraries(ai_demo 
+
+    target_link_libraries(ai_demo
         ${CMAKE_SOURCE_DIR}/zoo/iree_static/${MODEL_OBJ}
-        rv_aios_ai rv_aios_kernel rv_aios_drivers rv_aios_memory 
+        rv_aios_ai rv_aios_kernel rv_aios_drivers rv_aios_memory
         rv_aios_drivers
         c m gcc gcc
     )
