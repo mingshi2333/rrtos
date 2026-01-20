@@ -37,7 +37,7 @@ extern iree_status_t module_create(
 #else
 /* 静态库查询函数 (名称需与模型匹配) */
 extern const iree_hal_executable_library_header_t**
-    st_yolo_lc_v1_192_opt_linked_library_query(
+    st_yolo_lc_v1_192_int_beta_opt_linked_library_query(
         iree_hal_executable_library_version_t max_version,
         const iree_hal_executable_environment_v0_t* environment);
 #endif
@@ -112,7 +112,7 @@ ai_status_t ai_init(void) {
 #else
     /* 2. 创建静态库加载器 */
     const iree_hal_executable_library_query_fn_t libraries[] = {
-        st_yolo_lc_v1_192_opt_linked_library_query,
+        st_yolo_lc_v1_192_int_beta_opt_linked_library_query,
     };
     AI_CHECK_OK(iree_hal_static_library_loader_create(
         IREE_ARRAYSIZE(libraries), libraries,

@@ -76,3 +76,4 @@ sim-mobilenet = "pixi run sim-qemu"
 default = ["rv64"]
 rv64 = ["rv64"]
 rv32 = ["rv32"]
+

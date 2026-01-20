@@ -1,7 +1,8 @@
 :name: ai_demo_virt_rv32
 :description: RISC-V 32-bit virt machine for ai_demo
 
-$bin?=@build/ai_demo
+# Use path without @ to avoid relative path confusion
+$bin?="build/apps/ai_demo/ai_demo"
 
 mach create "riscv32-virt"
 
@@ -10,5 +11,4 @@ machine LoadPlatformDescription @scripts/simulation/riscv32_virt.repl
 showAnalyzer sysbus.uart0
 
 sysbus LoadELF $bin
-# Entry point is set automatically by LoadELF (0x80000000)
 start

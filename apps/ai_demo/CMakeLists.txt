@@ -1,43 +1,48 @@
-set(TARGET_NAME ai_demo)
+option(AI_MODE_BYTECODE "Use IREE VM Bytecode mode" OFF)
 
-# 源文件
-set(SOURCES
-    main.c
-    ai_model.c
-)
+if(AI_MODE_BYTECODE)
+    add_definitions(-DAI_MODE_BYTECODE -DAI_MODEL_YOLO)
+    add_executable(ai_demo main.c ai_model.c)
+else()
+    add_executable(ai_demo
+        main.c
+        ai_model.c
+        model_impl.c
+    )
+endif()
 
-add_executable(${TARGET_NAME}.elf ${SOURCES})
-
-target_include_directories(${TARGET_NAME}.elf PRIVATE
+target_include_directories(ai_demo PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_SOURCE_DIR}/kernel/include
-    ${CMAKE_SOURCE_DIR}/arch/${ARCH}/include
-    ${CMAKE_SOURCE_DIR}/drivers/include
-    ${CMAKE_SOURCE_DIR}/ai/include
-    ${CMAKE_SOURCE_DIR}/third_party/iree/runtime/src
+    ${CMAKE_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/zoo/iree_static
+    ${CMAKE_SOURCE_DIR}/third_party/iree/third_party/flatcc/include
 )
 
-target_link_libraries(${TARGET_NAME}.elf
-    rv_aios_kernel
-    rv_aios_drivers
+target_compile_options(ai_demo PRIVATE
+    -Wno-type-limits -Wno-unused-variable -Wno-unused-function
+    -Wno-unused-parameter -Wno-cast-function-type
+    -include${CMAKE_SOURCE_DIR}/ai/iree_bare_metal_config.h
+)
+
+if(ARCH_BITS STREQUAL "64")
+    set(MODEL_OBJ "st_yolo_lc_v1_192_int_beta_rv64.o")
+else()
+    set(MODEL_OBJ "st_yolo_lc_v1_192_int_beta.o")
+endif()
+
+target_link_libraries(ai_demo
     rv_aios_ai
+    rv_aios_libc_shim
+    rv_aios_drivers
+    ${CMAKE_SOURCE_DIR}/zoo/iree_static/${MODEL_OBJ}
+    c m gcc gcc
 )
 
-set_target_properties(${TARGET_NAME}.elf PROPERTIES
-    LINK_DEPENDS ${CMAKE_SOURCE_DIR}/arch/${ARCH}/link.ld
+set_target_properties(ai_demo PROPERTIES
+    LINK_FLAGS "-T${LINKER_SCRIPT} -nostartfiles --ld-path=ld.lld -Wl,--gc-sections -Wl,--icf=all -Wl,--allow-multiple-definition"
 )
 
-target_link_options(${TARGET_NAME}.elf PRIVATE
-    -T${CMAKE_SOURCE_DIR}/arch/${ARCH}/link.ld
-    -nostartfiles
-    -Wl,--gc-sections
-    -Wl,-Map=${CMAKE_CURRENT_BINARY_DIR}/${TARGET_NAME}.map
-)
-
-add_custom_command(TARGET ${TARGET_NAME}.elf POST_BUILD
-    COMMAND ${CMAKE_OBJCOPY} -O binary ${TARGET_NAME}.elf ${TARGET_NAME}.bin
-    COMMAND ${CMAKE_OBJDUMP} -D ${TARGET_NAME}.elf > ${TARGET_NAME}.asm
-    COMMAND ${CMAKE_SIZE} ${TARGET_NAME}.elf
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    COMMENT "Generating ${TARGET_NAME}.bin and ${TARGET_NAME}.asm"
+add_custom_command(TARGET ai_demo POST_BUILD
+    COMMAND ${CMAKE_OBJCOPY} -O binary ai_demo ai_demo.bin
+    COMMAND ${CMAKE_SIZE} ai_demo
 )
