@@ -1,7 +1,9 @@
 set(AI_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/ai_runtime.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/ai_backend.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ai_model_registry.c
     ${CMAKE_CURRENT_SOURCE_DIR}/mobilenet_test_module_c.c
+    ${CMAKE_SOURCE_DIR}/zoo/iree_static/models_registry.c
+    ${CMAKE_SOURCE_DIR}/zoo/iree_static/mnist_wrapper.c
+    ${CMAKE_SOURCE_DIR}/zoo/iree_static/yoloface_wrapper.c
 )
 
 add_library(rv_aios_ai STATIC ${AI_SOURCES})
@@ -21,6 +23,7 @@ target_compile_definitions(rv_aios_ai PUBLIC EMITC_IMPLEMENTATION)
 target_compile_options(rv_aios_ai PRIVATE
     -Wno-error -Wno-type-limits -Wno-unused-variable
     -Wno-unused-function -Wno-unused-parameter -Wno-cast-function-type
+    -Wno-implicit-function-declaration
     -include${CMAKE_SOURCE_DIR}/ai/iree_bare_metal_config.h
 )
 

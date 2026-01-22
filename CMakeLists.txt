@@ -145,3 +145,4 @@ add_subdirectory(ai)
 # Applications
 # ============================================================================
 add_subdirectory(apps/ai_demo)
+add_subdirectory(apps/ai_registry_test)

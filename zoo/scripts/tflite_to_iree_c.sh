@@ -71,6 +71,9 @@ echo "[2/3] Optimizing & Stripping Signedness (ui8 -> i8)..."
     "$TEMP_DIR/$OUTPUT_NAME.mlir" \
     -o "$TEMP_DIR/${OUTPUT_NAME}_opt.mlir"
 
+# Rename module to avoid collision
+sed -i "s/^module /module @${OUTPUT_NAME} /" "$TEMP_DIR/${OUTPUT_NAME}_opt.mlir"
+
 echo "[3/3] Compiling to EmitC + Object ($ARCH) [Optimized]..."
 "$IREE_TOOLCHAIN_ROOT/iree-compile" \
     --iree-hal-target-backends=llvm-cpu \

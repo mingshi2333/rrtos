@@ -68,6 +68,7 @@ sim-ai = "qemu-system-riscv32 -machine virt -nographic -m 4M -bios none -kernel 
 sim-renode-ai = "renode --console --disable-xwt scripts/simulation/ai_demo_rv32.resc"
 sim-renode-ram = "renode --console --disable-xwt scripts/simulation/mobilenet_test_rv32.resc"
 sim-renode-flash = "renode --console --disable-xwt scripts/simulation/mobilenet_test_flash.resc"
+test-registry = "timeout 15 qemu-system-riscv32 -machine virt -nographic -m 4M -bios none -kernel build/apps/ai_registry_test/ai_registry_test"
 
 # Alias for backward compatibility
 sim-mobilenet = "pixi run sim-qemu"
