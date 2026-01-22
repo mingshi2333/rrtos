@@ -23,7 +23,7 @@ target_compile_definitions(rv_aios_ai PUBLIC EMITC_IMPLEMENTATION)
 target_compile_options(rv_aios_ai PRIVATE
     -Wno-error -Wno-type-limits -Wno-unused-variable
     -Wno-unused-function -Wno-unused-parameter -Wno-cast-function-type
-    -Wno-implicit-function-declaration
+    -Wno-implicit-function-declaration -Wno-sign-compare -Wno-pointer-sign
     -include${CMAKE_SOURCE_DIR}/ai/iree_bare_metal_config.h
 )
 

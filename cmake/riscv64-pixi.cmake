@@ -18,14 +18,14 @@ set(CMAKE_SIZE llvm-size)
 # Target flags
 set(RISCV_FLAGS "--target=riscv64-unknown-elf -march=rv64imafdcv -mabi=lp64d -mcmodel=medany")
 
-# === Picolibc 路径配置（优先使用 CMake -D 参数，否则尝试环境变量）===
+# === Picolibc path configuration (prefer CMake -D parameters, otherwise try environment variables)===
 if(NOT DEFINED PICOLIBC_ROOT)
   if(DEFINED ENV{CONDA_PREFIX})
-    # Pixi build 将 Picolibc 直接安装到 $PREFIX/ 而不是 $PREFIX/riscv64-unknown-elf/
+    # Pixi build installs Picolibc directly to $PREFIX/ instead of $PREFIX/riscv64-unknown-elf/
     set(PICOLIBC_ROOT "$ENV{CONDA_PREFIX}")
     message(STATUS "Using Picolibc from Pixi environment: ${PICOLIBC_ROOT}")
   else()
-    # Fallback：向后兼容旧的手动构建路径
+    # Fallback: backward compatibility for old manual build paths
     set(PICOLIBC_ROOT "${CMAKE_SOURCE_DIR}/third_party/picolibc_pixi/riscv64-unknown-elf")
     message(STATUS "Using legacy Picolibc path: ${PICOLIBC_ROOT}")
   endif()

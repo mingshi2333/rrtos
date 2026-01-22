@@ -42,7 +42,7 @@ set(CMAKE_SIZE llvm-size)
 # Target flags (RV32 hard-float ABI)
 set(RISCV_FLAGS "--target=riscv32-unknown-elf -march=${RISCV_MARCH} -mabi=${RISCV_MABI} -mcmodel=medany")
 
-# === Picolibc 路径配置 ===
+# === Picolibc path configuration ===
 if(NOT DEFINED PICOLIBC_ROOT)
   if(DEFINED ENV{CONDA_PREFIX})
     set(PICOLIBC_ROOT "$ENV{CONDA_PREFIX}")
@@ -63,12 +63,12 @@ set(CMAKE_ASM_FLAGS_INIT "${RISCV_FLAGS} -ffreestanding -nostdlib -nostartfiles 
 set(CMAKE_CXX_FLAGS_INIT "${RISCV_FLAGS} -ffreestanding -nostdlib -nostartfiles -fno-pic -fno-plt -ffunction-sections -fdata-sections -U_POSIX_C_SOURCE -D_POSIX_C_SOURCE=0")
 
 # Linker flags (use lld for ilp32d)
-# 查找系统 GCC 的硬浮点库 (libgcc)
+# Find the system GCC's hard-float library (libgcc)
 execute_process(COMMAND /usr/bin/riscv64-linux-gnu-gcc -march=${RISCV_MARCH} -mabi=${RISCV_MABI} -print-libgcc-file-name OUTPUT_VARIABLE LIBGCC_PATH OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
 if(LIBGCC_PATH AND EXISTS "${LIBGCC_PATH}")
   get_filename_component(LIBGCC_DIR ${LIBGCC_PATH} DIRECTORY)
   message(STATUS "Found libgcc for hard-float: ${LIBGCC_PATH}")
-  # 添加 -L${LIBGCC_DIR} -lgcc 来显式链接
+  # Add -L${LIBGCC_DIR} -lgcc to explicitly link
   set(CMAKE_EXE_LINKER_FLAGS_INIT "${RISCV_FLAGS} -nostdlib -nostartfiles -static -fuse-ld=lld -Wl,--gc-sections -Wl,--no-relax -L${LIBGCC_DIR} -lgcc")
 else()
   message(WARNING "Could not find libgcc for hard-float. Link errors may occur.")

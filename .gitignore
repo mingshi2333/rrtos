@@ -4,6 +4,7 @@ debug_build/
 .pixi/
 .mamba/
 .cache/
+.ruff_cache/
 # Temporary files
 *.log
 *.tmp

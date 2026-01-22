@@ -2,7 +2,7 @@
  * @file ai_model_registry.h
  * @brief AI Model Registry - EmitC Model Management
  * 
- * 提供模型注册、查找和元数据管理功能
+ * Provides model registration, lookup, and metadata management functions
  */
 
 #ifndef AI_MODEL_REGISTRY_H
@@ -17,48 +17,49 @@ extern "C" {
 #endif
 
 /*===========================================================================*/
-/*                        数据类型定义                                        */
+/*                        Data type definitions                                        */
 /*===========================================================================*/
 
 /**
- * @brief 张量数据类型
+ * @brief Tensor data type
  */
 typedef enum {
     AI_DTYPE_INT8 = 0,
     AI_DTYPE_UINT8,
     AI_DTYPE_INT16,
+    AI_DTYPE_INT32,
     AI_DTYPE_FP32,
 } ai_dtype_t;
 
 /**
- * @brief 张量规格
+ * @brief Tensor specification
  */
 typedef struct {
-    uint32_t dims[4];           ///< NHWC 维度
-    uint32_t ndim;              ///< 维度数量
-    ai_dtype_t dtype;           ///< 数据类型
-    float scale;                ///< 量化缩放因子
-    int32_t zero_point;         ///< 量化零点
+    uint32_t dims[4];           ///< NHWC dimensions
+    uint32_t ndim;              ///< Number of dimensions
+    ai_dtype_t dtype;           ///< Data type
+    float scale;                ///< Quantization scale factor
+    int32_t zero_point;         ///< Quantization zero point
 } ai_tensor_spec_t;
 
 /**
- * @brief 张量数据结构
+ * @brief Tensor data structure
  */
 typedef struct {
-    void *data;                 ///< 数据指针
-    uint32_t shape[4];          ///< 形状
-    uint32_t ndim;              ///< 维度数
-    ai_dtype_t dtype;           ///< 数据类型
-    size_t size;                ///< 数据大小（字节）
+    void *data;                 ///< Data pointer
+    uint32_t shape[4];          ///< Shape
+    uint32_t ndim;              ///< Number of dimensions
+    ai_dtype_t dtype;           ///< Data type
+    size_t size;                ///< Data size (bytes)
 } ai_tensor_t;
 
 /**
- * @brief 模型句柄（不透明指针）
+ * @brief Model handle (opaque pointer)
  */
 typedef struct ai_model_entry_s* ai_model_handle_t;
 
 /**
- * @brief EmitC 模块创建函数类型
+ * @brief EmitC module creation function type
  */
 typedef iree_status_t (*ai_module_create_fn_t)(
     iree_vm_instance_t* instance,
@@ -67,140 +68,140 @@ typedef iree_status_t (*ai_module_create_fn_t)(
 );
 
 /**
- * @brief EmitC 模型描述符（编译时定义）
+ * @brief EmitC model descriptor (defined at compile time)
  */
 typedef struct {
-    const char *name;                       ///< 模型名称
-    const char *version;                    ///< 版本号
-    ai_module_create_fn_t module_create_fn; ///< EmitC 模块创建函数
+    const char *name;                       ///< Model name
+    const char *version;                    ///< Version number
+    ai_module_create_fn_t module_create_fn; ///< EmitC module creation function
     const void *library_query_fn;           ///< Static library query function
     
-    ai_tensor_spec_t inputs[4];             ///< 输入规格（最多4个）
-    ai_tensor_spec_t outputs[4];            ///< 输出规格（最多4个）
-    uint32_t num_inputs;                    ///< 输入数量
-    uint32_t num_outputs;                   ///< 输出数量
+    ai_tensor_spec_t inputs[4];             ///< Input specifications (up to 4)
+    ai_tensor_spec_t outputs[4];            ///< Output specifications (up to 4)
+    uint32_t num_inputs;                    ///< Number of inputs
+    uint32_t num_outputs;                   ///< Number of outputs
     
-    size_t arena_size;                      ///< Arena 分配器需求
-    size_t peak_memory;                     ///< 峰值内存估计
+    size_t arena_size;                      ///< Arena allocator requirements
+    size_t peak_memory;                     ///< Peak memory estimate
 } ai_emitc_model_descriptor_t;
 
 /**
- * @brief 性能统计
+ * @brief Performance statistics
  */
 typedef struct {
-    uint64_t latency_min_us;                ///< 最小延迟
-    uint64_t latency_max_us;                ///< 最大延迟
-    uint64_t latency_last_us;               ///< 最近一次延迟
-    uint64_t total_inferences;              ///< 总推理次数
-    size_t arena_peak_bytes;                ///< Arena 峰值使用
+    uint64_t latency_min_us;                ///< Minimum latency
+    uint64_t latency_max_us;                ///< Maximum latency
+    uint64_t latency_last_us;               ///< Last latency
+    uint64_t total_inferences;              ///< Total inferences
+    size_t arena_peak_bytes;                ///< Arena peak usage
 } ai_perf_stats_t;
 
 /*===========================================================================*/
-/*                        模型注册 API                                        */
+/*                        Model registration API                                        */
 /*===========================================================================*/
 
 /**
- * @brief 初始化 AI Runtime 和模型注册表
+ * @brief Initialize AI Runtime and model registry
  * 
- * 加载所有注册的 EmitC 模型
+ * Load all registered EmitC models
  * 
- * @return 0 成功, <0 失败
+ * @return 0 success, <0 failure
  */
 int ai_runtime_init(void);
 
 /**
- * @brief 去初始化 AI Runtime
+ * @brief De-initialize AI Runtime
  */
 void ai_runtime_deinit(void);
 
 /**
- * @brief 按名称查找模型
+ * @brief Find model by name
  * 
- * @param name 模型名称
- * @return 模型句柄，未找到返回 NULL
+ * @param name Model name
+ * @return Model handle, returns NULL if not found
  */
 ai_model_handle_t ai_model_find_by_name(const char *name);
 
 /**
- * @brief 获取模型输入规格
+ * @brief Get model input specifications
  * 
- * @param handle 模型句柄
- * @param index 输入索引
- * @param spec 输出：张量规格
- * @return 0 成功, <0 失败
+ * @param handle Model handle
+ * @param index Input index
+ * @param spec Output: Tensor specification
+ * @return 0 success, <0 failure
  */
 int ai_model_get_input_info(ai_model_handle_t handle, uint32_t index,
                              ai_tensor_spec_t *spec);
 
 /**
- * @brief 获取模型输出规格
+ * @brief Get model output specifications
  * 
- * @param handle 模型句柄
- * @param index 输出索引
- * @param spec 输出：张量规格
- * @return 0 成功, <0 失败
+ * @param handle Model handle
+ * @param index Output index
+ * @param spec Output: Tensor specification
+ * @return 0 success, <0 failure
  */
 int ai_model_get_output_info(ai_model_handle_t handle, uint32_t index,
                               ai_tensor_spec_t *spec);
 
 /**
- * @brief 获取模型名称
+ * @brief Get model name
  * 
- * @param handle 模型句柄
- * @return 模型名称字符串
+ * @param handle Model handle
+ * @return Model name string
  */
 const char* ai_model_get_name(ai_model_handle_t handle);
 
 /**
- * @brief 获取性能统计
+ * @brief Get performance statistics
  * 
- * @param handle 模型句柄
- * @param stats 输出：性能统计
- * @return 0 成功, <0 失败
+ * @param handle Model handle
+ * @param stats Output: Performance statistics
+ * @return 0 success, <0 failure
  */
 int ai_model_get_perf_stats(ai_model_handle_t handle, ai_perf_stats_t *stats);
 
 /**
- * @brief 重置性能统计
+ * @brief Reset performance statistics
  * 
- * @param handle 模型句柄
+ * @param handle Model handle
  */
 void ai_model_reset_perf_stats(ai_model_handle_t handle);
 
 /**
- * @brief 列出所有已注册的模型
+ * @brief List all registered models
  * 
- * @param names 输出：模型名称数组（调用者分配）
- * @param max_count 数组最大容量
- * @return 实际模型数量
+ * @param names Output: Model name array (allocated by caller)
+ * @param max_count Maximum array capacity
+ * @return Actual number of models
  */
 int ai_model_list(const char **names, int max_count);
 
 /*===========================================================================*/
-/*                        推理 API                                           */
+/*                        Inference API                                           */
 /*===========================================================================*/
 
 /**
- * @brief 同步推理（阻塞）
+ * @brief Synchronous inference (blocking)
  * 
- * @param handle 模型句柄
- * @param input 输入张量
- * @param output 输出张量（调用者分配内存）
- * @param timeout_ms 超时（毫秒），0 = 无限等待
- * @return 0 成功, <0 失败
+ * @param handle Model handle
+ * @param input Input tensors
+ * @param output Output tensors (allocated by caller)
+ * @param timeout_ms Timeout (ms), 0 = wait indefinitely
+ * @return 0 success, <0 failure
  */
 int ai_infer_sync(ai_model_handle_t handle,
-                  const ai_tensor_t *input,
-                  ai_tensor_t *output,
+                  const ai_tensor_t *inputs, uint32_t num_inputs,
+                  ai_tensor_t *outputs, uint32_t num_outputs,
                   uint32_t timeout_ms);
 
 /**
- * @brief 推理回调函数
+ * @brief Inference callback function
  * 
- * @param model 模型句柄
- * @param output 输出张量
- * @param status 推理状态（0 = 成功）
- * @param user_data 用户数据
+ * @param model Model handle
+ * @param output Output tensors
+ * @param status Inference status (0 = success)
+ * @param user_data User data
  */
 typedef void (*ai_inference_callback_t)(
     ai_model_handle_t model,
@@ -210,18 +211,24 @@ typedef void (*ai_inference_callback_t)(
 );
 
 /**
- * @brief 异步推理（非阻塞）
+ * @brief Asynchronous inference (non-blocking)
  * 
- * @param handle 模型句柄
- * @param input 输入张量
- * @param callback 完成回调
- * @param user_data 用户数据
- * @return 0 成功, <0 失败
+ * @param handle Model handle
+ * @param input Input tensors
+ * @param callback Completion callback
+ * @param user_data User data
+ * @return 0 success, <0 failure
  */
 int ai_infer_async(ai_model_handle_t handle,
-                   const ai_tensor_t *input,
+                   const ai_tensor_t *inputs, uint32_t num_inputs,
+                   ai_tensor_t *outputs, uint32_t num_outputs,
                    ai_inference_callback_t callback,
                    void *user_data);
+
+/**
+ * @brief Get current timestamp in microseconds.
+ */
+uint64_t ai_get_time_us(void);
 
 #ifdef __cplusplus
 }

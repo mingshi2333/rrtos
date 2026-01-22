@@ -2,14 +2,14 @@
  * @file ai_model.h
  * @brief AI Model Configuration - STM32CubeAI Style
  * 
- * 使用方法：
- * 1. 修改 MODEL_* 宏定义匹配你的模型
- * 2. 链接对应的 .o 文件 (emitc 或 bytecode 生成)
- * 3. 在 main.c 中调用 ai_init() / ai_run() / ai_get_output()
+ * Usage:
+ * 1. Modify MODEL_* macros to match your model
+ * 2. Link corresponding .o files (emitc or bytecode generated)
+ * 3. Call ai_init() / ai_run() / ai_get_output() in main.c
  * 
- * 更换模型只需：
- * - 修改此头文件中的配置
- * - 更换链接的 .o 文件
+ * To switch models, just:
+ * - Modify the configuration in this header file
+ * - Change the linked .o file
  */
 
 #ifndef AI_MODEL_H
@@ -23,39 +23,39 @@ extern "C" {
 #endif
 
 /*===========================================================================*/
-/*                        用户配置区 - 修改这里                               */
+/*                        User Configuration - Modify here                               */
 /*===========================================================================*/
 
-/* 模型名称 (用于日志) */
+/* Model name (for logging) */
 #define AI_MODEL_NAME           "yoloface_int8"
 
-/* 输入配置 */
+/* Input configuration */
 #define AI_INPUT_HEIGHT         56
 #define AI_INPUT_WIDTH          56
 #define AI_INPUT_CHANNELS       3
 #define AI_INPUT_SIZE           (AI_INPUT_HEIGHT * AI_INPUT_WIDTH * AI_INPUT_CHANNELS)
 
-/* 输出配置 - YOLO检测 (7x7x18) */
+/* Output configuration - YOLO detection (7x7x18) */
 #define AI_OUTPUT_HEIGHT        7
 #define AI_OUTPUT_WIDTH         7
 #define AI_OUTPUT_CHANNELS      18
 #define AI_OUTPUT_SIZE          (AI_OUTPUT_HEIGHT * AI_OUTPUT_WIDTH * AI_OUTPUT_CHANNELS)
 
-/* 数据类型 */
-typedef int8_t  ai_input_t;     /* 输入类型: int8_t (uint8-128) */
-typedef int8_t  ai_output_t;    /* 输出类型: int8_t */
+/* Data type */
+typedef int8_t  ai_input_t;     /* Input type: int8_t (uint8-128) */
+typedef int8_t  ai_output_t;    /* Output type: int8_t */
 
-/* 量化参数 (输入量化; float 输出不需要) */
+/* Quantization parameters (input quantization; not needed for float output) */
 #define AI_INPUT_SCALE          1.0f
 #define AI_INPUT_ZERO_POINT     (-128)
 #define AI_OUTPUT_SCALE         0.14218327403068542f
 #define AI_OUTPUT_ZERO_POINT    (-15)
 
 /*===========================================================================*/
-/*                        API 接口 - 不要修改                                 */
+/*                        API Interface - Do not modify                                 */
 /*===========================================================================*/
 
-/* 错误码 */
+/* Error codes */
 typedef enum {
     AI_OK = 0,
     AI_ERROR_INIT = -1,
@@ -63,70 +63,70 @@ typedef enum {
     AI_ERROR_PARAM = -3,
 } ai_status_t;
 
-/* 模型句柄 (内部使用) */
+/* Model handle (internal use) */
 typedef struct ai_handle_s* ai_handle_t;
 
 /**
- * @brief 初始化 AI 运行时
- * @return AI_OK 成功, 其他失败
+ * @brief Initialize AI runtime
+ * @return AI_OK success, others failed
  */
 ai_status_t ai_init(void);
 
 /**
- * @brief 释放 AI 运行时
+ * @brief Release AI runtime
  */
 void ai_deinit(void);
 
 /**
- * @brief 运行推理
- * @param input 输入数据指针 (大小必须为 AI_INPUT_SIZE)
- * @return AI_OK 成功, 其他失败
+ * @brief Run inference
+ * @param input Input data pointer (size must be AI_INPUT_SIZE)
+ * @return AI_OK success, others failed
  */
 ai_status_t ai_run(const ai_input_t* input);
 
 /**
- * @brief 获取输出数据指针
- * @return 输出数据指针 (大小为 AI_OUTPUT_SIZE)
+ * @brief Get output data pointer
+ * @return Output data pointer (size is AI_OUTPUT_SIZE)
  */
 const ai_output_t* ai_get_output(void);
 
 /**
- * @brief 获取输出缓冲区大小 (字节)
+ * @brief Get output buffer size (bytes)
  */
 size_t ai_output_buffer_size(void);
 
 /**
- * @brief 获取模型常量数据大小 (Flash/RO)
+ * @brief Get model constant data size (Flash/RO)
  */
 size_t ai_model_rodata_size(void);
 
 /**
- * @brief 获取预测类别 (分类模型)
- * @param confidence 可选, 返回置信度
- * @return 预测类别索引
+ * @brief Get predicted class (classification model)
+ * @param confidence Optional, returns confidence
+ * @return Predicted class index
  */
 int ai_get_prediction(ai_output_t* confidence);
 
 /**
- * @brief 打印 IREE allocator 统计信息(若启用)
+ * @brief Print IREE allocator statistics (if enabled)
  */
 void ai_print_allocator_stats(void);
 
 /*===========================================================================*/
-/*                        后处理模板 - 可选使用                               */
+/*                        Post-processing templates - Optional use                               */
 /*===========================================================================*/
 
 /**
- * @brief Softmax 后处理 (int8 输出反量化)
- * @param output 输出数据
- * @param probs 概率输出 (float[AI_OUTPUT_SIZE])
+ * @brief Softmax post-processing (int8 output dequantization)
+ * @param output Output data
+ * @param probs Probability output (float[AI_OUTPUT_SIZE])
  */
 void ai_postprocess_softmax(const ai_output_t* output, float* probs);
 
 /**
- * @brief ArgMax 后处理
- * @param output 输出数据
- * @return 最大值索引
+ * @brief ArgMax post-processing
+ * @param output Output data
+ * @return Maximum index
  */
 int ai_postprocess_argmax(const ai_output_t* output);
 

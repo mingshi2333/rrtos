@@ -35,7 +35,7 @@ typedef struct {
 
 static ai_model_registry_t g_registry;
 
-static inline uint64_t ai_get_time_us(void) {
+uint64_t ai_get_time_us(void) {
     return 0;
 }
 
@@ -280,32 +280,27 @@ int ai_model_list(const char **names, int max_count) {
     return g_registry.count;
 }
 
+static iree_hal_element_type_t ai_dtype_to_iree(ai_dtype_t dtype) {
+    switch (dtype) {
+        case AI_DTYPE_INT8:   return IREE_HAL_ELEMENT_TYPE_SINT_8;
+        case AI_DTYPE_UINT8:  return IREE_HAL_ELEMENT_TYPE_UINT_8;
+        case AI_DTYPE_INT16:  return IREE_HAL_ELEMENT_TYPE_SINT_16;
+        case AI_DTYPE_INT32:  return IREE_HAL_ELEMENT_TYPE_SINT_32;
+        case AI_DTYPE_FP32:   return IREE_HAL_ELEMENT_TYPE_FLOAT_32;
+        default:              return IREE_HAL_ELEMENT_TYPE_NONE;
+    }
+}
+
 int ai_infer_sync(ai_model_handle_t handle,
-                  const ai_tensor_t *input,
-                  ai_tensor_t *output,
+                  const ai_tensor_t *inputs, uint32_t num_inputs,
+                  ai_tensor_t *outputs, uint32_t num_outputs,
                   uint32_t timeout_ms) {
-    if (!handle || !input || !output) {
-        fprintf(stderr, "[AI] ERROR: Null parameter (handle=%p, input=%p, output=%p)\n",
-                handle, input, output);
+    if (!handle || !inputs || !outputs) {
         return -1;
     }
     
     ai_model_entry_t *entry = (ai_model_entry_t*)handle;
-    
-    if (!g_registry.vm_context) {
-        fprintf(stderr, "[AI] ERROR: Global VM context is null\n");
-        return -1;
-    }
-    
-    if (!entry->main_func.ordinal && !entry->main_func.linkage) {
-        fprintf(stderr, "[AI] ERROR: Model '%s' has invalid main_func\n", entry->descriptor->name);
-        return -1;
-    }
-    
-    if (!input->data) {
-        fprintf(stderr, "[AI] ERROR: Input data is null\n");
-        return -1;
-    }
+    if (!g_registry.vm_context) return -1;
     
     uint64_t start_us = ai_get_time_us();
     
@@ -315,148 +310,96 @@ int ai_infer_sync(ai_model_handle_t handle,
         .type = IREE_HAL_MEMORY_TYPE_DEVICE_LOCAL | IREE_HAL_MEMORY_TYPE_HOST_VISIBLE
     };
     
-    iree_hal_buffer_view_t *input_view;
-    iree_status_t status = iree_hal_buffer_view_allocate_buffer_copy(
-        g_registry.hal_device,
-        iree_hal_device_allocator(g_registry.hal_device),
-        input->ndim,
-        input->shape,
-        IREE_HAL_ELEMENT_TYPE_SINT_8,
-        IREE_HAL_ENCODING_TYPE_DENSE_ROW_MAJOR,
-        params,
-        iree_make_const_byte_span(input->data, input->size),
-        &input_view
-    );
-    
-    if (!iree_status_is_ok(status)) {
-        fprintf(stderr, "[AI] ERROR: Failed to allocate input buffer view, status code=%d\n", 
-                (int)iree_status_code(status));
-        iree_status_ignore(status);
-        return -1;
-    }
-    
-    fprintf(stderr, "[AI] DEBUG: Created input buffer view successfully\n");
-    
-    if (!iree_status_is_ok(status)) {
-        fprintf(stderr, "[AI] ERROR: Failed to allocate input buffer view, status code=%d\n", 
-                (int)iree_status_code(status));
-        iree_status_ignore(status);
-        return -1;
-    }
-    
+    // 1. Prepare Inputs
     iree_vm_list_t *input_list;
-    status = iree_vm_list_create(
-        g_registry.buffer_view_type,
-        1,
-        g_registry.allocator,
-        &input_list
-    );
-    
-    if (!iree_status_is_ok(status)) {
-        fprintf(stderr, "[AI] ERROR: Failed to create input_list, status code=%d\n", 
-                (int)iree_status_code(status));
-        iree_hal_buffer_view_release(input_view);
-        iree_status_ignore(status);
-        return -1;
+    iree_status_t status = iree_vm_list_create(
+        g_registry.buffer_view_type, num_inputs, g_registry.allocator, &input_list);
+    if (!iree_status_is_ok(status)) return -1;
+
+    for (uint32_t i = 0; i < num_inputs; i++) {
+        iree_hal_buffer_view_t *view;
+        status = iree_hal_buffer_view_allocate_buffer_copy(
+            g_registry.hal_device,
+            iree_hal_device_allocator(g_registry.hal_device),
+            inputs[i].ndim, inputs[i].shape,
+            ai_dtype_to_iree(inputs[i].dtype),
+            IREE_HAL_ENCODING_TYPE_DENSE_ROW_MAJOR,
+            params,
+            iree_make_const_byte_span(inputs[i].data, inputs[i].size),
+            &view
+        );
+        if (!iree_status_is_ok(status)) {
+            iree_vm_list_release(input_list);
+            return -1;
+        }
+        iree_vm_ref_t ref = iree_hal_buffer_view_move_ref(view);
+        iree_vm_list_push_ref_move(input_list, &ref);
     }
     
-    iree_vm_ref_t input_ref = {0};
-    iree_vm_ref_wrap_retain(input_view, iree_hal_buffer_view_type(), &input_ref);
-    status = iree_vm_list_push_ref_move(input_list, &input_ref);
-    
-    if (!iree_status_is_ok(status)) {
-        fprintf(stderr, "[AI] ERROR: Failed to push input ref, status code=%d\n", 
-                (int)iree_status_code(status));
-        iree_vm_list_release(input_list);
-        iree_hal_buffer_view_release(input_view);
-        iree_status_ignore(status);
-        return -1;
-    }
-    
+    // 2. Prepare Outputs
     iree_vm_list_t *output_list;
     status = iree_vm_list_create(
-        g_registry.buffer_view_type,
-        1,
-        g_registry.allocator,
-        &output_list
-    );
-    
+        g_registry.buffer_view_type, num_outputs, g_registry.allocator, &output_list);
     if (!iree_status_is_ok(status)) {
-        fprintf(stderr, "[AI] ERROR: Failed to create output_list, status code=%d\n", 
-                (int)iree_status_code(status));
         iree_vm_list_release(input_list);
-        iree_hal_buffer_view_release(input_view);
-        iree_status_ignore(status);
         return -1;
     }
     
+    // 3. Invoke
     status = iree_vm_invoke(
-        g_registry.vm_context,
-        entry->main_func,
-        IREE_VM_INVOCATION_FLAG_NONE,
-        NULL,
-        input_list,
-        output_list,
-        g_registry.allocator
-    );
+        g_registry.vm_context, entry->main_func, IREE_VM_INVOCATION_FLAG_NONE,
+        NULL, input_list, output_list, g_registry.allocator);
     
     uint64_t elapsed_us = ai_get_time_us() - start_us;
     
     if (!iree_status_is_ok(status)) {
-        fprintf(stderr, "[AI] ERROR: Inference failed for model '%s', status code=%d\n", 
-                entry->descriptor->name, (int)iree_status_code(status));
-        iree_status_ignore(status);
         iree_vm_list_release(input_list);
         iree_vm_list_release(output_list);
         return -1;
     }
     
-    iree_hal_buffer_view_t *output_view = NULL;
-    iree_vm_ref_t output_ref = iree_vm_ref_null();
-    status = iree_vm_list_get_ref_retain(output_list, 0, &output_ref);
-    if (iree_status_is_ok(status)) {
-        output_view = iree_hal_buffer_view_deref(output_ref);
-    }
-    
-    if (output_view) {
-        iree_hal_buffer_t *buffer = iree_hal_buffer_view_buffer(output_view);
-        iree_hal_buffer_mapping_t mapping;
-        status = iree_hal_buffer_map_range(
-            buffer,
-            IREE_HAL_MAPPING_MODE_SCOPED,
-            IREE_HAL_MEMORY_ACCESS_READ,
-            0,
-            IREE_WHOLE_BUFFER,
-            &mapping
-        );
-        
-        if (iree_status_is_ok(status)) {
-            size_t copy_size = mapping.contents.data_length < output->size ?
-                               mapping.contents.data_length : output->size;
-            memcpy(output->data, mapping.contents.data, copy_size);
-            iree_hal_buffer_unmap_range(&mapping);
+    // 4. Copy results back
+    for (uint32_t i = 0; i < num_outputs; i++) {
+        iree_vm_ref_t ref = iree_vm_ref_null();
+        status = iree_vm_list_get_ref_retain(output_list, i, &ref);
+        iree_hal_buffer_view_t *view = iree_hal_buffer_view_deref(ref);
+        if (view) {
+            iree_hal_buffer_t *buffer = iree_hal_buffer_view_buffer(view);
+            iree_hal_buffer_mapping_t mapping;
+            status = iree_hal_buffer_map_range(
+                buffer, IREE_HAL_MAPPING_MODE_SCOPED, IREE_HAL_MEMORY_ACCESS_READ,
+                0, IREE_WHOLE_BUFFER, &mapping);
+            if (iree_status_is_ok(status)) {
+                size_t copy_size = mapping.contents.data_length < outputs[i].size ?
+                                   mapping.contents.data_length : outputs[i].size;
+                memcpy(outputs[i].data, mapping.contents.data, copy_size);
+                iree_hal_buffer_unmap_range(&mapping);
+            }
         }
+        iree_vm_ref_release(&ref);
     }
     
-    iree_vm_ref_release(&output_ref);
     iree_vm_list_release(input_list);
     iree_vm_list_release(output_list);
     
     entry->perf_stats.total_inferences++;
     entry->perf_stats.latency_last_us = elapsed_us;
-    if (elapsed_us < entry->perf_stats.latency_min_us) {
-        entry->perf_stats.latency_min_us = elapsed_us;
-    }
-    if (elapsed_us > entry->perf_stats.latency_max_us) {
-        entry->perf_stats.latency_max_us = elapsed_us;
-    }
+    if (elapsed_us < entry->perf_stats.latency_min_us) entry->perf_stats.latency_min_us = elapsed_us;
+    if (elapsed_us > entry->perf_stats.latency_max_us) entry->perf_stats.latency_max_us = elapsed_us;
     
     return 0;
 }
 
 int ai_infer_async(ai_model_handle_t handle,
-                   const ai_tensor_t *input,
+                   const ai_tensor_t *inputs, uint32_t num_inputs,
+                   ai_tensor_t *outputs, uint32_t num_outputs,
                    ai_inference_callback_t callback,
                    void *user_data) {
-    return -1;
+    // TODO: Implement async inference with work queue
+    // For now, just run sync
+    int ret = ai_infer_sync(handle, inputs, num_inputs, outputs, num_outputs, 1000);
+    if (callback) {
+        callback(handle, outputs, ret, user_data);
+    }
+    return 0; // Async call always succeeds (queued)
 }

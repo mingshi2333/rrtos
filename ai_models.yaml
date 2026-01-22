@@ -1,0 +1,12 @@
+project_name: "rrtos_ai"
+output_dir: "generated"
+app_name: "mnist_app"
+
+defaults:
+  target_arch: "rv32"
+  optimization: "size"
+  memory_strategy: "static"
+
+models:
+  - name: "st_mnist_28"
+    file: "/home/mingshi/Project/AI/stm32ai-modelzoo/image_classification/st_mnist/ST_pretrainedmodel_public_dataset/emnist_byclass/st_mnist_v1_28_tfs/st_mnist_v1_28_tfs_int8.tflite"

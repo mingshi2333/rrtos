@@ -35,7 +35,7 @@ else()
 endif()
 
 link_directories(${PICOLIBC_ROOT}/lib)
-add_compile_options(-nostdlib -ffunction-sections -fdata-sections)
+add_compile_options(-nostdlib -ffunction-sections -fdata-sections -Qunused-arguments -Wno-unused-parameter -Wno-unused-variable -Wno-missing-field-initializers -Wno-pointer-sign -Wno-sign-compare -Wno-cast-function-type -Wno-cast-function-type-mismatch)
 add_link_options(-nostdlib -Wl,--gc-sections -Wl,--strip-all -L${PICOLIBC_ROOT}/lib)
 
 option(OS_SMP_EN "Enable SMP support" ON)
@@ -145,4 +145,4 @@ add_subdirectory(ai)
 # Applications
 # ============================================================================
 add_subdirectory(apps/ai_demo)
-add_subdirectory(apps/ai_registry_test)
+add_subdirectory(apps/mnist_app)

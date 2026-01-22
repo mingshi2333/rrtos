@@ -2,10 +2,10 @@
  * @file main.c
  * @brief AI Demo Application - STM32CubeAI Style
  * 
- * 这是一个简洁的 AI 推理模板，用户只需：
- * 1. 修改 ai_model.h 中的模型配置
- * 2. 链接对应的模型 .o 文件
- * 3. 在此文件中填充输入数据并调用 ai_run()
+ * This is a concise AI inference template, where users only need to:
+ * 1. Modify model configuration in ai_model.h
+ * 2. Link corresponding model .o files
+ * 3. Fill input data in this file and call ai_run()
  */
 
 #include <math.h>
@@ -30,33 +30,33 @@ static inline uint64_t get_cycles(void) {
 }
 
 /*===========================================================================*/
-/*                        硬件配置                                            */
+/*                        Hardware Configuration                                            */
 /*===========================================================================*/
 
 #define UART0_BASE  0x10000000
 #define CLINT_BASE  0x02000000
 
 /*===========================================================================*/
-/*                        任务配置                                            */
+/*                        Task Configuration                                            */
 /*===========================================================================*/
 
 static os_tcb_t ai_tcb;
 static uint64_t ai_stack[4096];
 
 /*===========================================================================*/
-/*                        测试数据 (用户填充区)                               */
+/*                        Test Data (User-fill Area)                               */
 /*===========================================================================*/
 
-/* 静态分配输入缓冲区 */
+/* Statically allocate input buffer */
 static ai_input_t input_buffer[AI_INPUT_SIZE] __attribute__((aligned(16)));
 
 /**
- * @brief 初始化测试输入
+ * @brief Initialize test input
  * 
- * 用户可以在这里：
- * - 从传感器读取数据
- * - 加载测试图像
- * - 生成测试模式
+ * Users can here:
+ * - Read data from sensors
+ * - Load test images
+ * - Generate test patterns
  */
 static void prepare_input(void) {
     memcpy(input_buffer, face_56x56_int8, sizeof(face_56x56_int8));
@@ -81,16 +81,16 @@ static float ai_dequant_output(ai_output_t value) {
 }
 
 /*===========================================================================*/
-/*                        结果处理 (用户填充区)                               */
+/*                        Result Processing (User-fill Area)                               */
 /*===========================================================================*/
 
 /**
- * @brief 处理推理结果
+ * @brief Process inference results
  * 
- * 用户可以在这里：
- * - 打印预测结果
- * - 控制执行器
- * - 发送结果到上位机
+ * Users can here:
+ * - Print prediction results
+ * - Control actuators
+ * - Send results to host computer
  */
 static void process_output(void) {
     const ai_output_t* output = ai_get_output();
@@ -225,7 +225,7 @@ static void process_output(void) {
 }
 
 /*===========================================================================*/
-/*                        主任务                                              */
+/*                        Main Task                                              */
 /*===========================================================================*/
 
 void ai_task(void *arg) {
@@ -251,7 +251,7 @@ void ai_task(void *arg) {
            (unsigned)static_total);
     printf("\n");
 
-    /* Step 1: 初始化 AI 运行时 */
+    /* Step 1: Initialize AI runtime */
     printf("[APP] Initializing AI runtime...\n");
     status = ai_init();
     if (status != AI_OK) {
@@ -265,7 +265,7 @@ void ai_task(void *arg) {
     ai_print_allocator_stats();
     printf("\n");
 
-    /* Step 2: 准备输入数据 */
+    /* Step 2: Prepare input data */
     printf("[APP] Preparing input data...\n");
     prepare_input();
     printf("\n");
@@ -273,7 +273,7 @@ void ai_task(void *arg) {
     ai_print_allocator_stats();
     printf("\n");
 
-    /* Step 3: 运行推理 */
+    /* Step 3: Run inference */
     printf("[APP] Running inference...\n");
     uint64_t start_cycles = get_cycles();
     status = ai_run(input_buffer);
@@ -296,7 +296,7 @@ void ai_task(void *arg) {
     ai_print_allocator_stats();
     printf("\n");
 
-    /* Step 4: 处理输出 */
+    /* Step 4: Process output */
     printf("[APP] Processing results...\n");
     process_output();
     printf("\n");
@@ -306,34 +306,34 @@ void ai_task(void *arg) {
     printf("╚════════════════════════════════════════════╝\n");
 
 exit:
-    /* 清理 */
+    /* Cleanup */
     ai_deinit();
     printf("[APP] Done.\n");
     
     while(1) {
-        /* 空闲循环 */
+        /* Idle loop */
     }
 }
 
 /*===========================================================================*/
-/*                        系统入口                                            */
+/*                        System Entry                                            */
 /*===========================================================================*/
 
 void os_kernel_main(void) {
-    /* 初始化 UART */
+    /* Initialize UART */
     hal_uart_init(UART0_BASE, 115200);
     printf("Booting RTOS...\n");
 
-    /* 初始化 CLINT (Timer) */
+    /* Initialize CLINT (Timer) */
     hal_clint_init(CLINT_BASE);
     
-    /* 初始化内核 */
+    /* Initialize kernel */
     os_kernel_init();
     
-    /* 创建 AI 任务 */
+    /* Create AI task */
     os_task_create(&ai_tcb, "ai_demo", ai_task, NULL, 
                    10, ai_stack, sizeof(ai_stack));
     
-    /* 启动调度器 */
+    /* Start scheduler */
     os_kernel_start();
 }

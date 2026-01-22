@@ -10,7 +10,7 @@ package:
   version: "${{ version }}"
 
 source:
-  # 从 GitHub 官方 release 下载指定版本（避免重复编译问题）
+  # Download specified version from GitHub official release (to avoid repeated compilation issues)
   url: https://github.com/picolibc/picolibc/releases/download/${{ version }}/picolibc-${{ version }}.tar.xz
   sha256: 0ce5ee3bde81256633644d7b3bd25f5a6ccfd8b0590fd4ee543df2c3ede6e27e
 
@@ -18,7 +18,7 @@ build:
   number: 100
   script:
     - |
-      # 动态生成 Meson cross-file（基于 Picolibc 官方推荐）
+      # Dynamically generate Meson cross-file (based on Picolibc official recommendation)
       cat > cross_${{ arch }}.txt <<'EOF'
       [binaries]
       c = ['clang', '-target', '${{ target_triple }}', '-mcmodel=medany', '-fuse-ld=lld', '-nostdlib', '-nodefaultlibs']
@@ -41,7 +41,7 @@ build:
       c_link_args = ['-march=${{ march }}', '-mabi=${{ mabi }}']
       EOF
 
-      # 配置 Meson（关键选项参考官方文档和调研结果）
+      # Configure Meson (key options refer to official documentation and research results)
       meson setup build \
         --cross-file cross_${{ arch }}.txt \
         --prefix=$PREFIX \
@@ -52,19 +52,19 @@ build:
         -Dformat-default=integer \
         -Dthread-local-storage=false
 
-      # 构建和安装
+      # Build and install
       ninja -C build install
 
 requirements:
   build:
     - clang >=18
     - lld
-    - llvm-tools # 提供 llvm-ar, llvm-strip 等
+    - llvm-tools # Provides llvm-ar, llvm-strip, etc.
     - meson >=0.61
     - ninja
-  # host 和 run 留空（这是交叉编译的工具链库）
+  # host and run left blank (this is a cross-compilation toolchain library)
 
-# 测试暂时禁用，因为 rattler-build 的路径匹配问题
+# Tests temporarily disabled due to rattler-build path matching issues
 # tests:
 #   - package_contents:
 #       files:
