@@ -5,8 +5,12 @@ cpu: CPU.RiscV32 @ sysbus
     privilegeArchitecture: PrivilegeArchitecture.Priv1_10
     timeProvider: clint
 
+# Flash (2MB) and RAM (4MB) layout
+flash: Memory.MappedMemory @ sysbus 0x20000000
+    size: 0x00200000
+
 ram: Memory.MappedMemory @ sysbus 0x80000000
-    size: 0x08000000
+    size: 0x00400000
 
 plic: IRQControllers.PlatformLevelInterruptController @ sysbus 0x0c000000
     // Connect Context 0 to CPU Machine External Interrupt (11) and Supervisor (9)

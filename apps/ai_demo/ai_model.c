@@ -4,11 +4,14 @@
  */
 
 #include "ai_model.h"
+#include <math.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 
 /* IREE Headers */
 #include "iree/base/api.h"
+#include "iree/base/status.h"
 #include "iree/vm/api.h"
 #include "iree/hal/api.h"
 #include "iree/modules/hal/module.h"
@@ -16,6 +19,7 @@
 // Use sync_device directly, skipping the driver layer
 #include "iree/hal/drivers/local_sync/sync_device.h" 
 #include "iree/hal/local/loaders/static_library_loader.h"
+
 
 /*===========================================================================*/
 /*                   External Symbols (Model)                                 */
@@ -30,7 +34,7 @@ extern iree_status_t module_create(
 #ifndef AI_MODE_BYTECODE
 /* Static Library Query Function */
 extern const iree_hal_executable_library_header_t**
-    st_yolo_lc_v1_192_int_beta_opt_linked_library_query(
+    yoloface_int8_opt_linked_library_query(
         iree_hal_executable_library_version_t max_version,
         const iree_hal_executable_environment_v0_t* environment);
 #endif
@@ -47,6 +51,7 @@ typedef struct {
     iree_hal_executable_loader_t* loader;
     iree_vm_function_t main_func;
     iree_vm_ref_type_t buffer_view_type;
+    iree_vm_module_t* model_module;
     ai_output_t output_buffer[AI_OUTPUT_SIZE];
     int initialized;
 } ai_context_t;
@@ -81,7 +86,7 @@ ai_status_t ai_init(void) {
         status = iree_make_status(IREE_STATUS_UNIMPLEMENTED, "Bytecode not supported in optimized build");
 #else
         const iree_hal_executable_library_query_fn_t libraries[] = {
-            st_yolo_lc_v1_192_int_beta_opt_linked_library_query,
+            yoloface_int8_opt_linked_library_query,
         };
         status = iree_hal_static_library_loader_create(
             IREE_ARRAYSIZE(libraries), libraries,
@@ -98,14 +103,20 @@ ai_status_t ai_init(void) {
         
         // Device needs its own allocator for buffers
         iree_hal_allocator_t* device_allocator = NULL;
-        iree_hal_allocator_create_heap(iree_make_cstring_view("hal"), g_ctx.allocator, g_ctx.allocator, &device_allocator);
+        status = iree_hal_allocator_create_heap(
+            iree_make_cstring_view("hal"), g_ctx.allocator, g_ctx.allocator,
+            &device_allocator);
 
-        status = iree_hal_sync_device_create(
-            iree_make_cstring_view("local-sync"), &params,
-            /*loader_count=*/1, &g_ctx.loader,
-            device_allocator, g_ctx.allocator, &g_ctx.device);
-            
-        iree_hal_allocator_release(device_allocator); // Device takes ownership
+        if (iree_status_is_ok(status)) {
+            status = iree_hal_sync_device_create(
+                iree_make_cstring_view("local-sync"), &params,
+                /*loader_count=*/1, &g_ctx.loader,
+                device_allocator, g_ctx.allocator, &g_ctx.device);
+        }
+
+        if (device_allocator) {
+            iree_hal_allocator_release(device_allocator); // Device takes ownership
+        }
     }
 
     // 4. Create HAL Module for VM
@@ -122,6 +133,11 @@ ai_status_t ai_init(void) {
     iree_vm_module_t* model_module = NULL;
     if (iree_status_is_ok(status)) {
         status = module_create(g_ctx.instance, g_ctx.allocator, &model_module);
+    }
+
+    if (iree_status_is_ok(status)) {
+        g_ctx.model_module = model_module;
+        iree_vm_module_retain(model_module);
     }
 
     // 6. Create Context with Modules
@@ -167,6 +183,9 @@ void ai_deinit(void) {
     iree_vm_instance_release(g_ctx.instance);
     iree_hal_device_release(g_ctx.device);
     iree_hal_executable_loader_release(g_ctx.loader);
+    if (g_ctx.model_module) {
+        iree_vm_module_release(g_ctx.model_module);
+    }
     memset(&g_ctx, 0, sizeof(g_ctx));
 }
 
@@ -208,44 +227,60 @@ ai_status_t ai_run(const ai_input_t* input) {
         iree_hal_buffer_release_callback_null(),
         &buffer
     );
-
-    if (iree_status_is_ok(status)) {
-        status = iree_hal_buffer_view_create(
-            buffer, 4, shape,
-            IREE_HAL_ELEMENT_TYPE_SINT_8,
-            IREE_HAL_ENCODING_TYPE_DENSE_ROW_MAJOR,
-            g_ctx.allocator,
-            &input_view
-        );
-        iree_hal_buffer_release(buffer); // View holds reference
+    if (!iree_status_is_ok(status)) {
+        printf("[AI] import_buffer failed\n");
+        goto error;
     }
 
-    if (!iree_status_is_ok(status)) goto error;
+    status = iree_hal_buffer_view_create(
+        buffer, 4, shape,
+        IREE_HAL_ELEMENT_TYPE_SINT_8,
+        IREE_HAL_ENCODING_TYPE_DENSE_ROW_MAJOR,
+        g_ctx.allocator,
+        &input_view
+    );
+    iree_hal_buffer_release(buffer); // View holds reference
+    if (!iree_status_is_ok(status) || !input_view) {
+        printf("[AI] buffer_view_create failed\n");
+        goto error;
+    }
 
     // 2. Prepare VM Lists
     // Optimize: Pre-calculate type defs or reuse if possible (but list creation is cheap)
     iree_vm_type_def_t type_def = iree_vm_make_ref_type_def(g_ctx.buffer_view_type);
     
     status = iree_vm_list_create(type_def, 1, g_ctx.allocator, &inputs);
-    if (!iree_status_is_ok(status)) goto error;
+    if (!iree_status_is_ok(status) || !inputs) {
+        printf("[AI] inputs list create failed\n");
+        goto error;
+    }
     
     iree_vm_ref_t input_ref = iree_vm_ref_null();
     iree_vm_ref_wrap_retain(input_view, g_ctx.buffer_view_type, &input_ref);
     iree_vm_list_push_ref_move(inputs, &input_ref);
 
     status = iree_vm_list_create(type_def, 1, g_ctx.allocator, &outputs);
-    if (!iree_status_is_ok(status)) goto error;
+    if (!iree_status_is_ok(status) || !outputs) {
+        printf("[AI] outputs list create failed\n");
+        goto error;
+    }
 
     // 3. Invoke
     status = iree_vm_invoke(
         g_ctx.context, g_ctx.main_func, IREE_VM_INVOCATION_FLAG_NONE,
         NULL, inputs, outputs, g_ctx.allocator);
-    
-    if (!iree_status_is_ok(status)) goto error;
+    if (!iree_status_is_ok(status)) {
+        printf("[AI] invoke failed\n");
+        goto error;
+    }
 
     // 4. Retrieve Output
     iree_vm_ref_t output_ref = iree_vm_ref_null();
     iree_vm_list_get_ref_assign(outputs, 0, &output_ref);
+    if (!output_ref.ptr) {
+        printf("[AI] output ref null\n");
+        goto error;
+    }
     iree_hal_buffer_view_t* output_view = (iree_hal_buffer_view_t*)output_ref.ptr;
 
     // Direct Read - no complex mapping if possible, but map_range is safest
@@ -254,11 +289,11 @@ ai_status_t ai_run(const ai_input_t* input) {
         iree_hal_buffer_view_buffer(output_view),
         IREE_HAL_MAPPING_MODE_SCOPED, IREE_HAL_MEMORY_ACCESS_READ,
         0, IREE_WHOLE_BUFFER, &mapping);
-        
     if (iree_status_is_ok(status)) {
         memcpy(g_ctx.output_buffer, mapping.contents.data, AI_OUTPUT_SIZE * sizeof(ai_output_t));
         iree_hal_buffer_unmap_range(&mapping);
     } else {
+        printf("[AI] buffer_map_range failed\n");
         goto error;
     }
 
@@ -269,13 +304,18 @@ cleanup:
     return ret;
 
 error:
-    iree_status_ignore(status); // In production, log this
+    printf("[AI] status: %s\n", iree_status_code_string(iree_status_code(status)));
+    iree_status_ignore(status);
     ret = AI_ERROR_RUN;
     goto cleanup;
 }
 
 const ai_output_t* ai_get_output(void) {
     return g_ctx.output_buffer;
+}
+
+size_t ai_output_buffer_size(void) {
+    return sizeof(g_ctx.output_buffer);
 }
 
 // Helpers kept for compatibility
@@ -292,17 +332,108 @@ int ai_get_prediction(ai_output_t* confidence) {
     return max_idx;
 }
 
+static void ai_print_u64_dec(uint64_t value) {
+    char buf[21];
+    unsigned int i = 0;
+
+    if (value == 0) {
+        buf[i++] = '0';
+    } else {
+        while (value > 0 && i < (unsigned int)(sizeof(buf) - 1)) {
+            buf[i++] = (char)('0' + (value % 10));
+            value /= 10;
+        }
+    }
+
+    buf[i] = '\0';
+    for (unsigned int j = 0; j < i / 2; ++j) {
+        char tmp = buf[j];
+        buf[j] = buf[i - 1 - j];
+        buf[i - 1 - j] = tmp;
+    }
+
+    printf("%s", buf);
+}
+
+void ai_print_allocator_stats(void) {
+    if (!g_ctx.device) {
+        return;
+    }
+#if IREE_STATISTICS_ENABLE
+    iree_hal_allocator_t* allocator = iree_hal_device_allocator(g_ctx.device);
+    if (!allocator) {
+        printf("  allocator unavailable\n");
+        return;
+    }
+    iree_hal_allocator_statistics_t stats;
+    iree_hal_allocator_query_statistics(allocator, &stats);
+    uint64_t host_in_use = (stats.host_bytes_allocated >= stats.host_bytes_freed)
+                               ? (stats.host_bytes_allocated - stats.host_bytes_freed)
+                               : 0;
+    uint64_t device_in_use = (stats.device_bytes_allocated >= stats.device_bytes_freed)
+                                 ? (stats.device_bytes_allocated - stats.device_bytes_freed)
+                                 : 0;
+    printf("  host: allocated=");
+    ai_print_u64_dec(stats.host_bytes_allocated);
+    printf(" freed=");
+    ai_print_u64_dec(stats.host_bytes_freed);
+    printf(" in_use=");
+    ai_print_u64_dec(host_in_use);
+    printf(" peak=");
+    ai_print_u64_dec(stats.host_bytes_peak);
+    printf("\n");
+
+    printf("  device: allocated=");
+    ai_print_u64_dec(stats.device_bytes_allocated);
+    printf(" freed=");
+    ai_print_u64_dec(stats.device_bytes_freed);
+    printf(" in_use=");
+    ai_print_u64_dec(device_in_use);
+    printf(" peak=");
+    ai_print_u64_dec(stats.device_bytes_peak);
+    printf("\n");
+#else
+    printf("  statistics disabled\n");
+#endif
+}
+
 void ai_postprocess_softmax(const ai_output_t* output, float* probs) {
-    // Keep implementation same as before
+    float max_val = -1.0f / 0.0f;
+    for (int i = 0; i < AI_OUTPUT_SIZE; i++) {
+        float val = ((float)output[i] - AI_OUTPUT_ZERO_POINT) * AI_OUTPUT_SCALE;
+        if (val > max_val) {
+            max_val = val;
+        }
+    }
+
     float sum = 0.0f;
     for (int i = 0; i < AI_OUTPUT_SIZE; i++) {
         float val = ((float)output[i] - AI_OUTPUT_ZERO_POINT) * AI_OUTPUT_SCALE;
-        probs[i] = val;
-        sum += val;
+        float exp_val = expf(val - max_val);
+        probs[i] = exp_val;
+        sum += exp_val;
     }
+
     if (sum > 0.0f) {
+        float inv_sum = 1.0f / sum;
         for (int i = 0; i < AI_OUTPUT_SIZE; i++) {
-            probs[i] /= sum;
+            probs[i] *= inv_sum;
+        }
+    } else {
+        for (int i = 0; i < AI_OUTPUT_SIZE; i++) {
+            probs[i] = 0.0f;
         }
     }
+}
+
+int ai_postprocess_argmax(const ai_output_t* output) {
+    int max_idx = 0;
+    ai_output_t max_val = output[0];
+    for (int i = 1; i < AI_OUTPUT_SIZE; i++) {
+        if (output[i] > max_val) {
+            max_val = output[i];
+            max_idx = i;
+        }
+    }
+    return max_idx;
 }

@@ -27,27 +27,29 @@ extern "C" {
 /*===========================================================================*/
 
 /* 模型名称 (用于日志) */
-#define AI_MODEL_NAME           "st_yolo_lc_v1_192"
+#define AI_MODEL_NAME           "yoloface_int8"
 
 /* 输入配置 */
-#define AI_INPUT_HEIGHT         192
-#define AI_INPUT_WIDTH          192
+#define AI_INPUT_HEIGHT         56
+#define AI_INPUT_WIDTH          56
 #define AI_INPUT_CHANNELS       3
 #define AI_INPUT_SIZE           (AI_INPUT_HEIGHT * AI_INPUT_WIDTH * AI_INPUT_CHANNELS)
 
-/* 输出配置 - YOLO检测 */
-#define AI_OUTPUT_CLASSES       1470
-#define AI_OUTPUT_SIZE          AI_OUTPUT_CLASSES
+/* 输出配置 - YOLO检测 (7x7x18) */
+#define AI_OUTPUT_HEIGHT        7
+#define AI_OUTPUT_WIDTH         7
+#define AI_OUTPUT_CHANNELS      18
+#define AI_OUTPUT_SIZE          (AI_OUTPUT_HEIGHT * AI_OUTPUT_WIDTH * AI_OUTPUT_CHANNELS)
 
 /* 数据类型 */
-typedef int8_t  ai_input_t;     /* 输入类型: int8_t, uint8_t, float */
-typedef int8_t  ai_output_t;    /* 输出类型: int8_t, uint8_t, float */
+typedef int8_t  ai_input_t;     /* 输入类型: int8_t (uint8-128) */
+typedef int8_t  ai_output_t;    /* 输出类型: int8_t */
 
-/* 量化参数 (INT8 模型需要) */
-#define AI_INPUT_SCALE          (1.0f / 255.0f)
-#define AI_INPUT_ZERO_POINT     0
-#define AI_OUTPUT_SCALE         1.0f
-#define AI_OUTPUT_ZERO_POINT    0
+/* 量化参数 (输入量化; float 输出不需要) */
+#define AI_INPUT_SCALE          1.0f
+#define AI_INPUT_ZERO_POINT     (-128)
+#define AI_OUTPUT_SCALE         0.14218327403068542f
+#define AI_OUTPUT_ZERO_POINT    (-15)
 
 /*===========================================================================*/
 /*                        API 接口 - 不要修改                                 */
@@ -89,20 +91,35 @@ ai_status_t ai_run(const ai_input_t* input);
 const ai_output_t* ai_get_output(void);
 
 /**
+ * @brief 获取输出缓冲区大小 (字节)
+ */
+size_t ai_output_buffer_size(void);
+
+/**
+ * @brief 获取模型常量数据大小 (Flash/RO)
+ */
+size_t ai_model_rodata_size(void);
+
+/**
  * @brief 获取预测类别 (分类模型)
  * @param confidence 可选, 返回置信度
  * @return 预测类别索引
  */
 int ai_get_prediction(ai_output_t* confidence);
 
+/**
+ * @brief 打印 IREE allocator 统计信息(若启用)
+ */
+void ai_print_allocator_stats(void);
+
 /*===========================================================================*/
 /*                        后处理模板 - 可选使用                               */
 /*===========================================================================*/
 
 /**
- * @brief Softmax 后处理 (INT8 输出转概率)
+ * @brief Softmax 后处理 (int8 输出反量化)
  * @param output 输出数据
- * @param probs 概率输出 (float[AI_OUTPUT_CLASSES])
+ * @param probs 概率输出 (float[AI_OUTPUT_SIZE])
  */
 void ai_postprocess_softmax(const ai_output_t* output, float* probs);
 

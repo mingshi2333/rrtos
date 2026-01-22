@@ -2,6 +2,8 @@
 #include "ai_backend.h"
 #include "os_kernel.h"
 #include "riscv_atomic.h"
+#include <stdio.h>
+#include <string.h>
 
 #if OS_CFG_AI_EN
 
@@ -9,8 +11,13 @@ typedef struct ai_arena {
     uint8_t         *base;
     uint32_t        size;
     uint32_t        used;
+    uint32_t        peak;
     os_spinlock_t   lock;
 } ai_arena_t;
+
+typedef struct ai_arena_block_header {
+    uint32_t size;
+} ai_arena_block_header_t;
 
 typedef enum {
     AI_OP_CONV2D = 0,
@@ -72,6 +79,9 @@ static void *arena_alloc(uint32_t size) {
     
     void *ptr = g_arena.base + g_arena.used;
     g_arena.used += size;
+    if (g_arena.used > g_arena.peak) {
+        g_arena.peak = g_arena.used;
+    }
     
     os_spinlock_unlock(&g_arena.lock);
     
@@ -81,7 +91,86 @@ static void *arena_alloc(uint32_t size) {
 static void arena_reset(void) {
     os_spinlock_lock(&g_arena.lock);
     g_arena.used = 0;
+    g_arena.peak = 0;
     os_spinlock_unlock(&g_arena.lock);
+}
+
+static void *arena_alloc_with_header(uint32_t size, bool zero) {
+    if (size == 0) {
+        return NULL;
+    }
+
+    uint32_t aligned_size = OS_ALIGN_UP(size, 8);
+    uint32_t header_size = OS_ALIGN_UP(sizeof(ai_arena_block_header_t), 8);
+
+    os_spinlock_lock(&g_arena.lock);
+
+    uint32_t offset = OS_ALIGN_UP(g_arena.used, 8);
+    if (offset + header_size + aligned_size > g_arena.size) {
+        printf("[AI] Arena OOM: req=%u used=%u total=%u\n",
+               aligned_size, g_arena.used, g_arena.size);
+        os_spinlock_unlock(&g_arena.lock);
+        return NULL;
+    }
+
+    ai_arena_block_header_t *header = (ai_arena_block_header_t *)(g_arena.base + offset);
+    header->size = aligned_size;
+
+    uint8_t *ptr = (uint8_t *)header + header_size;
+    g_arena.used = offset + header_size + aligned_size;
+    if (g_arena.used > g_arena.peak) {
+        g_arena.peak = g_arena.used;
+    }
+
+    if (zero) {
+        memset(ptr, 0, aligned_size);
+    }
+
+    os_spinlock_unlock(&g_arena.lock);
+
+    return ptr;
+}
+
+void *ai_runtime_arena_malloc(uint32_t size) {
+    return arena_alloc_with_header(size, false);
+}
+
+void *ai_runtime_arena_calloc(uint32_t size) {
+    return arena_alloc_with_header(size, true);
+}
+
+void *ai_runtime_arena_realloc(void *ptr, uint32_t size) {
+    if (!ptr) {
+        return ai_runtime_arena_malloc(size);
+    }
+    if (size == 0) {
+        ai_runtime_arena_free(ptr);
+        return NULL;
+    }
+
+    uint32_t header_size = OS_ALIGN_UP(sizeof(ai_arena_block_header_t), 8);
+    ai_arena_block_header_t *header =
+        (ai_arena_block_header_t *)((uint8_t *)ptr - header_size);
+    uint32_t old_size = header->size;
+
+    uint32_t aligned_size = OS_ALIGN_UP(size, 8);
+    if (aligned_size <= old_size) {
+        header->size = aligned_size;
+        return ptr;
+    }
+
+    void *new_ptr = ai_runtime_arena_malloc(size);
+    if (!new_ptr) {
+        return NULL;
+    }
+
+    memcpy(new_ptr, ptr, old_size);
+    return new_ptr;
+}
+
+void ai_runtime_arena_free(void *ptr) {
+    (void)ptr;
+    // No-op: arena allocations are reclaimed in arena_reset.
 }
 
 static inline int32_t saturate_int8(int32_t val) {
@@ -110,6 +199,7 @@ ai_err_t ai_runtime_init(void *arena, uint32_t arena_size) {
     g_arena.base = (uint8_t *)arena;
     g_arena.size = arena_size;
     g_arena.used = 0;
+    g_arena.peak = 0;
     os_spinlock_init(&g_arena.lock);
 
     for (int i = 0; i < OS_CFG_AI_MODEL_MAX; i++) {
@@ -151,6 +241,14 @@ void ai_runtime_deinit(void) {
 
 uint32_t ai_runtime_get_free_memory(void) {
     return g_arena.size - g_arena.used;
+}
+
+uint32_t ai_runtime_get_peak_memory(void) {
+    return g_arena.peak;
+}
+
+void ai_runtime_reset_peak(void) {
+    g_arena.peak = g_arena.used;
 }
 
 ai_err_t ai_model_load(ai_model_t **model, const void *model_data, uint32_t size) {

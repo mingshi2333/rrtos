@@ -24,40 +24,11 @@ typedef struct {
 
 static iree_ctx_t g_iree_ctx;
 
-// IREE allocator wrapper using OS heap
-static iree_status_t os_alloc_impl(void* self, iree_allocator_command_t command,
-                                   const void* params,
-                                   void** inout_ptr) {
-    (void)self;  // Unused parameter
-    
-    const iree_allocator_alloc_params_t* alloc_params = 
-        (const iree_allocator_alloc_params_t*)params;
-    
-    switch (command) {
-        case IREE_ALLOCATOR_COMMAND_MALLOC:
-            *inout_ptr = os_malloc(alloc_params->byte_length);
-            return *inout_ptr ? iree_ok_status() : iree_status_from_code(IREE_STATUS_RESOURCE_EXHAUSTED);
-        case IREE_ALLOCATOR_COMMAND_CALLOC:
-            *inout_ptr = os_calloc(1, alloc_params->byte_length);
-            return *inout_ptr ? iree_ok_status() : iree_status_from_code(IREE_STATUS_RESOURCE_EXHAUSTED);
-        case IREE_ALLOCATOR_COMMAND_REALLOC:
-            *inout_ptr = os_realloc(*inout_ptr, alloc_params->byte_length);
-            return *inout_ptr ? iree_ok_status() : iree_status_from_code(IREE_STATUS_RESOURCE_EXHAUSTED);
-        case IREE_ALLOCATOR_COMMAND_FREE:
-            os_free(*inout_ptr);
-            *inout_ptr = NULL;
-            return iree_ok_status();
-        default:
-            return iree_status_from_code(IREE_STATUS_UNIMPLEMENTED);
-    }
-}
-
 static ai_err_t iree_backend_init(void *arena, uint32_t arena_size) {
     (void)arena;
     (void)arena_size;
-    
-    g_iree_ctx.allocator.self = NULL;
-    g_iree_ctx.allocator.ctl = os_alloc_impl;
+
+    g_iree_ctx.allocator = iree_allocator_system();
 
     iree_status_t status = iree_vm_instance_create(IREE_VM_TYPE_CAPACITY_DEFAULT,
                                                    g_iree_ctx.allocator,

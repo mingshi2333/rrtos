@@ -79,6 +79,12 @@ typedef struct ai_perf_stats {
 ai_err_t ai_runtime_init(void *arena, uint32_t arena_size);
 void ai_runtime_deinit(void);
 uint32_t ai_runtime_get_free_memory(void);
+uint32_t ai_runtime_get_peak_memory(void);
+void ai_runtime_reset_peak(void);
+void *ai_runtime_arena_malloc(uint32_t size);
+void *ai_runtime_arena_calloc(uint32_t size);
+void *ai_runtime_arena_realloc(void *ptr, uint32_t size);
+void ai_runtime_arena_free(void *ptr);
 
 ai_err_t ai_model_load(ai_model_t **model, const void *model_data, uint32_t size);
 ai_err_t ai_model_load_from_flash(ai_model_t **model, const void *flash_addr);

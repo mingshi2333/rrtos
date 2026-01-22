@@ -155,7 +155,7 @@
 #define OS_CFG_AI_BACKEND_IREE      1
 
 /** @brief AI tensor arena size */
-#define OS_CFG_AI_ARENA_SIZE        (128 * 1024)
+#define OS_CFG_AI_ARENA_SIZE        (300 * 1024)
 
 /** @brief Maximum loaded models */
 #define OS_CFG_AI_MODEL_MAX         4
@@ -175,7 +175,7 @@
 #define OS_CFG_AI_EN                1
 
 /** @brief AI tensor arena size */
-#define OS_CFG_AI_ARENA_SIZE        (128 * 1024)
+#define OS_CFG_AI_ARENA_SIZE        (300 * 1024)
 
 /** @brief Maximum loaded models */
 #define OS_CFG_AI_MODEL_MAX         4
@@ -282,7 +282,7 @@
 #define OS_CFG_RAM_BASE             0x80000000UL
 
 /** @brief RAM size */
-#define OS_CFG_RAM_SIZE             (1024 * 1024)
+#define OS_CFG_RAM_SIZE             (4 * 1024 * 1024)
 
 /** @brief Flash start address */
 #define OS_CFG_FLASH_BASE           0x20000000UL

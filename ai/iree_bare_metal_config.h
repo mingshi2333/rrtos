@@ -19,6 +19,9 @@
 #define IREE_HAVE_STDIO 0
 #define IREE_PLATFORM_GENERIC 1
 
+// Enable per-allocation tracing for IREE heap buffers.
+#define AI_IREE_ALLOC_TRACE 1
+
 // ============================================================================
 // System headers can now be safely included
 // ============================================================================

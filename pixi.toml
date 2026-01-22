@@ -63,8 +63,8 @@ configure = "cmake -B build -DCMAKE_TOOLCHAIN_FILE=cmake/riscv32-pixi.cmake -DAR
 configure-flash = "cmake -B build -DCMAKE_TOOLCHAIN_FILE=cmake/riscv32-pixi.cmake -DARCH_BITS=32 -DARCH=riscv -DCMAKE_BUILD_TYPE=MinSizeRel -DLINKER_SCRIPT=arch/riscv/link_flash.ld"
 sim-flash = "renode --console --disable-xwt scripts/simulation/mobilenet_test_flash.resc"
 build = "cmake --build build"
-sim-qemu = "qemu-system-riscv32 -machine virt -nographic -bios none -kernel build/mobilenet_test"
-sim-ai = "qemu-system-riscv32 -machine virt -nographic -bios none -kernel build/apps/ai_demo/ai_demo"
+sim-qemu = "qemu-system-riscv32 -machine virt -nographic -m 4M -bios none -kernel build/mobilenet_test"
+sim-ai = "qemu-system-riscv32 -machine virt -nographic -m 4M -bios none -kernel build/apps/ai_demo/ai_demo"
 sim-renode-ai = "renode --console --disable-xwt scripts/simulation/ai_demo_rv32.resc"
 sim-renode-ram = "renode --console --disable-xwt scripts/simulation/mobilenet_test_rv32.resc"
 sim-renode-flash = "renode --console --disable-xwt scripts/simulation/mobilenet_test_flash.resc"
@@ -76,4 +76,3 @@ sim-mobilenet = "pixi run sim-qemu"
 default = ["rv64"]
 rv64 = ["rv64"]
 rv32 = ["rv32"]
-

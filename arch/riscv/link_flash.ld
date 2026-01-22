@@ -3,8 +3,8 @@ ENTRY(_start)
 
 MEMORY
 {
-    FLASH (rx)  : ORIGIN = 0x20000000, LENGTH = 4M
-    RAM (rwx)   : ORIGIN = 0x80000000, LENGTH = 16M
+    FLASH (rx)  : ORIGIN = 0x20000000, LENGTH = 2M
+    RAM (rwx)   : ORIGIN = 0x80000000, LENGTH = 4M
 }
 
 STACK_SIZE = 16K;

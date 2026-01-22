@@ -113,6 +113,7 @@ add_compile_definitions(IREE_STATUS_FEATURES=0)
 add_compile_definitions(IREE_FILE_IO_ENABLE=0)
 add_compile_definitions(IREE_HAVE_POSIX_MEMALIGN=0)
 add_compile_definitions(IREE_HAVE_STDIO=0)
+add_compile_definitions(AI_IREE_ALLOC_TRACE=1)
 add_compile_definitions(_POSIX_C_SOURCE=0)
 add_compile_definitions(_ISOC11_SOURCE=0)
 

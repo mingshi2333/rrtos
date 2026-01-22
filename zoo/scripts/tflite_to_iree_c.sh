@@ -6,7 +6,8 @@ set -e
 
 # ================= Configuration =================
 IREE_TOOLCHAIN_ROOT="/home/mingshi/.mamba/envs/iree-toolchain310/bin"
-OUTPUT_DIR="../iree_static"
+SCRIPT_DIR=$(cd -- "$(dirname "$0")" && pwd)
+OUTPUT_DIR="$SCRIPT_DIR/../iree_static"
 TEMP_DIR="/tmp/iree_build_temp"
 
 ARCH="rv32"
@@ -83,6 +84,11 @@ echo "[3/3] Compiling to EmitC + Object ($ARCH) [Optimized]..."
     --iree-llvmcpu-static-library-output-path="$OUTPUT_DIR/$OUTPUT_OBJ_NAME" \
     --iree-llvmcpu-loop-unrolling=false \
     --iree-llvmcpu-enable-ukernels=all \
+    --iree-stream-partitioning-favor=min-peak-memory \
+    --iree-stream-resource-alias-mutable-bindings \
+    --iree-stream-resource-index-bits=32 \
+    --iree-stream-resource-memory-model=unified \
+    --iree-stream-resource-max-allocation-size=1048576 \
     --iree-flow-inline-constants-max-byte-length=0 \
     --iree-llvmcpu-debug-symbols=false \
     "$TEMP_DIR/${OUTPUT_NAME}_opt.mlir" \
@@ -100,6 +106,11 @@ echo "[4/4] Compiling to VM Bytecode + Static Library..."
     --iree-llvmcpu-static-library-output-path="$OUTPUT_DIR/$BYTECODE_OBJ_NAME" \
     --iree-llvmcpu-loop-unrolling=false \
     --iree-llvmcpu-enable-ukernels=all \
+    --iree-stream-partitioning-favor=min-peak-memory \
+    --iree-stream-resource-alias-mutable-bindings \
+    --iree-stream-resource-index-bits=32 \
+    --iree-stream-resource-memory-model=unified \
+    --iree-stream-resource-max-allocation-size=1048576 \
     --iree-llvmcpu-debug-symbols=false \
     "$TEMP_DIR/${OUTPUT_NAME}_opt.mlir" \
     -o "$OUTPUT_DIR/${OUTPUT_NAME}.vmfb"

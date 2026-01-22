@@ -25,9 +25,9 @@ target_compile_options(ai_demo PRIVATE
 )
 
 if(ARCH_BITS STREQUAL "64")
-    set(MODEL_OBJ "st_yolo_lc_v1_192_int_beta_rv64.o")
+    set(MODEL_OBJ "yoloface_int8_rv64.o")
 else()
-    set(MODEL_OBJ "st_yolo_lc_v1_192_int_beta.o")
+    set(MODEL_OBJ "yoloface_int8.o")
 endif()
 
 target_link_libraries(ai_demo

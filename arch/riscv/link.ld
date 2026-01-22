@@ -3,7 +3,7 @@ ENTRY(_start)
 
 MEMORY
 {
-    RAM (rwx)   : ORIGIN = 0x80000000, LENGTH = 16M
+    RAM (rwx)   : ORIGIN = 0x80000000, LENGTH = 4M
     FLASH (rx)  : ORIGIN = 0x20000000, LENGTH = 2M
 }
 

@@ -6,7 +6,7 @@ QEMU_BIN="qemu-system-riscv32"
 BINARY="build/apps/ai_demo/ai_demo"
 MACHINE="virt"
 CPU="rv32"
-MEMORY="128M" # QEMU memory size (larger than physical to ensure it runs)
+MEMORY="4M" # QEMU memory size (matches 4MB RAM constraint)
 
 # Check for QEMU
 if ! command -v $QEMU_BIN &> /dev/null; then
