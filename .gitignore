@@ -5,6 +5,7 @@ debug_build/
 .mamba/
 .cache/
 .ruff_cache/
+build_esp32
 # Temporary files
 *.log
 *.tmp

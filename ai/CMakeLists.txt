@@ -1,9 +1,5 @@
 set(AI_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ai_model_registry.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/mobilenet_test_module_c.c
-    ${CMAKE_SOURCE_DIR}/zoo/iree_static/models_registry.c
-    ${CMAKE_SOURCE_DIR}/zoo/iree_static/mnist_wrapper.c
-    ${CMAKE_SOURCE_DIR}/zoo/iree_static/yoloface_wrapper.c
 )
 
 add_library(rv_aios_ai STATIC ${AI_SOURCES})

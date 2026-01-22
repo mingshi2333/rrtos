@@ -8,9 +8,9 @@
 #include "hal_uart.h"
 #include "hal_clint.h"
 
-// Hardware addresses (common for our QEMU/Renode setup)
-#define UART0_BASE  0x10000000
-#define CLINT_BASE  0x02000000
+// Hardware addresses (ESP32-C3)
+#define UART0_BASE  0x60000000
+#define CLINT_BASE  0x60023000
 
 // Task configuration
 static os_tcb_t ai_tcb;

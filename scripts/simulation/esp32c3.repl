@@ -1,0 +1,33 @@
+// ESP32-C3 Platform Definition
+
+// sysbus is implicit
+
+cpu: CPU.RiscV32 @ sysbus
+    cpuType: "rv32imc_zicsr"
+    hartId: 0
+    privilegeArchitecture: PrivilegeArchitecture.Priv1_10
+    timeProvider: empty
+
+// IRAM
+iram: Memory.MappedMemory @ sysbus 0x40380000
+    size: 0x60000
+
+// DRAM (320KB)
+dram: Memory.MappedMemory @ sysbus 0x3FC80000
+    size: 0x50000
+
+// Flash (4MB) - Mapped to 0x42000000 (IROM)
+flash: Memory.MappedMemory @ sysbus 0x42000000
+    size: 0x400000
+
+uart0: UART.NS16550 @ sysbus 0x60000000
+    wideRegisters: true
+
+
+sysbus:
+    init:
+        # Load the ELF file
+                // Load ELF to memory
+        sysbus LoadELF $bin
+
+

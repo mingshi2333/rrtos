@@ -1,4 +1,11 @@
-file(GLOB_RECURSE HAL_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.c)
+set(HAL_SOURCES)
+
+if(CONFIG_PLATFORM_ESP32C3)
+    file(GLOB HAL_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/esp32/*.c)
+else()
+    # Default/Generic RISC-V HAL
+    file(GLOB HAL_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.c)
+endif()
 
 add_library(rv_aios_drivers STATIC ${HAL_SOURCES})
 
