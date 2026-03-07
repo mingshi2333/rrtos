@@ -148,14 +148,18 @@ int ai_runtime_init(void) {
             continue;
         }
         
+        const char *entry_function = desc->entry_function ? desc->entry_function : "main";
+
         status = iree_vm_module_lookup_function_by_name(
             entry->vm_module,
             IREE_VM_FUNCTION_LINKAGE_EXPORT,
-            iree_make_cstring_view("main"),
+            iree_make_cstring_view(entry_function),
             &entry->main_func
         );
         if (!iree_status_is_ok(status)) {
-            printf("[AI] ERROR: Failed to resolve 'main' function for %s\n", desc->name);
+            printf("[AI] ERROR: Failed to resolve '%s' function for %s\n",
+                   entry_function,
+                   desc->name);
             iree_vm_module_release(entry->vm_module);
             continue;
         }

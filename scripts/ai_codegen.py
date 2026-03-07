@@ -8,6 +8,8 @@ import shutil
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent.resolve()
+LOCK_FILE = PROJECT_ROOT / "iree-version.lock"
+TOOLCHECK_CACHE = {}
 
 
 def run_command(cmd, cwd=None, env=None):
@@ -19,20 +21,84 @@ def run_command(cmd, cwd=None, env=None):
     return result.stdout
 
 
-def get_toolchain_root(config):
+def tool_is_usable(tool_path):
+    tool_path = str(tool_path)
+    if tool_path in TOOLCHECK_CACHE:
+        return TOOLCHECK_CACHE[tool_path]
+
+    try:
+        result = subprocess.run(
+            [tool_path, "--help"],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        usable = result.returncode == 0
+    except OSError:
+        usable = False
+
+    TOOLCHECK_CACHE[tool_path] = usable
+    return usable
+
+
+def read_locked_toolchain_env():
+    if not LOCK_FILE.exists():
+        return ""
+
+    for line in LOCK_FILE.read_text(encoding="utf-8").splitlines():
+        if line.startswith("TOOLCHAIN_ENV="):
+            return line.split("=", 1)[1].strip()
+    return ""
+
+
+def candidate_toolchain_roots(config):
     toolchain_cfg = config.get("toolchain", {})
     root_env = toolchain_cfg.get("root_env", "IREE_TOOLCHAIN_ROOT")
     root_value = os.environ.get(root_env, "")
-    return Path(root_value).expanduser() if root_value else None
+    candidates = []
+    if root_value:
+        candidates.append(Path(root_value).expanduser())
+
+    locked_env = read_locked_toolchain_env()
+    if locked_env:
+        candidates.append(Path.home() / ".mamba" / "envs" / locked_env / "bin")
+
+    return candidates
 
 
-def get_iree_tool(config, name):
-    toolchain_root = get_toolchain_root(config)
-    if toolchain_root:
-        path = toolchain_root / name
-        if path.exists():
-            return str(path)
-    return name
+def resolve_iree_tools(config, required_tools):
+    resolved = {}
+
+    for root in candidate_toolchain_roots(config):
+        missing = []
+        for tool_name in required_tools:
+            candidate = root / tool_name
+            if not candidate.exists() or not tool_is_usable(candidate):
+                missing.append(tool_name)
+            else:
+                resolved[tool_name] = str(candidate)
+        if not missing:
+            return resolved
+
+    path_resolved = {}
+    missing = []
+    for tool_name in required_tools:
+        candidate = shutil.which(tool_name)
+        if not candidate or not tool_is_usable(candidate):
+            missing.append(tool_name)
+        else:
+            path_resolved[tool_name] = candidate
+    if not missing:
+        return path_resolved
+
+    if missing:
+        print("Error: Missing usable IREE toolchain components: " + ", ".join(missing))
+        print(
+            "Set IREE_TOOLCHAIN_ROOT or install the locked toolchain env from iree-version.lock."
+        )
+        sys.exit(1)
+
+    return path_resolved
 
 
 def resolve_model_path(config, model, config_path):
@@ -49,15 +115,23 @@ def resolve_model_path(config, model, config_path):
 
 def parse_mlir_info(mlir_text):
     """Extracts input and output metadata from MLIR text."""
-    # Find the main function signature
-    # Example: func.func @main(%arg0: tensor<?x28x28x1xui8> ...) -> (tensor<?x36xf32> ...)
-    main_match = re.search(
-        r"func\.func @main\((.*?)\)\s*->\s*(.*?)\{", mlir_text, re.DOTALL
+    export_match = None
+    export_pattern = re.compile(
+        r"func\.func\s+@(?P<name>[A-Za-z0-9_.$-]+)\((?P<inputs>.*?)\)\s*->\s*(?P<outputs>.*?)\s*(?P<suffix>attributes\s*\{.*?\})?\s*\{",
+        re.DOTALL,
     )
-    if not main_match:
+    for match in export_pattern.finditer(mlir_text):
+        suffix = match.group("suffix") or ""
+        if "iree.module.export" in suffix or match.group("name") == "main":
+            export_match = match
+            break
+
+    if not export_match:
         return None
 
-    inputs_raw, outputs_raw = main_match.groups()
+    entry_function = export_match.group("name")
+    inputs_raw = export_match.group("inputs")
+    outputs_raw = export_match.group("outputs")
 
     def parse_tensors(raw):
         tensors = []
@@ -88,15 +162,24 @@ def parse_mlir_info(mlir_text):
             )
         return tensors
 
-    return {"inputs": parse_tensors(inputs_raw), "outputs": parse_tensors(outputs_raw)}
+    return {
+        "entry_function": entry_function,
+        "inputs": parse_tensors(inputs_raw),
+        "outputs": parse_tensors(outputs_raw),
+    }
 
 
 def compile_model(config, config_path, model, defaults, output_dir):
     name = model["name"]
-    tflite_path = resolve_model_path(config, model, config_path)
+    model_path = resolve_model_path(config, model, config_path)
+    source_suffix = model_path.suffix.lower()
+    required_tools = ["iree-compile"]
+    if source_suffix == ".tflite":
+        required_tools = ["iree-import-tflite", "iree-opt", "iree-compile"]
+    iree_tools = resolve_iree_tools(config, required_tools)
 
-    if not tflite_path.exists():
-        print(f"Error: Model file not found: {tflite_path}")
+    if not model_path.exists():
+        print(f"Error: Model file not found: {model_path}")
         sys.exit(1)
 
     print(f"=== Compiling Model: {name} ===")
@@ -107,29 +190,36 @@ def compile_model(config, config_path, model, defaults, output_dir):
         shutil.rmtree(temp_dir)
     temp_dir.mkdir(parents=True)
 
-    # 1. Import TFLite -> MLIR
+    # 1. Resolve model source into MLIR
     mlir_path = temp_dir / f"{name}.mlir"
-    run_command(
-        [
-            get_iree_tool(config, "iree-import-tflite"),
-            str(tflite_path),
-            "-o",
-            str(mlir_path),
-        ]
-    )
+    if source_suffix == ".tflite":
+        run_command(
+            [
+                iree_tools["iree-import-tflite"],
+                str(model_path),
+                "-o",
+                str(mlir_path),
+            ]
+        )
+    elif source_suffix == ".mlir":
+        shutil.copyfile(model_path, mlir_path)
+    else:
+        print(f"Error: Unsupported model source type: {model_path}")
+        sys.exit(1)
 
-    # 2. Optimize & Extract Info
-    # We use iree-opt to ensure we get a clean text representation for parsing
     opt_mlir_path = temp_dir / f"{name}_opt.mlir"
-    run_command(
-        [
-            get_iree_tool(config, "iree-opt"),
-            "--pass-pipeline=builtin.module(func.func(iree-tosa-strip-signedness))",
-            str(mlir_path),
-            "-o",
-            str(opt_mlir_path),
-        ]
-    )
+    if source_suffix == ".tflite":
+        run_command(
+            [
+                iree_tools["iree-opt"],
+                "--pass-pipeline=builtin.module(func.func(iree-tosa-strip-signedness))",
+                str(mlir_path),
+                "-o",
+                str(opt_mlir_path),
+            ]
+        )
+    else:
+        shutil.copyfile(mlir_path, opt_mlir_path)
 
     with open(opt_mlir_path, "r") as f:
         mlir_content = f.read()
@@ -164,7 +254,7 @@ def compile_model(config, config_path, model, defaults, output_dir):
 
     run_command(
         [
-            get_iree_tool(config, "iree-compile"),
+            iree_tools["iree-compile"],
             "--iree-hal-target-backends=llvm-cpu",
             f"--iree-llvmcpu-target-triple={target_triple}",
             f"--iree-llvmcpu-target-cpu-features={cpu_features}",
@@ -299,6 +389,7 @@ extern const iree_hal_executable_library_header_t** {symbol}(
             f"\nstatic const ai_emitc_model_descriptor_t {name}_descriptor = {{\n"
         )
         c_content += f'    .name = "{name}",\n'
+        c_content += f'    .entry_function = "{metadata["entry_function"]}",\n'
         c_content += f"    .module_create_fn = {name}_create_wrapper,\n"
         c_content += f"    .library_query_fn = (const void*){symbol},\n"
         c_content += "    .inputs = {\n"
@@ -594,9 +685,21 @@ def main():
     generate_code(config, models_metadata, output_dir)
     generate_cmake(config, models_metadata, output_dir)
 
-    if app_dir:
+    scaffold_targets = (
+        [
+            app_dir / "CMakeLists.txt",
+            app_dir / "src" / "main.c",
+            app_dir / "src" / "hooks.c",
+        ]
+        if app_dir
+        else []
+    )
+
+    if app_dir and not all(path.exists() for path in scaffold_targets):
         print("=== Generating App Scaffolding ===")
         generate_app_scaffolding(config, app_dir)
+    elif app_dir:
+        print("=== Skipping App Scaffolding (existing files preserved) ===")
 
     print("Done! Generated files in:", app_dir if app_dir else output_dir)
 

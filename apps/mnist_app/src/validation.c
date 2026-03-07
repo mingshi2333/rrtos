@@ -6,6 +6,10 @@
 #define MNIST_VALIDATION_SCORE_SCALE 100000.0f
 #define MNIST_VALIDATION_FNV_OFFSET 2166136261u
 #define MNIST_VALIDATION_FNV_PRIME 16777619u
+#define MNIST_VALIDATION_INPUT_COUNT \
+    (sizeof(((ai_st_mnist_28_input_t *)0)->tensor_0) / sizeof(((ai_st_mnist_28_input_t *)0)->tensor_0[0]))
+#define MNIST_VALIDATION_OUTPUT_COUNT \
+    (sizeof(((ai_st_mnist_28_output_t *)0)->tensor_0) / sizeof(((ai_st_mnist_28_output_t *)0)->tensor_0[0]))
 
 const mnist_validation_sample_t *mnist_validation_get_samples(size_t *count) {
     if (count) {
@@ -16,12 +20,16 @@ const mnist_validation_sample_t *mnist_validation_get_samples(size_t *count) {
 
 void mnist_validation_fill_input(ai_st_mnist_28_input_t *input,
                                  const mnist_validation_sample_t *sample) {
+    size_t i;
+
     memset(input, 0, sizeof(*input));
     if (!sample) {
         return;
     }
 
-    memcpy(input->tensor_0, sample->pixels, sizeof(sample->pixels));
+    for (i = 0; i < MNIST_VALIDATION_INPUT_COUNT && i < sizeof(sample->pixels); ++i) {
+        input->tensor_0[i] = (float)sample->pixels[i] / 255.0f;
+    }
 }
 
 uint32_t mnist_validation_output_argmax(const ai_st_mnist_28_output_t *output) {
@@ -29,7 +37,7 @@ uint32_t mnist_validation_output_argmax(const ai_st_mnist_28_output_t *output) {
     uint32_t i;
     float best_score = output->tensor_0[0];
 
-    for (i = 1; i < 36; ++i) {
+    for (i = 1; i < MNIST_VALIDATION_OUTPUT_COUNT; ++i) {
         if (output->tensor_0[i] > best_score) {
             best_score = output->tensor_0[i];
             best_index = i;
@@ -59,7 +67,7 @@ uint32_t mnist_validation_output_hash(const ai_st_mnist_28_output_t *output) {
     uint32_t hash = MNIST_VALIDATION_FNV_OFFSET;
     uint32_t i;
 
-    for (i = 0; i < 36; ++i) {
+    for (i = 0; i < MNIST_VALIDATION_OUTPUT_COUNT; ++i) {
         int32_t quantized =
             (int32_t)lroundf(output->tensor_0[i] * MNIST_VALIDATION_SCORE_SCALE);
         hash = mnist_validation_hash_u32(hash, (uint32_t)quantized);
@@ -84,12 +92,8 @@ mnist_validation_status_t mnist_validation_check(
     observation->total_inferences = stats ? (uint32_t)stats->total_inferences : 0u;
     observation->arena_peak = stats ? (uint32_t)stats->arena_peak_bytes : 0u;
 
-    if (sample->expected_hash == 0u) {
-        return MNIST_VALIDATION_BASELINE_MISSING;
-    }
-
-    if (observation->hash != sample->expected_hash) {
-        return MNIST_VALIDATION_HASH_MISMATCH;
+    if (observation->argmax != sample->label) {
+        return MNIST_VALIDATION_LABEL_MISMATCH;
     }
 
     if (!stats) {

@@ -15,4 +15,4 @@ model_sources:
 
 models:
   - name: "st_mnist_28"
-    file: "st_mnist_28.tflite"
+    file: "third_party/iree/samples/models/mnist.mlir"

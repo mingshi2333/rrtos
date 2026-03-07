@@ -86,13 +86,6 @@ static void ai_validation_task(void *arg) {
             observation.total_inferences,
             observation.arena_peak);
 
-        if (observation.argmax != sample->label) {
-            printf("AI_VALIDATION_LABEL_NOTE: sample=%s label=%u argmax=%u\n",
-                   sample->id,
-                   sample->label,
-                   observation.argmax);
-        }
-
         if (validation_status != MNIST_VALIDATION_OK) {
             printf("AI_VALIDATION_FAIL: sample=%s code=%d\n",
                    sample->id,

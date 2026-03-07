@@ -53,10 +53,10 @@ What this validates:
 
 - registry-backed runtime initialization
 - one supported model: `st_mnist_28`
-- a five-sample official MNIST batch fingerprint on QEMU
-- optional QEMU-vs-Renode output cross-check
+- a five-sample official MNIST batch with label-based pass/fail on QEMU
+- optional QEMU-vs-Renode output cross-check using per-sample metrics and hashes
 
-The current sample-set gate is fingerprint-based. The logs also print label notes for human review when the model argmax differs from the dataset label.
+The runtime gate now passes only when the committed sample batch predicts the correct MNIST labels. The logs still emit per-sample hashes so QEMU and Renode runs can be compared for drift.
 
 ## Project map
 

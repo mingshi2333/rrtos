@@ -44,8 +44,8 @@ def main() -> None:
     ).read_text(encoding="utf-8")
     if "MNIST_VALIDATION_SAMPLE_COUNT" not in validation_samples:
         fail("mnist validation sample set header is missing")
-    if ".expected_hash = 0u" in validation_samples:
-        fail("mnist validation sample hashes are not fully baselined")
+    if "dataset_index" not in validation_samples or "label" not in validation_samples:
+        fail("mnist validation sample set is missing dataset metadata")
 
     validation_generator = (
         REPO_ROOT / "scripts/generate_mnist_validation_samples.py"

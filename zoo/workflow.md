@@ -20,7 +20,8 @@ It is not a promise that every historical RV64 or model-specific experiment unde
 The canonical flow resolves tools in this order:
 
 1. `IREE_TOOLCHAIN_ROOT` if set
-2. tool names from `PATH`
+2. the locked mamba env from `iree-version.lock`
+3. tool names from `PATH`
 
 Model source files resolve in this order:
 
@@ -34,6 +35,8 @@ pixi run -e rv32 ai-gen
 ```
 
 This regenerates the registry-backed wrappers for the models declared in `ai_models.yaml`.
+
+If `IREE_TOOLCHAIN_ROOT` is unset, `scripts/ai_codegen.py` will automatically try the locked toolchain env named in `iree-version.lock` before falling back to `PATH`.
 
 ## Build and validate
 

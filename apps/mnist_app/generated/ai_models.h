@@ -9,11 +9,11 @@
 /* --- Wrappers and Descriptors --- */
 /* Model: st_mnist_28 */
 typedef struct {
-    uint8_t tensor_0[784]; // Shape: [1, 28, 28, 1]
+    float tensor_0[784]; // Shape: [1, 28, 28, 1]
 } ai_st_mnist_28_input_t;
 
 typedef struct {
-    float tensor_0[36]; // Shape: [1, 36]
+    float tensor_0[10]; // Shape: [1, 10]
 } ai_st_mnist_28_output_t;
 
 /**

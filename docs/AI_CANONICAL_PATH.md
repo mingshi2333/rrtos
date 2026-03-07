@@ -4,8 +4,9 @@
 - Supported app entrypoint: `apps/mnist_app`
 - Supported runtime validation target: `build/apps/mnist_app/mnist_validation`
 - Generated artifacts live under `apps/<app>/generated/`
-- Toolchain resolution uses `IREE_TOOLCHAIN_ROOT` when set, otherwise falls back to tools on `PATH`
+- Toolchain resolution uses `IREE_TOOLCHAIN_ROOT` when set, otherwise tries the locked env from `iree-version.lock` before falling back to tools on `PATH`
 - Model source resolution uses `RRTOS_AI_MODEL_DIR` when set, otherwise resolves relative paths from `ai_models.yaml`
+- The current supported `st_mnist_28` source is `third_party/iree/samples/models/mnist.mlir`
 
 ## Validation fixtures
 
@@ -23,6 +24,6 @@
 - Legacy `ai_runtime.h` consumers are experimental until migrated to the registry contract.
 - QEMU `virt` is the preferred runtime validation lane because it matches the supported `qemu_virt` software path and is faster to automate than Renode.
 - Renode remains the preferred lane for BE-U1000 board bring-up, interrupt, and peripheral behavior validation.
-- The supported AI gate currently uses committed multi-sample output fingerprints as the pass/fail criterion.
-- The validation logs also emit dataset-label notes for human review when the current model argmax differs from the sample label.
-- A secondary Renode observation lane may compare the canonical AI batch output fingerprint against QEMU, but QEMU remains the normative pass/fail gate.
+- The supported AI gate uses committed multi-sample dataset labels as the pass/fail criterion.
+- The validation path normalizes official MNIST byte pixels to the model's expected floating-point input range before inference.
+- A secondary Renode observation lane may compare the canonical AI batch output metrics and hashes against QEMU, but QEMU remains the normative pass/fail gate.

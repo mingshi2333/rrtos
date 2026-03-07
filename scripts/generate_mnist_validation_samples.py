@@ -17,11 +17,11 @@ LABEL_URL = (
 OUTPUT = Path("apps/mnist_app/src/mnist_validation_samples.h")
 
 SAMPLES = [
-    ("mnist_t10k_00000", 0, 7, 2017584636),
-    ("mnist_t10k_00001", 1, 2, 4068489470),
-    ("mnist_t10k_00002", 2, 1, 83172534),
-    ("mnist_t10k_00003", 3, 0, 2150508560),
-    ("mnist_t10k_00004", 4, 4, 1223536008),
+    ("mnist_t10k_00000", 0, 7),
+    ("mnist_t10k_00001", 1, 2),
+    ("mnist_t10k_00002", 2, 1),
+    ("mnist_t10k_00003", 3, 0),
+    ("mnist_t10k_00004", 4, 4),
 ]
 
 
@@ -59,7 +59,7 @@ def format_pixels(pixels: bytes) -> str:
 
 def build_header(labels: bytes, images: bytes) -> str:
     entries = []
-    for sample_id, dataset_index, label, expected_hash in SAMPLES:
+    for sample_id, dataset_index, label in SAMPLES:
         actual_label = labels[dataset_index]
         if actual_label != label:
             raise ValueError(
@@ -76,7 +76,6 @@ def build_header(labels: bytes, images: bytes) -> str:
             f'        .id = "{sample_id}",\n'
             f"        .dataset_index = {dataset_index}u,\n"
             f"        .label = {label}u,\n"
-            f"        .expected_hash = {expected_hash}u,\n"
             "        .pixels = {\n"
             f"{format_pixels(pixels)}\n"
             "        }\n"
@@ -99,7 +98,6 @@ typedef struct {{
     const char *id;
     uint32_t dataset_index;
     uint32_t label;
-    uint32_t expected_hash;
     uint8_t pixels[784];
 }} mnist_validation_sample_t;
 

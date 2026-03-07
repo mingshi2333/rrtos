@@ -12,7 +12,6 @@ typedef struct {
     const char *id;
     uint32_t dataset_index;
     uint32_t label;
-    uint32_t expected_hash;
     uint8_t pixels[784];
 } mnist_validation_sample_t;
 
@@ -21,7 +20,6 @@ static const mnist_validation_sample_t k_mnist_validation_samples[] = {
         .id = "mnist_t10k_00000",
         .dataset_index = 0u,
         .label = 7u,
-        .expected_hash = 2017584636u,
         .pixels = {
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -78,7 +76,6 @@ static const mnist_validation_sample_t k_mnist_validation_samples[] = {
         .id = "mnist_t10k_00001",
         .dataset_index = 1u,
         .label = 2u,
-        .expected_hash = 4068489470u,
         .pixels = {
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -135,7 +132,6 @@ static const mnist_validation_sample_t k_mnist_validation_samples[] = {
         .id = "mnist_t10k_00002",
         .dataset_index = 2u,
         .label = 1u,
-        .expected_hash = 83172534u,
         .pixels = {
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -192,7 +188,6 @@ static const mnist_validation_sample_t k_mnist_validation_samples[] = {
         .id = "mnist_t10k_00003",
         .dataset_index = 3u,
         .label = 0u,
-        .expected_hash = 2150508560u,
         .pixels = {
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -249,7 +244,6 @@ static const mnist_validation_sample_t k_mnist_validation_samples[] = {
         .id = "mnist_t10k_00004",
         .dataset_index = 4u,
         .label = 4u,
-        .expected_hash = 1223536008u,
         .pixels = {
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,

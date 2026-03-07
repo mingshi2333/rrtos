@@ -73,6 +73,7 @@ typedef iree_status_t (*ai_module_create_fn_t)(
 typedef struct {
     const char *name;                       ///< Model name
     const char *version;                    ///< Version number
+    const char *entry_function;             ///< Exported entry function name
     ai_module_create_fn_t module_create_fn; ///< EmitC module creation function
     const void *library_query_fn;           ///< Static library query function
     
