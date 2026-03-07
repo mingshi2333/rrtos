@@ -37,13 +37,27 @@ function(configure_mnist_target target_name)
         ${MNIST_COMMON_COMPILE_OPTIONS}
     )
 
-    set_target_properties(${target_name} PROPERTIES
-        LINK_FLAGS "-T${LINKER_SCRIPT} -nostartfiles --ld-path=ld.lld -Wl,--gc-sections -Wl,--icf=all -Wl,--allow-multiple-definition"
+    target_link_options(${target_name} PRIVATE
+        -T${LINKER_SCRIPT}
+        -nostartfiles
+        --ld-path=ld.lld
+        -Wl,--gc-sections
+        -Wl,--icf=all
+        -Wl,--allow-multiple-definition
+        -Wl,-Map,$<TARGET_FILE_DIR:${target_name}>/$<TARGET_FILE_BASE_NAME:${target_name}>.map
     )
 
     add_custom_command(TARGET ${target_name} POST_BUILD
         COMMAND ${CMAKE_OBJCOPY} -O binary ${target_name} ${target_name}.bin
         COMMAND ${CMAKE_SIZE} ${target_name}
+        COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/report_build_footprint.py
+                --label ${target_name}
+                --image $<TARGET_FILE:${target_name}>
+                --kernel-archive ${CMAKE_BINARY_DIR}/kernel/librv_aios_kernel.a
+                --cache ${CMAKE_BINARY_DIR}/CMakeCache.txt
+                --linker-script ${LINKER_SCRIPT}
+                --map $<TARGET_FILE_DIR:${target_name}>/$<TARGET_FILE_BASE_NAME:${target_name}>.map
+                --output $<TARGET_FILE_DIR:${target_name}>/$<TARGET_FILE_BASE_NAME:${target_name}>_footprint.md
     )
 endfunction()
 

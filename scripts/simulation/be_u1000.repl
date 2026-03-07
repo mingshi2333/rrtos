@@ -47,6 +47,60 @@ eflash: Memory.MappedMemory @ sysbus 0xA0000000
 qspi0: Memory.MappedMemory @ sysbus 0x80000000
     size: 0x1000000
 
+// Memory: QSPI1 (16 MB) — External flash via QSPI1 window
+qspi1: Memory.MappedMemory @ sysbus 0x90000000
+    size: 0x1000000
+
+// CRU / pinmux registers — mapped as simple MMIO storage to suppress
+// non-existing-peripheral warnings during board init and pinmux setup.
+cru: Memory.MappedMemory @ sysbus 0x14000000
+    size: 0x1000
+
+// GPIO2 — enough for LED/button self-test register access.
+gpio2: Memory.MappedMemory @ sysbus 0x14008000
+    size: 0x1000
+
+// I2C0 — simple register storage is enough for current init-only self-test.
+i2c0: Memory.MappedMemory @ sysbus 0x11004000
+    size: 0x1000
+
+// SPI1 — current self-test performs a polled single-byte transfer.
+// Use a tiny Python stub to expose the status/data registers needed by
+// hal_spi_transfer() so the simulation can complete the loopback-like check.
+spi1: Python.PythonPeripheral @ sysbus 0x1100C000
+    size: 0x1000
+    initable: true
+    script: '''
+def req_get(*names):
+    for name in names:
+        if hasattr(request, name):
+            return getattr(request, name)
+    raise AttributeError("missing request attributes: %s" % (", ".join(names),))
+
+def req_set_value(value):
+    if hasattr(request, "Value"):
+        request.Value = value
+    else:
+        request.value = value
+
+if req_get("isInit", "IsInit"):
+    last_tx = 0xFF
+elif req_get("isWrite", "IsWrite"):
+    if req_get("offset", "Offset") == 0x60:
+        last_tx = req_get("value", "Value") & 0xFF
+elif req_get("isRead", "IsRead"):
+    if req_get("offset", "Offset") == 0x28:
+        req_set_value(0xA)  # TFNF | RFNE, BUSY clear
+    elif req_get("offset", "Offset") == 0x20:
+        req_set_value(0x0)  # TXFLR
+    elif req_get("offset", "Offset") == 0x24:
+        req_set_value(0x1)  # RXFLR
+    elif req_get("offset", "Offset") == 0x60:
+        req_set_value(last_tx)
+    else:
+        req_set_value(0x0)
+'''
+
 // UART0 — Console (DesignWare APB UART, 16550-compatible for simulation)
 // Real address: 0x11001000 (APB0 + 0x1000)
 // In simulation, we use a standard 16550 model at the same address

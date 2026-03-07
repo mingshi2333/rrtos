@@ -16,6 +16,7 @@
 /* ============================================================================
  * CPU Configuration
  * ========================================================================= */
+#define BE_U1000_BOARD_VARIANT      "EVU-BA"
 #define BE_U1000_NUM_CORES          3       /* Core0, Core1 (main), Core2 (monitor) */
 #define BE_U1000_NUM_MAIN_CORES     2       /* Core0 + Core1 for RTOS scheduling */
 #define BE_U1000_TIMER_FREQ         1000000 /* 1 MHz mtime clock (F_TIMER_PULSE) */
@@ -25,7 +26,7 @@
  * Interrupt Controller — CLIC (NOT PLIC)
  * ========================================================================= */
 #define BE_U1000_IRQ_MODEL_CLIC     1
-#define BE_U1000_CLIC_NUM_IRQS      77      /* Total CLIC interrupt sources */
+#define BE_U1000_CLIC_NUM_IRQS      78      /* Total CLIC interrupt sources (0..77) */
 
 /* CLIC CSR addresses (non-standard RISC-V extensions) */
 #define CSR_MTVT                    0x307   /* Machine Trap Vector Table Base */
@@ -54,9 +55,11 @@
 #define BE_U1000_EFLASH_SIZE        0x00040000UL  /* 256 KB */
 
 /* Memory Layout — Core2 (limited) */
-#define BE_U1000_C2_TCMA_BASE       0x40007800UL
+#define BE_U1000_C2_TCMA_BASE       0x40007800UL  /* Core2-side execute view */
+#define BE_U1000_C2_TCMA_SYS_BASE   0x7000F800UL  /* System-side copy/program view */
 #define BE_U1000_C2_TCMA_SIZE       0x00000800UL  /* 2 KB */
-#define BE_U1000_C2_TCMB_BASE       0x40008000UL
+#define BE_U1000_C2_TCMB_BASE       0x40008000UL  /* Core2-side data view */
+#define BE_U1000_C2_TCMB_SYS_BASE   0x70010000UL  /* System-side data view */
 #define BE_U1000_C2_TCMB_SIZE       0x00002000UL  /* 8 KB */
 
 /* Default RAM/Flash for RTOS (Core0 using TCMA + TCMB) */
@@ -127,68 +130,77 @@
 #define BE_U1000_MB1_BASE          (BE_U1000_AHB_BASE + 0x103020)
 
 /* ============================================================================
- * CLIC Interrupt Numbers (from SDK startup vector table)
+ * CLIC Interrupt Numbers (aligned to SDK be_u1000.h)
  * ========================================================================= */
-#define BE_U1000_IRQ_SW             3   /* Software interrupt */
-#define BE_U1000_IRQ_TIMER          7   /* Timer interrupt (CLINT mtime) */
-#define BE_U1000_IRQ_CLIC_SW        12  /* CLIC software interrupt */
-#define BE_U1000_IRQ_QSPI0          13
-#define BE_U1000_IRQ_QSPI1          14
-#define BE_U1000_IRQ_UART0          17
-#define BE_U1000_IRQ_UART1          18
-#define BE_U1000_IRQ_UART2          19
-#define BE_U1000_IRQ_I2C0           20
-#define BE_U1000_IRQ_I2C1           21
-#define BE_U1000_IRQ_I2S0           22
-#define BE_U1000_IRQ_TIM0_CH0       23
-#define BE_U1000_IRQ_TIM0_CH1       24
-#define BE_U1000_IRQ_TIM0_CH2       25
-#define BE_U1000_IRQ_TIM0_CH3       26
-#define BE_U1000_IRQ_WDT0           27
-#define BE_U1000_IRQ_GPIO0          28
-#define BE_U1000_IRQ_GPIO1          29
-#define BE_U1000_IRQ_GPIO2          30
-#define BE_U1000_IRQ_PWMG0          31
-#define BE_U1000_IRQ_SPI0           32
-#define BE_U1000_IRQ_SPI1           33
-#define BE_U1000_IRQ_UART3          34
-#define BE_U1000_IRQ_UART4          35
-#define BE_U1000_IRQ_UART5          36
-#define BE_U1000_IRQ_I2C2           37
-#define BE_U1000_IRQ_I2C3           38
-#define BE_U1000_IRQ_I2S1           39
-#define BE_U1000_IRQ_TIM1_CH0       40
-#define BE_U1000_IRQ_TIM1_CH1       41
-#define BE_U1000_IRQ_TIM1_CH2       42
-#define BE_U1000_IRQ_TIM1_CH3       43
-#define BE_U1000_IRQ_WDT1           44
-#define BE_U1000_IRQ_PWMG1          45
-#define BE_U1000_IRQ_SPI2           46
-#define BE_U1000_IRQ_SPI3           47
-#define BE_U1000_IRQ_CANFD0         48
-#define BE_U1000_IRQ_CANFD1         49
-#define BE_U1000_IRQ_ADC0           50
-#define BE_U1000_IRQ_ADC1           51
-#define BE_U1000_IRQ_ADC2           52
-#define BE_U1000_IRQ_PWMA0          53
-#define BE_U1000_IRQ_PWMA1          54
-#define BE_U1000_IRQ_PWMA2          55
-#define BE_U1000_IRQ_PWMA3          56
-#define BE_U1000_IRQ_QE0            57
-#define BE_U1000_IRQ_QE1            58
-#define BE_U1000_IRQ_QE2            59
-#define BE_U1000_IRQ_QE3            60
-#define BE_U1000_IRQ_USB            61
-#define BE_U1000_IRQ_UART6          62
-#define BE_U1000_IRQ_UART7          63
-#define BE_U1000_IRQ_DMA0           64
-#define BE_U1000_IRQ_DMA1           65
-#define BE_U1000_IRQ_USB_DMA        66
-#define BE_U1000_IRQ_CORE2          67
-#define BE_U1000_IRQ_MAILBOX        68
-#define BE_U1000_IRQ_EXTI           69
-#define BE_U1000_IRQ_BUS_ERROR      70
-#define BE_U1000_IRQ_PLL_UNLOCK     71
+#define BE_U1000_IRQ_SW              3
+#define BE_U1000_IRQ_TIMER           7
+#define BE_U1000_IRQ_CLIC_SW         12
+#define BE_U1000_IRQ_QSPI0           16
+#define BE_U1000_IRQ_UART0           17
+#define BE_U1000_IRQ_UART1           18
+#define BE_U1000_IRQ_UART2           19
+#define BE_U1000_IRQ_I2C0            20
+#define BE_U1000_IRQ_I2C1            21
+#define BE_U1000_IRQ_I2S0            22
+#define BE_U1000_IRQ_TIM0_CH0        23
+#define BE_U1000_IRQ_TIM0_CH1        24
+#define BE_U1000_IRQ_TIM0_CH2        25
+#define BE_U1000_IRQ_TIM0_CH3        26
+#define BE_U1000_IRQ_WDT0            27
+#define BE_U1000_IRQ_GPIO0           28
+#define BE_U1000_IRQ_PWMG0           29
+#define BE_U1000_IRQ_SPI0            30
+#define BE_U1000_IRQ_SPI1            31
+#define BE_U1000_IRQ_CANFD0          32
+#define BE_U1000_IRQ_QSPI1           33
+#define BE_U1000_IRQ_UART3           34
+#define BE_U1000_IRQ_UART4           35
+#define BE_U1000_IRQ_UART5           36
+#define BE_U1000_IRQ_I2C2            37
+#define BE_U1000_IRQ_I2C3            38
+#define BE_U1000_IRQ_I2S1            39
+#define BE_U1000_IRQ_TIM1_CH0        40
+#define BE_U1000_IRQ_TIM1_CH1        41
+#define BE_U1000_IRQ_TIM1_CH2        42
+#define BE_U1000_IRQ_TIM1_CH3        43
+#define BE_U1000_IRQ_GPIO1           45
+#define BE_U1000_IRQ_PWMG1           46
+#define BE_U1000_IRQ_SPI2            47
+#define BE_U1000_IRQ_SPI3            48
+#define BE_U1000_IRQ_CANFD1          49
+#define BE_U1000_IRQ_ADC0            50
+#define BE_U1000_IRQ_ADC1            51
+#define BE_U1000_IRQ_ADC2            52
+#define BE_U1000_IRQ_PWMA0           53
+#define BE_U1000_IRQ_QE0             54
+#define BE_U1000_IRQ_PWMA1           55
+#define BE_U1000_IRQ_QE1             56
+#define BE_U1000_IRQ_PWMA2           57
+#define BE_U1000_IRQ_QE2             58
+#define BE_U1000_IRQ_PWMA3           59
+#define BE_U1000_IRQ_QE3             60
+#define BE_U1000_IRQ_GPIO2           61
+#define BE_U1000_IRQ_UART6           62
+#define BE_U1000_IRQ_UART7           63
+#define BE_U1000_IRQ_USB             64
+#define BE_U1000_IRQ_DMA0            65
+#define BE_U1000_IRQ_DMA1            66
+#define BE_U1000_IRQ_USB_DMA         67
+#define BE_U1000_IRQ_CORE2           68
+#define BE_U1000_IRQ_MAILBOX0        69
+#define BE_U1000_IRQ_MAILBOX1        70
+#define BE_U1000_IRQ_EXTI_PA         71
+#define BE_U1000_IRQ_EXTI_PB         72
+#define BE_U1000_IRQ_EXTI_PC         73
+#define BE_U1000_IRQ_BUS_ERROR_CORE0 75
+#define BE_U1000_IRQ_BUS_ERROR_CORE1 76
+#define BE_U1000_IRQ_PLL_UNLOCK      77
+
+/* Backward-compatible aliases for older repo naming. */
+#define BE_U1000_IRQ_WDT1            BE_U1000_IRQ_GPIO1
+#define BE_U1000_IRQ_MAILBOX         BE_U1000_IRQ_MAILBOX0
+#define BE_U1000_IRQ_EXTI            BE_U1000_IRQ_EXTI_PA
+#define BE_U1000_IRQ_BUS_ERROR       BE_U1000_IRQ_BUS_ERROR_CORE0
 
 /* ============================================================================
  * Default console UART for RTOS
@@ -197,11 +209,65 @@
 #define BE_U1000_CONSOLE_UART_IRQ   BE_U1000_IRQ_UART0
 #define BE_U1000_CONSOLE_BAUD       115200
 
-#define BE_U1000_DIAG_GPIO_BASE     BE_U1000_GPIO2_BASE
-#define BE_U1000_DIAG_GPIO_PIN      13
-#define BE_U1000_DIAG_SPI_BASE      BE_U1000_SPI0_BASE
+#define BE_U1000_CONSOLE_UART_PORT   0u
+#define BE_U1000_CONSOLE_UART_TX_PIN 6u
+#define BE_U1000_CONSOLE_UART_RX_PIN 7u
+#define BE_U1000_CONSOLE_UART_AF     1u
+
+#define BE_U1000_USER_LED_GPIO_BASE  BE_U1000_GPIO2_BASE
+#define BE_U1000_USER_LED_GPIO_PIN   0u
+#define BE_U1000_USER_LED_PORT       2u
+#define BE_U1000_USER_LED_PIN        0u
+#define BE_U1000_USER_LED_AF         0u
+
+#define BE_U1000_USER_BTN_GPIO_BASE  BE_U1000_GPIO2_BASE
+#define BE_U1000_USER_BTN_GPIO_PIN   13u
+#define BE_U1000_USER_BTN_PORT       2u
+#define BE_U1000_USER_BTN_PIN        13u
+#define BE_U1000_USER_BTN_AF         0u
+
+#define BE_U1000_HEADER_I2C_BASE     BE_U1000_I2C0_BASE
+#define BE_U1000_HEADER_I2C_SCL_PORT 0u
+#define BE_U1000_HEADER_I2C_SCL_PIN  4u
+#define BE_U1000_HEADER_I2C_SDA_PORT 0u
+#define BE_U1000_HEADER_I2C_SDA_PIN  5u
+#define BE_U1000_HEADER_I2C_AF       2u
+
+#define BE_U1000_HEADER_SPI_BASE     BE_U1000_SPI1_BASE
+#define BE_U1000_HEADER_SPI_CS_PORT  0u
+#define BE_U1000_HEADER_SPI_CS_PIN   8u
+#define BE_U1000_HEADER_SPI_SCK_PORT 0u
+#define BE_U1000_HEADER_SPI_SCK_PIN  9u
+#define BE_U1000_HEADER_SPI_MOSI_PORT 0u
+#define BE_U1000_HEADER_SPI_MOSI_PIN 10u
+#define BE_U1000_HEADER_SPI_MISO_PORT 0u
+#define BE_U1000_HEADER_SPI_MISO_PIN 11u
+#define BE_U1000_HEADER_SPI_AF       1u
+
+#define BE_U1000_QSPI1_PORT          1u
+#define BE_U1000_QSPI1_CS_PIN        0u
+#define BE_U1000_QSPI1_SCK_PIN       1u
+#define BE_U1000_QSPI1_IO0_PIN       2u
+#define BE_U1000_QSPI1_IO1_PIN       3u
+#define BE_U1000_QSPI1_IO2_PIN       4u
+#define BE_U1000_QSPI1_IO3_PIN       5u
+#define BE_U1000_QSPI1_AF            3u
+
+#define BE_U1000_CANFD0_PORT         0u
+#define BE_U1000_CANFD0_PIN_A        14u
+#define BE_U1000_CANFD0_PIN_B        15u
+#define BE_U1000_CANFD0_AF           3u
+
+#define BE_U1000_CANFD1_PORT         1u
+#define BE_U1000_CANFD1_PIN_A        6u
+#define BE_U1000_CANFD1_PIN_B        7u
+#define BE_U1000_CANFD1_AF           2u
+
+#define BE_U1000_DIAG_GPIO_BASE     BE_U1000_USER_LED_GPIO_BASE
+#define BE_U1000_DIAG_GPIO_PIN      BE_U1000_USER_LED_GPIO_PIN
+#define BE_U1000_DIAG_SPI_BASE      BE_U1000_HEADER_SPI_BASE
 #define BE_U1000_DIAG_SPI_BAUD_DIV  32
-#define BE_U1000_DIAG_I2C_BASE      BE_U1000_I2C0_BASE
+#define BE_U1000_DIAG_I2C_BASE      BE_U1000_HEADER_I2C_BASE
 #define BE_U1000_DIAG_I2C_BUS_HZ    100000
 
 /* ============================================================================

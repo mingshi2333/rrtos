@@ -29,6 +29,9 @@
 .section .text.init, "ax", @progbits
 .globl _start
 .type _start, @function
+#if OS_CFG_SMP_EN
+.extern os_smp_secondary_start
+#endif
 _start:
     /* ---------------------------------------------------------------
      * Multi-core boot: only Core0 (mhartid=0) proceeds to boot
@@ -156,8 +159,12 @@ _secondary_wait:
     li      t1, MSTATUS_MPP | MSTATUS_MPIE | MSTATUS_FS
     csrw    mstatus, t1
 
-    /* Enter kernel main on secondary hart (SMP init handled by kernel) */
+    /* Enter the secondary CPU path when SMP is enabled. */
+#if OS_CFG_SMP_EN
+    la      t1, os_smp_secondary_start
+#else
     la      t1, os_kernel_main
+#endif
     csrw    mepc, t1
     mret
 

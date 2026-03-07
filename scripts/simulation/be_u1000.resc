@@ -19,6 +19,11 @@ showAnalyzer uart0
 # Load the RTOS binary
 # The binary is built to run from TCMA (0x40010000)
 sysbus LoadELF @build-be_u1000/rrtos_be_u1000.elf
+sysbus LoadBinary @build-be_u1000/rrtos_be_u1000.bin 0x40010000
+sysbus WriteDoubleWord 0x90000000 0x31505351
+sysbus WriteDoubleWord 0x90000004 0x5F4C444D
+sysbus WriteDoubleWord 0x90000008 0x00010010
+sysbus WriteDoubleWord 0x9000000C 0xA55A3CC3
 
 # Set simulation speed
 # cpu0 PerformanceInMips 200

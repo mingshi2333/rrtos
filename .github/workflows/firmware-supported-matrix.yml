@@ -64,8 +64,8 @@ jobs:
       - name: Setup Pixi
         uses: prefix-dev/setup-pixi@v0.8.8
 
-      - name: Install QEMU system emulator
-        run: sudo apt-get update && sudo apt-get install -y qemu-system-misc
+      - name: Install runner dependencies
+        run: sudo apt-get update && sudo apt-get install -y qemu-system-misc gcc-riscv64-unknown-elf
 
       - name: Validate canonical AI path
         run: pixi run -e rv32 validate-supported-ai
@@ -83,6 +83,16 @@ jobs:
 
       - name: Setup Pixi
         uses: prefix-dev/setup-pixi@v0.8.8
+
+      - name: Install cross toolchain dependency
+        run: sudo apt-get update && sudo apt-get install -y gcc-riscv64-unknown-elf
+
+      - name: Install Renode portable
+        run: |
+          wget -q https://builds.renode.io/renode-latest.linux-portable.tar.gz
+          mkdir -p "$HOME/renode-portable"
+          tar xf renode-latest.linux-portable.tar.gz -C "$HOME/renode-portable" --strip-components=1
+          echo "$HOME/renode-portable" >> "$GITHUB_PATH"
 
       - name: Build and validate BE-U1000 lane
         run: pixi run -e be-u1000 validate-supported

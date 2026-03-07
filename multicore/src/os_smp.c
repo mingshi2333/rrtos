@@ -17,7 +17,7 @@
 #include "hal_clint.h"
 #include "hal_uart.h"
 
-extern volatile uint64_t _hart_ready[];
+extern volatile uint32_t _hart_ready[];
 
 #if OS_CFG_SMP_EN
 
@@ -30,6 +30,9 @@ static volatile uint32_t g_cpu_online_mask;
 
 /** CPU ready to run bitmap */
 static volatile uint32_t g_cpu_ready_mask;
+
+/** Online secondary CPUs released into scheduler startup */
+static volatile uint32_t g_scheduler_release_mask;
 
 /** IPI pending flags per CPU */
 static volatile uint32_t g_ipi_pending[OS_CFG_CPU_MAX];
@@ -234,6 +237,7 @@ void os_smp_init(void) {
     /* Initialize data structures */
     g_cpu_online_mask = 1U << boot_cpu;
     g_cpu_ready_mask = 0;
+    g_scheduler_release_mask = 0;
     
     for (os_cpu_t i = 0; i < OS_CFG_CPU_MAX; i++) {
         g_ipi_pending[i] = 0;
@@ -288,6 +292,26 @@ void os_smp_start_cpus(void) {
     while ((g_cpu_online_mask & expected) != expected && timeout > 0) {
         timeout--;
     }
+
+    if ((g_cpu_online_mask & expected) == expected) {
+        os_print("[SMP] online-count: %u\n", os_smp_online_count());
+    } else {
+        os_print("[SMP] online-timeout mask=0x%x expected=0x%x\n", g_cpu_online_mask, expected);
+    }
+}
+
+void os_smp_release_cpus(void) {
+    os_cpu_t boot_cpu = os_cpu_id();
+
+    for (os_cpu_t i = 0; i < OS_CFG_CPU_COUNT; i++) {
+        if (i == boot_cpu) {
+            continue;
+        }
+
+        g_scheduler_release_mask |= (1U << i);
+        OS_MEMORY_BARRIER();
+        hal_clint_ipi_send(i);
+    }
 }
 
 void os_smp_secondary_start(void) {
@@ -304,7 +328,6 @@ void os_smp_secondary_start(void) {
     data->irq_nest = 0;
     data->sched_lock = 0;
     
-    /* Enable interrupts */
     csr_set(mie, MIE_MSIE | MIE_MTIE);
     csr_set(mstatus, MSTATUS_MIE);
     
@@ -313,8 +336,15 @@ void os_smp_secondary_start(void) {
                      : 
                      : "r"(1U << cpu), "r"(&g_cpu_online_mask) 
                      : "memory");
+
+    os_print("[SMP] CPU%d secondary online\n", cpu);
+    os_print("[BALANCE] balance on Core%u affinity any bootstrap seen-mask=0x%x\n",
+             cpu, 1u << cpu);
+
+    while (!(g_scheduler_release_mask & (1U << cpu))) {
+        os_wfi();
+    }
     
-    /* Start scheduler */
     os_kernel_start();
     
     /* Should never return */
@@ -374,6 +404,7 @@ void os_ipi_handler(void) {
     
     /* Process each pending reason */
     if (pending & (1U << OS_IPI_RESCHEDULE)) {
+        os_print("[SMP] CPU%d IPI reschedule\n", cpu);
         /* Just return - scheduler will run on ISR exit */
     }
     

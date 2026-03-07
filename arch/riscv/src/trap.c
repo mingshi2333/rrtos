@@ -6,11 +6,11 @@
 #include "hal_uart.h"
 
 #include "os_config.h"
+#if OS_CFG_SMP_EN
+#include "os_smp.h"
+#endif
 
 extern void os_tick_handler(void);
-#if OS_CFG_SMP_EN
-extern void os_ipi_handler(uint32_t cpu);
-#endif
 
 #if OS_CFG_IRQ_MODEL_CLIC
 extern void hal_clic_dispatch(uint32_t irq_num);
@@ -37,8 +37,7 @@ void os_trap_handler(void *sp) {
                 
             case 3:
 #if OS_CFG_SMP_EN
-                hal_clint_ipi_clear(cpu);
-                os_ipi_handler(cpu);
+                os_ipi_handler();
 #endif
                 break;
                 

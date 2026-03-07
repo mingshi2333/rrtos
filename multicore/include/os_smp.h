@@ -78,6 +78,13 @@ void os_smp_init(void);
 void os_smp_start_cpus(void);
 
 /**
+ * @brief Release online secondary CPUs into the scheduler start path.
+ *
+ * Call after the boot CPU has created and configured the initial tasks.
+ */
+void os_smp_release_cpus(void);
+
+/**
  * @brief Secondary CPU entry point
  * 
  * Called by startup code on secondary CPUs.

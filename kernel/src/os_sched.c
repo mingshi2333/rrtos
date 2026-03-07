@@ -3,6 +3,10 @@
 #include "riscv_atomic.h"
 #include "hal_clint.h"
 
+#if OS_CFG_SMP_EN
+#include "os_smp.h"
+#endif
+
 extern void os_context_switch(void **from_sp, void **to_sp);
 extern void os_context_switch_first(void **to_sp);
 extern void os_heap_init(void);
@@ -57,6 +61,41 @@ static void os_list_remove(os_list_t *list, os_tcb_t *tcb) {
 }
 
 static void task_ready_add(os_tcb_t *tcb);
+
+#if OS_CFG_SMP_EN
+static bool task_affinity_matches_cpu(const os_tcb_t *tcb, os_cpu_t cpu) {
+    return tcb->affinity == OS_CPU_ANY || tcb->affinity == cpu;
+}
+
+static bool task_is_schedulable_on_cpu(const os_tcb_t *tcb, os_cpu_t cpu) {
+    if (!tcb) {
+        return false;
+    }
+
+    if (!task_affinity_matches_cpu(tcb, cpu)) {
+        return false;
+    }
+
+    if (tcb->state == OS_TASK_RUNNING && tcb->cpu_id != cpu) {
+        return false;
+    }
+
+    return tcb->state == OS_TASK_READY ||
+           (tcb->state == OS_TASK_RUNNING && tcb->cpu_id == cpu);
+}
+
+static bool ready_list_has_peer_for_cpu(os_prio_t prio, os_cpu_t cpu, const os_tcb_t *exclude) {
+    os_tcb_t *iter = g_ready_list[prio].head;
+    while (iter) {
+        if (iter != exclude && task_is_schedulable_on_cpu(iter, cpu)) {
+            return true;
+        }
+        iter = iter->next;
+    }
+
+    return false;
+}
+#endif
 
 static void task_timeout_wake(os_tcb_t *task) {
     switch (task->pending_type) {
@@ -128,12 +167,34 @@ static void task_ready_remove(os_tcb_t *tcb) {
     }
 }
 
-static os_tcb_t *sched_highest_ready(void) {
+static os_tcb_t *sched_highest_ready(os_cpu_t cpu) {
     int prio = bitmap_ffs(g_ready_bitmap, OS_CFG_PRIO_MAX);
-    if (prio >= 0 && g_ready_list[prio].head) {
-        return g_ready_list[prio].head;
+
+    while (prio >= 0) {
+        os_tcb_t *iter = g_ready_list[prio].head;
+        while (iter) {
+#if OS_CFG_SMP_EN
+            if (task_is_schedulable_on_cpu(iter, cpu)) {
+                return iter;
+            }
+#else
+            return iter;
+#endif
+            iter = iter->next;
+        }
+
+        prio++;
+        while ((uint32_t)prio < OS_CFG_PRIO_MAX) {
+            if (g_ready_bitmap[prio >> 3] & (1U << (prio & 7))) {
+                break;
+            }
+            prio++;
+        }
+        if ((uint32_t)prio >= OS_CFG_PRIO_MAX) {
+            break;
+        }
     }
-    os_cpu_t cpu = os_cpu_id();
+
     return &g_idle_tcb[cpu];
 }
 
@@ -211,7 +272,7 @@ void os_kernel_init(void) {
 void os_kernel_start(void) {
     os_cpu_t cpu = os_cpu_id();
     
-    os_tcb_t *first = sched_highest_ready();
+    os_tcb_t *first = sched_highest_ready(cpu);
     if (first != &g_idle_tcb[cpu]) {
         task_ready_remove(first);
     }
@@ -220,6 +281,7 @@ void os_kernel_start(void) {
     
 #if OS_CFG_SMP_EN
     g_cpu_data[cpu].current = first;
+    first->cpu_id = cpu;
 #endif
     
     g_kernel_running = true;
@@ -269,7 +331,11 @@ void os_tick_handler(void) {
         current->time_slice--;
         if (current->time_slice == 0) {
             current->time_slice = OS_CFG_TIME_SLICE_TICKS;
-            if (g_ready_list[current->priority].count > 0) {
+            if (g_ready_list[current->priority].count > 0
+#if OS_CFG_SMP_EN
+                && ready_list_has_peer_for_cpu(current->priority, cpu, current)
+#endif
+            ) {
                 task_ready_remove(current);
                 task_ready_add(current);
             }
@@ -480,7 +546,7 @@ void os_sched(void) {
     os_reg_t flags = os_spinlock_irq_save(&g_sched_lock);
     
     os_tcb_t *current = g_current_task[cpu];
-    os_tcb_t *next = sched_highest_ready();
+    os_tcb_t *next = sched_highest_ready(cpu);
     
     if (next != current && next != &g_idle_tcb[cpu]) {
         task_ready_remove(next);
@@ -531,10 +597,21 @@ os_err_t os_task_set_affinity(os_tcb_t *tcb, os_cpu_t affinity) {
     if (!tcb) {
         return OS_EINVAL;
     }
+
+    if (affinity != OS_CPU_ANY && affinity >= OS_CFG_CPU_COUNT) {
+        return OS_EINVAL;
+    }
     
     os_reg_t flags = os_spinlock_irq_save(&g_sched_lock);
     tcb->affinity = affinity;
     os_spinlock_irq_restore(&g_sched_lock, flags);
+
+    if (g_kernel_running) {
+        if (tcb->state == OS_TASK_RUNNING && affinity != OS_CPU_ANY && tcb->cpu_id != affinity) {
+            os_ipi_send(tcb->cpu_id, OS_IPI_RESCHEDULE);
+        }
+        os_sched();
+    }
     
     return OS_EOK;
 }

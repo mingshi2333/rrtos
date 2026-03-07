@@ -63,15 +63,31 @@ set(CMAKE_ASM_FLAGS_INIT "${RISCV_FLAGS} -ffreestanding -nostdlib -nostartfiles 
 set(CMAKE_CXX_FLAGS_INIT "${RISCV_FLAGS} -ffreestanding -nostdlib -nostartfiles -fno-pic -fno-plt -ffunction-sections -fdata-sections -U_POSIX_C_SOURCE -D_POSIX_C_SOURCE=0")
 
 # Linker flags (use lld for ilp32d)
-# Find the system GCC's hard-float library (libgcc)
-execute_process(COMMAND /usr/bin/riscv64-linux-gnu-gcc -march=${RISCV_MARCH} -mabi=${RISCV_MABI} -print-libgcc-file-name OUTPUT_VARIABLE LIBGCC_PATH OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
-if(LIBGCC_PATH AND EXISTS "${LIBGCC_PATH}")
+# Probe a GCC toolchain that can supply RV32 hard-float libgcc.
+set(LIBGCC_PATH "")
+set(LIBGCC_PROBE "")
+foreach(LIBGCC_CANDIDATE riscv64-unknown-elf-gcc riscv64-linux-gnu-gcc)
+  execute_process(
+    COMMAND ${LIBGCC_CANDIDATE} -march=${RISCV_MARCH} -mabi=${RISCV_MABI} -print-libgcc-file-name
+    OUTPUT_VARIABLE LIBGCC_CANDIDATE_PATH
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_QUIET
+    RESULT_VARIABLE LIBGCC_CANDIDATE_RC
+  )
+  if(LIBGCC_CANDIDATE_RC EQUAL 0 AND LIBGCC_CANDIDATE_PATH AND EXISTS "${LIBGCC_CANDIDATE_PATH}")
+    set(LIBGCC_PATH "${LIBGCC_CANDIDATE_PATH}")
+    set(LIBGCC_PROBE "${LIBGCC_CANDIDATE}")
+    break()
+  endif()
+endforeach()
+
+if(LIBGCC_PATH)
   get_filename_component(LIBGCC_DIR ${LIBGCC_PATH} DIRECTORY)
-  message(STATUS "Found libgcc for hard-float: ${LIBGCC_PATH}")
+  message(STATUS "Found libgcc for hard-float via ${LIBGCC_PROBE}: ${LIBGCC_PATH}")
   # Add -L${LIBGCC_DIR} -lgcc to explicitly link
   set(CMAKE_EXE_LINKER_FLAGS_INIT "${RISCV_FLAGS} -nostdlib -nostartfiles -static -fuse-ld=lld -Wl,--gc-sections -Wl,--no-relax -L${LIBGCC_DIR} -lgcc")
 else()
-  message(WARNING "Could not find libgcc for hard-float. Link errors may occur.")
+  message(WARNING "Could not find RV32 hard-float libgcc. Link errors may occur.")
   set(CMAKE_EXE_LINKER_FLAGS_INIT "${RISCV_FLAGS} -nostdlib -nostartfiles -static -fuse-ld=lld -Wl,--gc-sections -Wl,--no-relax")
 endif()
 

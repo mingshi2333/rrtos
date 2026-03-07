@@ -10,6 +10,49 @@ DEFINE_RE = re.compile(r"^\s*#define\s+([A-Za-z0-9_]+)\s+(.+?)\s*$")
 TOKEN_RE = re.compile(r"\b[A-Za-z_][A-Za-z0-9_]*\b")
 
 
+def parse_task_affinity(spec: str) -> tuple[str, str]:
+    task, sep, core = spec.partition(":")
+    if not sep or not task or not core:
+        raise ValueError(
+            f"invalid affinity expectation '{spec}', expected TASK:Core0 or TASK:Core1"
+        )
+
+    normalized_core = core.strip().lower()
+    if normalized_core not in {"core0", "core1", "cpu0", "cpu1"}:
+        raise ValueError(
+            f"invalid affinity core '{core}' in '{spec}', expected Core0/Core1"
+        )
+
+    return task.strip(), f"Core{normalized_core[-1]}"
+
+
+def parse_expected_qspi_signature(spec: str) -> list[int]:
+    parts = spec.replace(",", " ").split()
+    if not parts:
+        raise ValueError("empty QSPI signature specification")
+    return [int(part, 0) for part in parts]
+
+
+def parse_expected_qspi_signature_args(specs: list[str]) -> list[int]:
+    words: list[int] = []
+    for spec in specs:
+        words.extend(parse_expected_qspi_signature(spec))
+    return words
+
+
+def affinity_marker_found(log_text: str, task_name: str, core_name: str) -> bool:
+    task_pattern = re.escape(task_name)
+    core_index = core_name[-1]
+    core_pattern = rf"(?:Core|CPU|core|cpu){core_index}"
+    patterns = [
+        rf"\[SMP\].*?{task_pattern}.*?{core_pattern}",
+        rf"\[AFFINITY\].*?{task_pattern}.*?{core_pattern}",
+        rf"\b{task_pattern}\b.*?affinity.*?{core_pattern}",
+        rf"\b{task_pattern}\b.*?(?:on|@|->)\s*{core_pattern}",
+    ]
+    return any(re.search(pattern, log_text) for pattern in patterns)
+
+
 def normalize_expr(expr: str) -> str:
     expr = expr.split("/*", 1)[0].strip()
     expr = expr.split("//", 1)[0].strip()
@@ -79,10 +122,34 @@ def main() -> int:
     _ = ap.add_argument("--log", required=True)
     _ = ap.add_argument("--expect-irq-model", default="CLIC")
     _ = ap.add_argument("--board-config", default="boards/be_u1000/board_config.h")
+    _ = ap.add_argument("--expect-smp-online-count", type=int)
+    _ = ap.add_argument("--require-smp-ipi", action="store_true")
+    _ = ap.add_argument(
+        "--expect-single-core-fallback",
+        action="store_true",
+        help="Require the single-core fallback task-map marker",
+    )
+    _ = ap.add_argument(
+        "--expect-task-affinity",
+        action="append",
+        default=[],
+        metavar="TASK:CORE",
+        help="Require a task affinity marker such as worker0:Core0 or worker1:Core1",
+    )
+    _ = ap.add_argument(
+        "--expect-qspi-signature",
+        nargs="+",
+        help="Require a QSPI1 sample line matching one or more hex words",
+    )
     args = ap.parse_args()
     log_arg = cast(str, args.log)
     expect_irq_model = cast(str, args.expect_irq_model)
     board_config_arg = cast(str, args.board_config)
+    expect_smp_online_count = cast(int | None, args.expect_smp_online_count)
+    require_smp_ipi = cast(bool, args.require_smp_ipi)
+    expect_single_core_fallback = cast(bool, args.expect_single_core_fallback)
+    expect_task_affinity = cast(list[str], args.expect_task_affinity)
+    expect_qspi_signature = cast(list[str] | None, args.expect_qspi_signature)
 
     path = Path(log_arg)
     board_config_path = Path(board_config_arg)
@@ -104,6 +171,13 @@ def main() -> int:
         "[CHK] I2C init: OK",
         "[BOOT] Starting scheduler...",
     ]
+    ordered_tokens = [
+        "[BOOT] RUN_MARKER:",
+        f"[BOOT] IRQ model: {expect_irq_model}",
+        "[CHK] CLINT mtime monotonic: OK",
+        "[BOOT] Initializing kernel...",
+        "[BOOT] Starting scheduler...",
+    ]
 
     failures: list[str] = []
     for token in required:
@@ -115,7 +189,7 @@ def main() -> int:
         failures.append("found failing check markers in boot log")
 
     positions: list[int] = []
-    for token in required:
+    for token in ordered_tokens:
         pos = txt.find(token)
         positions.append(pos)
     if any(p == -1 for p in positions):
@@ -127,6 +201,50 @@ def main() -> int:
     run_marker = re.search(r"\[BOOT\] RUN_MARKER: 0x([0-9a-fA-F]+)", txt)
     if run_marker is None:
         failures.append("missing valid RUN_MARKER hex token")
+
+    if expect_smp_online_count is not None:
+        role_tokens = [
+            "[SMP] role-plan: core0=boot core1=worker core2=reserved",
+            "[SMP] role-plan: core0=control core1=worker core2=reserved",
+        ]
+        if not any(token in txt for token in role_tokens):
+            failures.append(
+                "missing token: [SMP] role-plan: core0=<boot|control> core1=worker core2=reserved"
+            )
+
+        online_token = f"[SMP] online-count: {expect_smp_online_count}"
+        if online_token not in txt:
+            failures.append(f"missing token: {online_token}")
+
+        for cpu in range(1, expect_smp_online_count):
+            token = f"[SMP] CPU{cpu} secondary online"
+            if token not in txt:
+                failures.append(f"missing token: {token}")
+
+    if require_smp_ipi and "[SMP] CPU1 IPI reschedule" not in txt:
+        failures.append("missing token: [SMP] CPU1 IPI reschedule")
+
+    if expect_single_core_fallback:
+        fallback_tokens = [
+            "[BOOT] task-map: control+worker share single core",
+            "[CTRL] single-core tick 0",
+            "[WORK] single-core tick 0",
+        ]
+        for token in fallback_tokens:
+            if token not in txt:
+                failures.append(f"missing token: {token}")
+
+    for affinity_spec in expect_task_affinity:
+        try:
+            task_name, core_name = parse_task_affinity(affinity_spec)
+        except ValueError as exc:
+            failures.append(str(exc))
+            continue
+
+        if not affinity_marker_found(txt, task_name, core_name):
+            failures.append(
+                f"missing affinity marker for task '{task_name}' on {core_name}"
+            )
 
     mtime_line = re.search(
         r"\[CHK\] CLINT mtime monotonic: OK \(0x([0-9a-fA-F]+) -> 0x([0-9a-fA-F]+)\)",
@@ -208,6 +326,29 @@ def main() -> int:
             failures.append(
                 f"I2C bus-hz mismatch: board={expected_i2c_hz} log={i2c_hz}"
             )
+
+    if expect_qspi_signature is not None:
+        try:
+            expected_words = parse_expected_qspi_signature_args(expect_qspi_signature)
+        except ValueError as exc:
+            failures.append(str(exc))
+        else:
+            qspi_line = re.search(r"\[SELFTEST\] QSPI1 window sample: (.+)", txt)
+            if qspi_line is None:
+                failures.append("missing QSPI1 window sample line")
+            else:
+                actual_words = [
+                    int(part, 16)
+                    for part in re.findall(r"0x([0-9a-fA-F]+)", qspi_line.group(1))
+                ]
+                if len(actual_words) < len(expected_words):
+                    failures.append(
+                        f"QSPI sample too short: expected {len(expected_words)} words got {len(actual_words)}"
+                    )
+                elif actual_words[: len(expected_words)] != expected_words:
+                    failures.append(
+                        f"QSPI signature mismatch: expected {expected_words} got {actual_words[: len(expected_words)]}"
+                    )
 
     if failures:
         print("BOOT_LOG_CHECK_FAILED")
