@@ -1,13 +1,18 @@
 # Build directories
 build/
+build-*/
 debug_build/
 .pixi/
 .mamba/
 .cache/
 .ruff_cache/
+__pycache__/
+*.pyc
 build_esp32
+.sisyphus
 # Temporary files
 *.log
+*.log.*
 *.tmp
 temp_test/
 /tmp/

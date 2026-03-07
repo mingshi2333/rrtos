@@ -1,6 +1,7 @@
 :name: mobilenet_test_polarfire
 :description: RISC-V 64-bit PolarFire SoC for MobileNet test
 
+# Historical script: board-specific experiment, not a supported lane.
 $bin?=@build/mobilenet_test
 
 # Create machine (PolarFire SoC Icicle Kit)

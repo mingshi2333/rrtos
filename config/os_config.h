@@ -27,10 +27,17 @@
 #endif
 
 /** @brief CPU clock frequency in Hz */
+#ifndef OS_CFG_CPU_FREQ_HZ
 #define OS_CFG_CPU_FREQ_HZ          100000000UL
+#endif
 
 /** @brief System tick frequency in Hz */
 #define OS_CFG_TICK_FREQ_HZ         1000
+
+/** @brief Timer clock frequency in Hz */
+#ifndef OS_CFG_TIMER_FREQ_HZ
+#define OS_CFG_TIMER_FREQ_HZ        10000000UL
+#endif
 
 /*===========================================================================*/
 /* Kernel Configuration                                                       */
@@ -65,13 +72,19 @@
 /*===========================================================================*/
 
 /** @brief Enable SMP support */
+#ifndef OS_CFG_SMP_EN
 #define OS_CFG_SMP_EN               0
+#endif
 
 /** @brief Maximum number of CPU cores */
+#ifndef OS_CFG_CPU_MAX
 #define OS_CFG_CPU_MAX              1
+#endif
 
 /** @brief Number of active CPU cores */
+#ifndef OS_CFG_CPU_COUNT
 #define OS_CFG_CPU_COUNT            1
+#endif
 
 /** @brief Enable AMP mode support */
 #define OS_CFG_AMP_EN               1
@@ -148,7 +161,9 @@
 /*===========================================================================*/
 
 /** @brief Enable AI runtime */
+#ifndef OS_CFG_AI_EN
 #define OS_CFG_AI_EN                1
+#endif
 
 /** @brief AI backend selection */
 #define OS_CFG_AI_BACKEND_NATIVE    0
@@ -170,31 +185,13 @@
 #define OS_CFG_AI_PREEMPT_EN        1
 
 /*===========================================================================*/
-
-/** @brief Enable AI runtime */
-#define OS_CFG_AI_EN                1
-
-/** @brief AI tensor arena size */
-#define OS_CFG_AI_ARENA_SIZE        (300 * 1024)
-
-/** @brief Maximum loaded models */
-#define OS_CFG_AI_MODEL_MAX         4
-
-/** @brief Enable INT8 quantized inference */
-#define OS_CFG_AI_INT8_EN           1
-
-/** @brief AI task default priority */
-#define OS_CFG_AI_TASK_PRIO         128
-
-/** @brief Enable preemptible inference */
-#define OS_CFG_AI_PREEMPT_EN        1
-
-/*===========================================================================*/
 /* Federated Learning Configuration                                           */
 /*===========================================================================*/
 
 /** @brief Enable federated learning */
+#ifndef OS_CFG_FL_EN
 #define OS_CFG_FL_EN                1
+#endif
 
 /** @brief Local training batch size */
 #define OS_CFG_FL_BATCH_SIZE        16
@@ -269,25 +266,31 @@
 /* Platform Specific                                                          */
 /*===========================================================================*/
 
-/** @brief UART base address for debug output */
+#if defined(CONFIG_BOARD_BE_U1000)
+#include "board_config.h"
+
+#define OS_CFG_UART_BASE            BE_U1000_CONSOLE_UART_BASE
+#define OS_CFG_CLINT_BASE           BE_U1000_CLINT_BASE
+#define OS_CFG_PLIC_BASE            0   /* BE-U1000 uses CLIC, not PLIC */
+#define OS_CFG_RAM_BASE             BE_U1000_RAM_BASE
+#define OS_CFG_RAM_SIZE             BE_U1000_RAM_SIZE
+#define OS_CFG_FLASH_BASE           BE_U1000_EFLASH_BASE
+#define OS_CFG_FLASH_SIZE           BE_U1000_EFLASH_SIZE
+#define OS_CFG_IRQ_MODEL_CLIC       1
+#define OS_CFG_UART_BAUD            BE_U1000_CONSOLE_BAUD
+
+#else
+/* Default: QEMU virt machine */
 #define OS_CFG_UART_BASE            0x10000000UL
-
-/** @brief CLINT base address */
 #define OS_CFG_CLINT_BASE           0x02000000UL
-
-/** @brief PLIC base address */
 #define OS_CFG_PLIC_BASE            0x0C000000UL
-
-/** @brief RAM start address */
 #define OS_CFG_RAM_BASE             0x80000000UL
-
-/** @brief RAM size */
 #define OS_CFG_RAM_SIZE             (4 * 1024 * 1024)
-
-/** @brief Flash start address */
 #define OS_CFG_FLASH_BASE           0x20000000UL
-
-/** @brief Flash size */
 #define OS_CFG_FLASH_SIZE           (2 * 1024 * 1024)
+#define OS_CFG_IRQ_MODEL_CLIC       0
+#define OS_CFG_UART_BAUD            115200U
+
+#endif /* CONFIG_BOARD_BE_U1000 */
 
 #endif /* OS_CONFIG_H */

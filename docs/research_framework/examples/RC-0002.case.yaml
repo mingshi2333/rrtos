@@ -1,0 +1,66 @@
+case_id: RC-0002
+title: "CPU scheduling jitter impact on frame pacing"
+owner: perf-team
+objective: "Measure whether scheduler jitter contributes to p99 frame pacing variance."
+
+hypothesis:
+  primary: "Scheduler jitter is a significant contributor to p99 frame pacing spikes."
+  alternatives:
+    - "Memory pressure dominates spikes."
+    - "I/O burst dominates spikes."
+
+environment:
+  hardware: "rv32-sim"
+  os: "sim-runtime"
+  driver: "renode-1.15"
+  tool_versions:
+    pixi: "0.x"
+    cmake: "3.x"
+    python: "3.11+"
+
+procedure:
+  entrypoint: "pixi run -e rv32 sim-renode-ai"
+  params:
+    scenario: jitter-b
+    seed: "1337"
+  warmup_count: 5
+  measured_count: 30
+
+artifacts:
+  captures: []
+  traces:
+    - "s3://research-artifacts/RC-0002/RUN-20260306-CD34EF/trace.json"
+  logs:
+    - "s3://research-artifacts/RC-0002/RUN-20260306-CD34EF/run.log"
+  metrics_raw:
+    - "s3://research-artifacts/RC-0002/RUN-20260306-CD34EF/metrics.json"
+
+results:
+  metrics:
+    - name: frame_pacing_ms_p99
+      value: 31.4
+      unit: ms
+    - name: scheduler_jitter_us_p99
+      value: 870.0
+      unit: us
+  variance_note: "p99 is sensitive to background scheduling bursts in this scenario."
+
+conclusion:
+  statement: "Scheduler jitter correlates with frame pacing p99 spikes in this simulation path."
+  evidence_grade: G2
+  applicability_scope: "Linux rv32 simulation path"
+  uncertainty_note: "Correlation observed; hardware confirmation required for causality strength."
+
+replay:
+  command: "pixi run -e rv32 sim-renode-ai -- --scenario jitter-b --seed 1337"
+  expected_outputs:
+    - "metrics.json generated"
+    - "scheduler_jitter_us_p99 present"
+  pass_fail_rule: "frame_pacing_ms_p99 <= 33.0ms"
+
+provenance:
+  source_commit: def5678
+  source_branch: feature/jitter-study
+  actor: analyst-02
+  generated_by: validate_case.py
+  generated_at: "2026-03-06T11:00:00Z"

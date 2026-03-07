@@ -1,0 +1,10 @@
+:name: be_u1000_autorun
+:description: Non-interactive BE-U1000 boot validation
+
+mach create "be_u1000"
+machine LoadPlatformDescription @scripts/simulation/be_u1000.repl
+
+sysbus.uart0 CreateFileBackend @/home/mingshi/Project/PF/rrtos/logs/be_u1000_boot_sim.log
+sysbus LoadELF @/home/mingshi/Project/PF/rrtos/build-be_u1000/rrtos_be_u1000.elf
+
+start

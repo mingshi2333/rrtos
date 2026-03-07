@@ -1,0 +1,88 @@
+name: firmware-supported-matrix
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "CMakeLists.txt"
+      - "config/**"
+      - "kernel/**"
+      - "hal/**"
+      - "ai/**"
+      - "apps/**"
+      - "boards/be_u1000/**"
+      - "scripts/ai_codegen.py"
+      - "scripts/generate_mnist_validation_samples.py"
+      - "scripts/run_mnist_validation.py"
+      - "scripts/run_mnist_validation_renode.py"
+      - "scripts/compare_mnist_validation_logs.py"
+      - "scripts/test_ai_registry.sh"
+      - "scripts/validate_supported_ai_path.py"
+      - "scripts/be_u1000/**"
+      - "docs/SUPPORTED_MATRIX.md"
+      - "docs/README.md"
+      - "docs/AI_CANONICAL_PATH.md"
+      - "docs/switching_guide.md"
+      - "zoo/workflow.md"
+      - "pixi.toml"
+      - ".github/workflows/firmware-supported-matrix.yml"
+  pull_request:
+    paths:
+      - "CMakeLists.txt"
+      - "config/**"
+      - "kernel/**"
+      - "hal/**"
+      - "ai/**"
+      - "apps/**"
+      - "boards/be_u1000/**"
+      - "scripts/ai_codegen.py"
+      - "scripts/generate_mnist_validation_samples.py"
+      - "scripts/run_mnist_validation.py"
+      - "scripts/run_mnist_validation_renode.py"
+      - "scripts/compare_mnist_validation_logs.py"
+      - "scripts/test_ai_registry.sh"
+      - "scripts/validate_supported_ai_path.py"
+      - "scripts/be_u1000/**"
+      - "docs/SUPPORTED_MATRIX.md"
+      - "docs/README.md"
+      - "docs/AI_CANONICAL_PATH.md"
+      - "docs/switching_guide.md"
+      - "zoo/workflow.md"
+      - "pixi.toml"
+      - ".github/workflows/firmware-supported-matrix.yml"
+  workflow_dispatch:
+
+jobs:
+  rv32-supported:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Pixi
+        uses: prefix-dev/setup-pixi@v0.8.8
+
+      - name: Install QEMU system emulator
+        run: sudo apt-get update && sudo apt-get install -y qemu-system-misc
+
+      - name: Validate canonical AI path
+        run: pixi run -e rv32 validate-supported-ai
+
+      - name: Build and runtime-validate supported rv32 targets
+        run: pixi run -e rv32 validate-supported-rv32
+
+  be-u1000-supported:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Pixi
+        uses: prefix-dev/setup-pixi@v0.8.8
+
+      - name: Build and validate BE-U1000 lane
+        run: pixi run -e be-u1000 validate-supported

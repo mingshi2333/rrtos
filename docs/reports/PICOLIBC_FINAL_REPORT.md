@@ -26,7 +26,7 @@
 - ✅ Kernel Library: 759KB (+42KB, +6%)
 - ✅ AI Module: 2.2MB (No Change)
 - ✅ IREE operational
-- ⚠️ ai_test requires rewrite (API mismatch)
+- Historical note: `ai_test` had required a rewrite due to API mismatch and has since been removed from the tree
 
 ## Key Achievements
 
@@ -64,7 +64,6 @@
 ## Future Work
 
 ### Pending Tasks
-- [ ] Fix ai_test application (API adaptation)
 - [ ] Test printf/scanf functionality
 - [ ] Verify time function precision
 

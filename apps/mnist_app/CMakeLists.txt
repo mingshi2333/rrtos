@@ -4,9 +4,7 @@ project(mnist_app C)
 # Add the generated AI models library
 add_subdirectory(generated)
 
-add_executable(mnist_app src/main.c src/hooks.c)
-
-target_link_libraries(mnist_app
+set(MNIST_COMMON_LIBS
     rv_aios_models
     rv_aios_libc_shim
     rv_aios_drivers
@@ -14,23 +12,43 @@ target_link_libraries(mnist_app
     c m gcc gcc
 )
 
-target_include_directories(mnist_app PRIVATE
+set(MNIST_COMMON_INCLUDES
     ${CMAKE_SOURCE_DIR}/kernel/include
     ${CMAKE_SOURCE_DIR}/hal/include
 )
 
-target_compile_options(mnist_app PRIVATE
+set(MNIST_COMMON_COMPILE_OPTIONS
     -Wno-type-limits -Wno-unused-variable -Wno-unused-function
     -Wno-unused-parameter -Wno-cast-function-type
     -Wno-implicit-function-declaration -Wno-sign-compare -Wno-pointer-sign
     -include${CMAKE_SOURCE_DIR}/ai/iree_bare_metal_config.h
 )
 
-set_target_properties(mnist_app PROPERTIES
-    LINK_FLAGS "-T${LINKER_SCRIPT} -nostartfiles --ld-path=ld.lld -Wl,--gc-sections -Wl,--icf=all -Wl,--allow-multiple-definition"
-)
+function(configure_mnist_target target_name)
+    target_link_libraries(${target_name}
+        ${MNIST_COMMON_LIBS}
+    )
 
-add_custom_command(TARGET mnist_app POST_BUILD
-    COMMAND ${CMAKE_OBJCOPY} -O binary mnist_app mnist_app.bin
-    COMMAND ${CMAKE_SIZE} mnist_app
-)
+    target_include_directories(${target_name} PRIVATE
+        ${MNIST_COMMON_INCLUDES}
+    )
+
+    target_compile_options(${target_name} PRIVATE
+        ${MNIST_COMMON_COMPILE_OPTIONS}
+    )
+
+    set_target_properties(${target_name} PROPERTIES
+        LINK_FLAGS "-T${LINKER_SCRIPT} -nostartfiles --ld-path=ld.lld -Wl,--gc-sections -Wl,--icf=all -Wl,--allow-multiple-definition"
+    )
+
+    add_custom_command(TARGET ${target_name} POST_BUILD
+        COMMAND ${CMAKE_OBJCOPY} -O binary ${target_name} ${target_name}.bin
+        COMMAND ${CMAKE_SIZE} ${target_name}
+    )
+endfunction()
+
+add_executable(mnist_app src/main.c src/hooks.c)
+configure_mnist_target(mnist_app)
+
+add_executable(mnist_validation src/validation_main.c src/validation.c)
+configure_mnist_target(mnist_validation)

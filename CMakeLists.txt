@@ -38,10 +38,60 @@ link_directories(${PICOLIBC_ROOT}/lib)
 add_compile_options(-nostdlib -ffunction-sections -fdata-sections -Qunused-arguments -Wno-unused-parameter -Wno-unused-variable -Wno-missing-field-initializers -Wno-pointer-sign -Wno-sign-compare -Wno-cast-function-type -Wno-cast-function-type-mismatch)
 add_link_options(-nostdlib -Wl,--gc-sections -Wl,--strip-all -L${PICOLIBC_ROOT}/lib)
 
-option(OS_SMP_EN "Enable SMP support" ON)
+option(OS_SMP_EN "Enable SMP support" OFF)
 option(OS_AI_EN "Enable AI runtime" ON)
 option(OS_FL_EN "Enable Federated Learning" ON)
 option(OS_DEBUG "Enable debug build" ON)
+option(RRTOS_BUILD_EXPERIMENTAL_APPS "Build experimental apps and legacy AI demos" OFF)
+
+# Board Selection
+set(CONFIG_BOARD "qemu_virt" CACHE STRING "Target board (qemu_virt, be_u1000)")
+if(CONFIG_BOARD STREQUAL "be_u1000")
+    set(CONFIG_BOARD_BE_U1000 ON)
+    add_definitions(-DCONFIG_BOARD_BE_U1000=1)
+    add_definitions(-DCONFIG_IRQ_MODEL_CLIC=1)
+    include_directories(${CMAKE_SOURCE_DIR}/boards/be_u1000)
+endif()
+
+set(OS_CFG_CPU_FREQ_HZ_VALUE 100000000UL)
+set(OS_CFG_TIMER_FREQ_HZ_VALUE 10000000UL)
+set(OS_CFG_CPU_MAX_VALUE 1)
+set(OS_CFG_CPU_COUNT_VALUE 1)
+
+if(CONFIG_BOARD_BE_U1000)
+    set(OS_CFG_CPU_FREQ_HZ_VALUE 200000000UL)
+    set(OS_CFG_TIMER_FREQ_HZ_VALUE 1000000UL)
+    set(OS_CFG_CPU_MAX_VALUE 3)
+    set(OS_CFG_CPU_COUNT_VALUE 2)
+endif()
+
+if(OS_SMP_EN)
+    set(OS_CFG_SMP_EN_VALUE 1)
+else()
+    set(OS_CFG_SMP_EN_VALUE 0)
+endif()
+
+if(OS_AI_EN)
+    set(OS_CFG_AI_EN_VALUE 1)
+else()
+    set(OS_CFG_AI_EN_VALUE 0)
+endif()
+
+if(OS_FL_EN)
+    set(OS_CFG_FL_EN_VALUE 1)
+else()
+    set(OS_CFG_FL_EN_VALUE 0)
+endif()
+
+add_compile_definitions(
+    OS_CFG_SMP_EN=${OS_CFG_SMP_EN_VALUE}
+    OS_CFG_AI_EN=${OS_CFG_AI_EN_VALUE}
+    OS_CFG_FL_EN=${OS_CFG_FL_EN_VALUE}
+    OS_CFG_CPU_FREQ_HZ=${OS_CFG_CPU_FREQ_HZ_VALUE}
+    OS_CFG_TIMER_FREQ_HZ=${OS_CFG_TIMER_FREQ_HZ_VALUE}
+    OS_CFG_CPU_MAX=${OS_CFG_CPU_MAX_VALUE}
+    OS_CFG_CPU_COUNT=${OS_CFG_CPU_COUNT_VALUE}
+)
 
 # Architecture Selection
 set(ARCH_BITS "64" CACHE STRING "Target architecture bits (32 or 64)")
@@ -70,7 +120,14 @@ else()
 endif()
 
 # Linker Script
-if(NOT DEFINED LINKER_SCRIPT)
+if(CONFIG_BOARD_BE_U1000)
+    set(BE_U1000_MEMORY_MODEL "tcm" CACHE STRING "BE-U1000 memory model (tcm or flash)")
+    if(BE_U1000_MEMORY_MODEL STREQUAL "flash")
+        set(LINKER_SCRIPT "${CMAKE_SOURCE_DIR}/boards/be_u1000/link_be_u1000_flash.ld" CACHE FILEPATH "Linker script" FORCE)
+    else()
+        set(LINKER_SCRIPT "${CMAKE_SOURCE_DIR}/boards/be_u1000/link_be_u1000_tcm.ld" CACHE FILEPATH "Linker script" FORCE)
+    endif()
+elseif(NOT DEFINED LINKER_SCRIPT)
     set(LINKER_SCRIPT "${CMAKE_SOURCE_DIR}/arch/${ARCH}/link.ld")
 else()
     if(NOT IS_ABSOLUTE "${LINKER_SCRIPT}")
@@ -139,10 +196,28 @@ target_link_libraries(rv_aios_rtos INTERFACE
 # ============================================================================
 # AI Module
 # ============================================================================
-add_subdirectory(ai)
+if(OS_AI_EN)
+    add_subdirectory(ai)
+endif()
+
+# ============================================================================
+# Board Support
+# ============================================================================
+if(CONFIG_BOARD_BE_U1000)
+    add_subdirectory(boards/be_u1000)
+endif()
 
 # ============================================================================
 # Applications
 # ============================================================================
-add_subdirectory(apps/ai_demo)
-add_subdirectory(apps/mnist_app)
+if(CONFIG_BOARD_BE_U1000)
+    add_subdirectory(apps/be_u1000_demo)
+else()
+    if(OS_AI_EN)
+        add_subdirectory(apps/mnist_app)
+    endif()
+
+    if(RRTOS_BUILD_EXPERIMENTAL_APPS)
+        add_subdirectory(apps/ai_demo)
+    endif()
+endif()

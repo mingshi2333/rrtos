@@ -4,6 +4,8 @@
 #include "iree/modules/hal/module.h"
 #include "iree/hal/drivers/local_sync/sync_device.h"
 #include "iree/hal/local/loaders/static_library_loader.h"
+#include "hal_clint.h"
+#include "os_config.h"
 #include "os_kernel.h"
 #include <string.h>
 #include <stdio.h>
@@ -36,7 +38,8 @@ typedef struct {
 static ai_model_registry_t g_registry;
 
 uint64_t ai_get_time_us(void) {
-    return 0;
+    uint64_t ticks = hal_clint_mtime_get();
+    return (ticks * 1000000ULL) / OS_CFG_TIMER_FREQ_HZ;
 }
 
 int ai_runtime_init(void) {
@@ -160,6 +163,7 @@ int ai_runtime_init(void) {
         all_modules[module_count++] = entry->vm_module;
         entry->perf_stats.latency_min_us = UINT64_MAX;
         entry->perf_stats.latency_max_us = 0;
+        entry->perf_stats.arena_peak_bytes = desc->peak_memory;
         
         g_registry.count++;
         printf("[AI] Loaded model: %s\n", desc->name);
@@ -295,6 +299,8 @@ int ai_infer_sync(ai_model_handle_t handle,
                   const ai_tensor_t *inputs, uint32_t num_inputs,
                   ai_tensor_t *outputs, uint32_t num_outputs,
                   uint32_t timeout_ms) {
+    (void)timeout_ms;
+
     if (!handle || !inputs || !outputs) {
         return -1;
     }
@@ -401,5 +407,5 @@ int ai_infer_async(ai_model_handle_t handle,
     if (callback) {
         callback(handle, outputs, ret, user_data);
     }
-    return 0; // Async call always succeeds (queued)
+    return ret;
 }

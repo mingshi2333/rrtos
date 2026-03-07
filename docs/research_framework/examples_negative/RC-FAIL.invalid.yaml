@@ -1,0 +1,48 @@
+case_id: BAD-ID
+title: "Invalid case for negative test"
+owner: ""
+objective: ""
+
+hypothesis:
+  primary: "This file should fail validation"
+  alternatives: []
+
+environment:
+  hardware: ""
+  os: ""
+  driver: ""
+  tool_versions: {}
+
+procedure:
+  entrypoint: ""
+  params: {}
+  warmup_count: 0
+  measured_count: 0
+
+artifacts:
+  captures: []
+  traces: []
+  logs: []
+  metrics_raw: []
+
+results:
+  metrics: []
+  variance_note: ""
+
+conclusion:
+  statement: "Intentionally invalid"
+  evidence_grade: G2
+  applicability_scope: ""
+  uncertainty_note: ""
+
+replay:
+  command: ""
+  expected_outputs: []
+  pass_fail_rule: ""
+
+provenance:
+  source_commit: ""
+  source_branch: ""
+  actor: ""
+  generated_by: ""
+  generated_at: ""

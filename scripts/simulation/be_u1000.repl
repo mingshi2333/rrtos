@@ -1,0 +1,63 @@
+// Renode platform description for Baikal Electronics BE-U1000
+//
+// This is an approximation for simulation purposes.
+// The real BE-U1000 uses CLIC. This model keeps CLINT timing/IPI
+// compatible and routes key UART IRQ lines directly to cpu IRQ IDs
+// to stay CLIC-compatible for basic bring-up validation.
+
+// CPU: RISC-V RV32IMAFC
+cpu0: CPU.RiscV32 @ sysbus
+    cpuType: "rv32imafc_zicsr_zifencei"
+    timeProvider: clint
+    hartId: 0
+
+cpu1: CPU.RiscV32 @ sysbus
+    cpuType: "rv32imafc_zicsr_zifencei"
+    timeProvider: clint
+    hartId: 1
+
+// CLINT — Core-Local Interruptor (timer + IPI)
+// Standard RISC-V CLINT at 0x02000000
+// Compatible with both real hardware and RRTOS hal_clint
+clint: IRQControllers.CoreLevelInterruptor @ sysbus 0x02000000
+    frequency: 1000000
+    numberOfTargets: 2
+    [0, 1] -> cpu0@[3, 7]    // cpu0: IPI(3), Timer(7)
+    [2, 3] -> cpu1@[3, 7]    // cpu1: IPI(3), Timer(7)
+
+// CLIC-compatible direct IRQ wiring: UART sources routed to cpu0 IRQ IDs
+
+// Memory: TCMA (64 KB) — Core0/Core1 fast code/data
+tcma: Memory.MappedMemory @ sysbus 0x40010000
+    size: 0x10000
+
+// Memory: TCMB (96 KB) — Core0/Core1 heap + stack
+tcmb: Memory.MappedMemory @ sysbus 0x40020000
+    size: 0x18000
+
+// Memory: SRAM (32 KB) — Shared between cores
+sram: Memory.MappedMemory @ sysbus 0x70000000
+    size: 0x8000
+
+// Memory: EFLASH (256 KB) — Embedded flash
+eflash: Memory.MappedMemory @ sysbus 0xA0000000
+    size: 0x40000
+
+// Memory: QSPI0 (16 MB) — External flash via QSPI
+qspi0: Memory.MappedMemory @ sysbus 0x80000000
+    size: 0x1000000
+
+// UART0 — Console (DesignWare APB UART, 16550-compatible for simulation)
+// Real address: 0x11001000 (APB0 + 0x1000)
+// In simulation, we use a standard 16550 model at the same address
+uart0: UART.NS16550 @ sysbus 0x11001000
+    wideRegisters: true
+    -> cpu0@17
+
+// UART1
+uart1: UART.NS16550 @ sysbus 0x11002000
+    wideRegisters: true
+    -> cpu0@18
+
+// Core2 local TCM windows are omitted in simulation because Renode memory
+// regions must be page-aligned and these addresses are sub-page offsets.

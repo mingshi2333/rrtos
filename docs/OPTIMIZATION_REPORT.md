@@ -1,4 +1,7 @@
 # Final Optimization Report: AI-RTOS System (RV32)
+
+Historical note: this report documents an older `ai_demo` optimization effort and should be treated as archival context rather than current guidance.
+
 **Date:** January 20, 2026
 **Target:** `ai_demo` (YOLOv1-Tiny INT8) on Custom RISC-V RTOS
 

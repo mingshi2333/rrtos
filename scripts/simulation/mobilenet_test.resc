@@ -1,6 +1,7 @@
 :name: mobilenet_test_virt_rv64
 :description: RISC-V 64-bit virt machine
 
+# Historical script: model-specific RV64 experiment, not a supported lane.
 $bin?=@build/mobilenet_test
 
 mach create "riscv64-virt"

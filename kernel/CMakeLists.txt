@@ -17,4 +17,4 @@ target_include_directories(rv_aios_kernel PRIVATE
     ${CMAKE_SOURCE_DIR}/memory/include
 )
 
-target_link_libraries(rv_aios_kernel PUBLIC rv_aios_memory rv_aios_drivers)
+target_link_libraries(rv_aios_kernel PUBLIC rv_aios_memory)

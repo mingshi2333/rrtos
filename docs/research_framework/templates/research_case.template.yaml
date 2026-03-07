@@ -1,0 +1,48 @@
+case_id: RC-0001
+title: ""
+owner: ""
+objective: ""
+
+hypothesis:
+  primary: ""
+  alternatives: []
+
+environment:
+  hardware: ""
+  os: ""
+  driver: ""
+  tool_versions: {}
+
+procedure:
+  entrypoint: ""
+  params: {}
+  warmup_count: 0
+  measured_count: 0
+
+artifacts:
+  captures: []
+  traces: []
+  logs: []
+  metrics_raw: []
+
+results:
+  metrics: []
+  variance_note: ""
+
+conclusion:
+  statement: ""
+  evidence_grade: G0
+  applicability_scope: ""
+  uncertainty_note: ""
+
+replay:
+  command: ""
+  expected_outputs: []
+  pass_fail_rule: ""
+
+provenance:
+  source_commit: ""
+  source_branch: ""
+  actor: ""
+  generated_by: ""
+  generated_at: ""

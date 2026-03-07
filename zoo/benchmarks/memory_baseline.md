@@ -202,4 +202,4 @@ Based on `mobilenet_test` (92KB RAM):
 
 - IREE Toolchain: `/home/mingshi/.mamba/envs/iree-toolchain310/`
 - stm32ai-modelzoo: `/home/mingshi/Project/AI/stm32ai-modelzoo/`
-- Zoo Directory: `/home/mingshi/Project/PF/rtos/zoo/`
+- Zoo Directory: `zoo/`

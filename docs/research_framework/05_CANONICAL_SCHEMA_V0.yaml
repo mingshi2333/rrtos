@@ -1,0 +1,268 @@
+meta:
+  schema_name: research_framework_canonical
+  schema_version: v0.1
+  status: draft_for_pilot
+  owners:
+    - research-framework-maintainers
+  compatibility:
+    min_reader_version: v0.1
+
+id_patterns:
+  case_id: "^RC-[0-9]{4}$"
+  run_id: "^RUN-[0-9]{8}-[A-Z0-9]{6}$"
+  artifact_id: "^AR-[A-Z0-9]{10}$"
+  metric_id: "^MT-[A-Z0-9]{10}$"
+  claim_id: "^CL-[A-Z0-9]{10}$"
+  review_id: "^RV-[A-Z0-9]{10}$"
+
+enums:
+  evidence_grade: [G0, G1, G2, G3, G4]
+  run_status: [pending, running, passed, failed, cancelled]
+  artifact_type: [capture, trace, log, metrics_raw, metrics_summary, report, replay_script]
+  review_status: [draft, reviewed, accepted, rejected]
+  metric_aggregation: [raw, mean, p50, p90, p95, p99, min, max]
+  workflow_state: [intake, plan, execute, collect, evaluate, propose_claim, human_review, accept_or_reject, publish]
+  environment_tier: [dev, ci, staging, production]
+
+entities:
+  research_case:
+    required: [case_id, title, objective, owner, created_at, tags]
+    fields:
+      case_id: {type: string, pattern_ref: case_id}
+      title: {type: string, min_length: 8, max_length: 200}
+      objective: {type: string, min_length: 16, max_length: 2000}
+      owner: {type: string}
+      tags: {type: array, items: string, min_items: 1}
+      created_at: {type: datetime}
+      updated_at: {type: datetime}
+      domain_focus:
+        type: array
+        items: string
+        allowed:
+          - graphics
+          - rendering
+          - frame_capture
+          - performance_analysis
+          - knowledge_system
+          - agent_automation
+      priority: {type: integer, min: 1, max: 5}
+
+  environment_snapshot:
+    required: [env_id, hardware, os, driver, tool_versions, tier]
+    fields:
+      env_id: {type: string}
+      hardware: {type: object}
+      os: {type: object}
+      driver: {type: object}
+      tool_versions: {type: object}
+      tier: {type: enum, enum_ref: environment_tier}
+      notes: {type: string}
+
+  run:
+    required:
+      - run_id
+      - case_id
+      - env_id
+      - started_at
+      - script_entrypoint
+      - workload_hash
+      - status
+    fields:
+      run_id: {type: string, pattern_ref: run_id}
+      case_id: {type: string, pattern_ref: case_id}
+      env_id: {type: string}
+      started_at: {type: datetime}
+      ended_at: {type: datetime}
+      seed: {type: string}
+      warmup_count: {type: integer, min: 0}
+      measured_count: {type: integer, min: 1}
+      script_entrypoint: {type: string}
+      script_args: {type: array, items: string}
+      source_commit: {type: string, min_length: 7, max_length: 64}
+      source_branch: {type: string}
+      workload_hash: {type: string, regex: "^[a-f0-9]{64}$"}
+      status: {type: enum, enum_ref: run_status}
+      parent_run_id: {type: string}
+
+  artifact:
+    required: [artifact_id, run_id, artifact_type, uri, sha256, size_bytes]
+    fields:
+      artifact_id: {type: string, pattern_ref: artifact_id}
+      run_id: {type: string, pattern_ref: run_id}
+      artifact_type: {type: enum, enum_ref: artifact_type}
+      uri: {type: string}
+      sha256: {type: string, regex: "^[a-f0-9]{64}$"}
+      size_bytes: {type: integer, min: 1}
+      mime_type: {type: string}
+      generated_at: {type: datetime}
+      generated_by: {type: string}
+
+  metric:
+    required: [metric_id, run_id, name, value, unit, aggregation]
+    fields:
+      metric_id: {type: string, pattern_ref: metric_id}
+      run_id: {type: string, pattern_ref: run_id}
+      name: {type: string}
+      value: {type: number}
+      unit: {type: string}
+      aggregation: {type: enum, enum_ref: metric_aggregation}
+      confidence: {type: number, min: 0.0, max: 1.0}
+      extractor: {type: string}
+      timestamp_utc: {type: datetime}
+
+  hypothesis:
+    required: [hypothesis_id, case_id, statement, created_at]
+    fields:
+      hypothesis_id: {type: string}
+      case_id: {type: string, pattern_ref: case_id}
+      statement: {type: string, min_length: 8}
+      alternatives: {type: array, items: string}
+      created_at: {type: datetime}
+
+  claim:
+    required:
+      - claim_id
+      - case_id
+      - statement
+      - evidence_grade
+      - supporting_run_ids
+      - status
+    fields:
+      claim_id: {type: string, pattern_ref: claim_id}
+      case_id: {type: string, pattern_ref: case_id}
+      statement: {type: string, min_length: 12}
+      evidence_grade: {type: enum, enum_ref: evidence_grade}
+      supporting_run_ids: {type: array, items: string, min_items: 0}
+      applicability_scope: {type: string}
+      uncertainty_note: {type: string}
+      status: {type: enum, enum_ref: review_status}
+      approved_by: {type: string}
+      approved_at: {type: datetime}
+
+  review_event:
+    required: [review_id, claim_id, reviewer, decision, reviewed_at]
+    fields:
+      review_id: {type: string, pattern_ref: review_id}
+      claim_id: {type: string, pattern_ref: claim_id}
+      reviewer: {type: string}
+      decision: {type: enum, enum_ref: review_status}
+      note: {type: string}
+      reviewed_at: {type: datetime}
+
+  workflow_event:
+    required: [event_id, run_id, state, actor, emitted_at]
+    fields:
+      event_id: {type: string}
+      run_id: {type: string, pattern_ref: run_id}
+      state: {type: enum, enum_ref: workflow_state}
+      actor: {type: string}
+      action: {type: string}
+      input_refs: {type: array, items: string}
+      output_refs: {type: array, items: string}
+      confidence: {type: number, min: 0.0, max: 1.0}
+      emitted_at: {type: datetime}
+
+relations:
+  - name: case_has_runs
+    from: research_case.case_id
+    to: run.case_id
+    cardinality: one_to_many
+  - name: run_has_artifacts
+    from: run.run_id
+    to: artifact.run_id
+    cardinality: one_to_many
+  - name: run_has_metrics
+    from: run.run_id
+    to: metric.run_id
+    cardinality: one_to_many
+  - name: case_has_claims
+    from: research_case.case_id
+    to: claim.case_id
+    cardinality: one_to_many
+  - name: claim_supported_by_runs
+    from: claim.supporting_run_ids
+    to: run.run_id
+    cardinality: many_to_many
+  - name: claim_reviewed_by_events
+    from: claim.claim_id
+    to: review_event.claim_id
+    cardinality: one_to_many
+  - name: run_has_workflow_events
+    from: run.run_id
+    to: workflow_event.run_id
+    cardinality: one_to_many
+
+constraints:
+  - id: C001_claim_grade_requires_support
+    expression: "if claim.evidence_grade != 'G0' then len(claim.supporting_run_ids) >= 1"
+  - id: C002_accepted_claim_requires_review
+    expression: "if claim.status == 'accepted' then exists(review_event where review_event.claim_id == claim.claim_id and review_event.decision == 'accepted')"
+  - id: C003_run_passed_requires_metrics
+    expression: "if run.status == 'passed' then exists(metric where metric.run_id == run.run_id)"
+  - id: C004_traceability_required
+    expression: "run.source_commit and run.source_branch and artifact.sha256 are mandatory for accepted claims"
+  - id: C005_replay_required_for_accepted
+    expression: "accepted claim must link at least one replay_script artifact in any supporting run"
+
+quality_gates:
+  gate_1_methodology: "evidence bundle completeness >= 95%"
+  gate_2_schema_pilot: "3 pilot cases pass all constraints"
+  gate_3_workflow_audit: "all accepted claims have review_event and replay artifact"
+  gate_4_qa_contract: "answer includes claim_id + supporting_run_ids + replay command reference"
+
+index_hints:
+  relational_indexes:
+    - run(case_id, started_at)
+    - artifact(run_id, artifact_type)
+    - metric(run_id, name, aggregation)
+    - claim(case_id, status, evidence_grade)
+  retrieval_indexes:
+    - claim(statement)
+    - metric(name)
+    - artifact(uri)
+
+example_instances:
+  research_case:
+    case_id: RC-0001
+    title: "Frame-time regression after model-switch path update"
+    objective: "Identify root cause and produce replayable evidence chain"
+    owner: perf-team
+    tags: [rendering, performance_analysis, agent_automation]
+    created_at: "2026-03-06T09:00:00Z"
+
+  run:
+    run_id: RUN-20260306-AB12CD
+    case_id: RC-0001
+    env_id: ENV-LINUX-RV32-01
+    started_at: "2026-03-06T09:10:00Z"
+    ended_at: "2026-03-06T09:25:00Z"
+    seed: "42"
+    warmup_count: 3
+    measured_count: 20
+    script_entrypoint: "pixi run -e rv32 sim-renode-ai"
+    script_args: ["--scenario", "regression-a"]
+    source_commit: "abc1234"
+    source_branch: "feature/perf-study"
+    workload_hash: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    status: passed
+
+  artifact:
+    artifact_id: AR-0A1B2C3D4E
+    run_id: RUN-20260306-AB12CD
+    artifact_type: metrics_raw
+    uri: "s3://research-artifacts/RC-0001/RUN-20260306-AB12CD/metrics.json"
+    sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    size_bytes: 8192
+    mime_type: "application/json"
+    generated_at: "2026-03-06T09:25:02Z"
+    generated_by: "metrics-extractor-v1"
+
+  claim:
+    claim_id: CL-1A2B3C4D5E
+    case_id: RC-0001
+    statement: "Regression is dominated by increased p95 frame time in model switch path"
+    evidence_grade: G2
+    supporting_run_ids: [RUN-20260306-AB12CD]
+    applicability_scope: "Linux rv32 simulation path"
+    uncertainty_note: "Needs hardware validation on board"
+    status: reviewed

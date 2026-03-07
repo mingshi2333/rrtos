@@ -1,6 +1,7 @@
 :name: mobilenet_test_k210
 :description: RISC-V 64-bit Kendryte K210 for MobileNet test
 
+# Historical script: board-specific experiment, not a supported lane.
 $bin?=@build/mobilenet_test
 
 # Create machine
@@ -10,11 +11,11 @@ mach create "k210"
 machine LoadPlatformDescription @/opt/renode/platforms/cpus/kendryte_k210.repl
 
 # Add UART1 (NS16550)
-machine LoadPlatformDescription @/home/mingshi/Project/PF/rtos/k210_uart1.repl
+machine LoadPlatformDescription @scripts/simulation/k210_uart1.repl
 
 # Configure UART output
 # showAnalyzer sysbus.uart1
-sysbus.uart1 CreateFileBackend @/home/mingshi/Project/PF/rtos/k210_uart.log
+sysbus.uart1 CreateFileBackend @logs/k210_uart.log
 
 # Load ELF file
 sysbus LoadELF $bin

@@ -1,6 +1,15 @@
 #ifndef AI_RUNTIME_H
 #define AI_RUNTIME_H
 
+/*
+ * Legacy AI runtime API kept for experimental code only.
+ * The supported AI path uses ai_model_registry.h.
+ */
+
+#if !defined(RRTOS_SUPPRESS_LEGACY_AI_RUNTIME_WARNING)
+#warning "ai_runtime.h is deprecated; use ai_model_registry.h for supported AI integration"
+#endif
+
 #include "os_types.h"
 
 #if OS_CFG_AI_EN

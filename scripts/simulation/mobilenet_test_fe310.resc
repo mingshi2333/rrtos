@@ -1,6 +1,7 @@
 :name: mobilenet_test_fe310
 :description: SiFive FE310 platform (RV32) running mobilenet_test from QSPI XIP
 
+# Historical script: board-specific experiment, not a supported lane.
 # $bin is expected to be set by the caller
 # e.g. -e '$bin=@build/mobilenet_test'
 

@@ -1,0 +1,32 @@
+# Renode simulation script for BE-U1000
+#
+# Usage:
+#   renode scripts/simulation/be_u1000.resc
+#   start
+#
+# Or via pixi:
+#   pixi run -e be-u1000 sim-be_u1000
+
+using sysbus
+
+# Load platform description
+mach create "be_u1000"
+machine LoadPlatformDescription @scripts/simulation/be_u1000.repl
+
+# Show UART0 console
+showAnalyzer uart0
+
+# Load the RTOS binary
+# The binary is built to run from TCMA (0x40010000)
+sysbus LoadELF @build-be_u1000/rrtos_be_u1000.elf
+
+# Set simulation speed
+# cpu0 PerformanceInMips 200
+
+# Log level
+logLevel 1
+
+# Optional: log UART output to file
+# uart0 CreateFileBackend @/tmp/be_u1000_uart.log
+
+echo "BE-U1000 simulation ready. Type 'start' to begin."

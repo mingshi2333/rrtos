@@ -7,10 +7,6 @@ import re
 import shutil
 from pathlib import Path
 
-# Configuration
-IREE_TOOLCHAIN_ROOT = os.environ.get(
-    "IREE_TOOLCHAIN_ROOT", "/home/mingshi/.mamba/envs/iree-toolchain310/bin"
-)
 PROJECT_ROOT = Path(__file__).parent.parent.resolve()
 
 
@@ -23,19 +19,41 @@ def run_command(cmd, cwd=None, env=None):
     return result.stdout
 
 
-def get_iree_tool(name):
-    path = Path(IREE_TOOLCHAIN_ROOT) / name
-    if not path.exists():
-        # Try system path
-        return name
-    return str(path)
+def get_toolchain_root(config):
+    toolchain_cfg = config.get("toolchain", {})
+    root_env = toolchain_cfg.get("root_env", "IREE_TOOLCHAIN_ROOT")
+    root_value = os.environ.get(root_env, "")
+    return Path(root_value).expanduser() if root_value else None
+
+
+def get_iree_tool(config, name):
+    toolchain_root = get_toolchain_root(config)
+    if toolchain_root:
+        path = toolchain_root / name
+        if path.exists():
+            return str(path)
+    return name
+
+
+def resolve_model_path(config, model, config_path):
+    model_file = Path(model["file"]).expanduser()
+    if model_file.is_absolute():
+        return model_file
+
+    root_env = config.get("model_sources", {}).get("root_env")
+    if root_env and os.environ.get(root_env):
+        return Path(os.environ[root_env]).expanduser() / model_file
+
+    return config_path.parent / model_file
 
 
 def parse_mlir_info(mlir_text):
     """Extracts input and output metadata from MLIR text."""
     # Find the main function signature
     # Example: func.func @main(%arg0: tensor<?x28x28x1xui8> ...) -> (tensor<?x36xf32> ...)
-    main_match = re.search(r"func\.func @main\((.*?)\)\s*->\s*(.*?)\{", mlir_text, re.DOTALL)
+    main_match = re.search(
+        r"func\.func @main\((.*?)\)\s*->\s*(.*?)\{", mlir_text, re.DOTALL
+    )
     if not main_match:
         return None
 
@@ -49,7 +67,7 @@ def parse_mlir_info(mlir_text):
             shape_str, dtype_mlir = m.groups()
             # Replace ? with 1 for batch size, and convert to list of ints
             shape = [int(d) if d != "?" else 1 for d in shape_str.split("x")]
-            
+
             # Map MLIR types to C types and IREE descriptors
             type_map = {
                 "f32": {"c": "float", "dtype": "AI_DTYPE_FP32"},
@@ -59,24 +77,23 @@ def parse_mlir_info(mlir_text):
                 "i32": {"c": "int32_t", "dtype": "AI_DTYPE_INT32"},
             }
             info = type_map.get(dtype_mlir, {"c": "uint8_t", "dtype": "AI_DTYPE_UINT8"})
-            
-            tensors.append({
-                "name": f"tensor_{i}",
-                "shape": shape,
-                "type": info["c"],
-                "dtype": info["dtype"]
-            })
+
+            tensors.append(
+                {
+                    "name": f"tensor_{i}",
+                    "shape": shape,
+                    "type": info["c"],
+                    "dtype": info["dtype"],
+                }
+            )
         return tensors
 
-    return {
-        "inputs": parse_tensors(inputs_raw),
-        "outputs": parse_tensors(outputs_raw)
-    }
+    return {"inputs": parse_tensors(inputs_raw), "outputs": parse_tensors(outputs_raw)}
 
 
-def compile_model(model, defaults, output_dir):
+def compile_model(config, config_path, model, defaults, output_dir):
     name = model["name"]
-    tflite_path = PROJECT_ROOT / model["file"]
+    tflite_path = resolve_model_path(config, model, config_path)
 
     if not tflite_path.exists():
         print(f"Error: Model file not found: {tflite_path}")
@@ -93,7 +110,12 @@ def compile_model(model, defaults, output_dir):
     # 1. Import TFLite -> MLIR
     mlir_path = temp_dir / f"{name}.mlir"
     run_command(
-        [get_iree_tool("iree-import-tflite"), str(tflite_path), "-o", str(mlir_path)]
+        [
+            get_iree_tool(config, "iree-import-tflite"),
+            str(tflite_path),
+            "-o",
+            str(mlir_path),
+        ]
     )
 
     # 2. Optimize & Extract Info
@@ -101,7 +123,7 @@ def compile_model(model, defaults, output_dir):
     opt_mlir_path = temp_dir / f"{name}_opt.mlir"
     run_command(
         [
-            get_iree_tool("iree-opt"),
+            get_iree_tool(config, "iree-opt"),
             "--pass-pipeline=builtin.module(func.func(iree-tosa-strip-signedness))",
             str(mlir_path),
             "-o",
@@ -142,7 +164,7 @@ def compile_model(model, defaults, output_dir):
 
     run_command(
         [
-            get_iree_tool("iree-compile"),
+            get_iree_tool(config, "iree-compile"),
             "--iree-hal-target-backends=llvm-cpu",
             f"--iree-llvmcpu-target-triple={target_triple}",
             f"--iree-llvmcpu-target-cpu-features={cpu_features}",
@@ -413,13 +435,11 @@ void ai_app_post_process(void *output_data, size_t size) {
 #include <math.h>
 #include "ai_models.h"
 #include "ai_model_registry.h"
+#include "os_config.h"
 #include "os_kernel.h"
+#include "hal_board.h"
 #include "hal_uart.h"
 #include "hal_clint.h"
-
-// Hardware addresses (common for our QEMU/Renode setup)
-#define UART0_BASE  0x10000000
-#define CLINT_BASE  0x02000000
 
 // Task configuration
 static os_tcb_t ai_tcb;
@@ -464,8 +484,7 @@ void ai_main_task(void *arg) {{
 
 void os_kernel_main(void) {{
     // 1. Hardware Init
-    hal_uart_init(UART0_BASE, 115200);
-    hal_clint_init(CLINT_BASE);
+    hal_board_init();
     
     printf("Booting AI App: {app_name}...\\n");
 
@@ -541,14 +560,16 @@ def main():
     else:
         output_dir = PROJECT_ROOT / config.get("output_dir", "generated")
         app_dir = None
-        
+
     output_dir.mkdir(parents=True, exist_ok=True)
 
     models_metadata = []
 
     for model in config["models"]:
         # Compile
-        obj_file, metadata = compile_model(model, config["defaults"], output_dir)
+        obj_file, metadata = compile_model(
+            config, config_path, model, config["defaults"], output_dir
+        )
 
         # Find Symbol
         full_obj_path = output_dir / obj_file
@@ -560,18 +581,23 @@ def main():
         print(f"  -> Symbol found: {symbol}")
 
         models_metadata.append(
-            {"name": model["name"], "symbol": symbol, "obj_file": obj_file, "metadata": metadata}
+            {
+                "name": model["name"],
+                "symbol": symbol,
+                "obj_file": obj_file,
+                "metadata": metadata,
+            }
         )
 
     # Generate Code
     print("=== Generating Registry Code ===")
     generate_code(config, models_metadata, output_dir)
     generate_cmake(config, models_metadata, output_dir)
-    
+
     if app_dir:
         print("=== Generating App Scaffolding ===")
         generate_app_scaffolding(config, app_dir)
-        
+
     print("Done! Generated files in:", app_dir if app_dir else output_dir)
 
 

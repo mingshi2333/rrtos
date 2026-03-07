@@ -1,26 +1,19 @@
 #!/bin/bash
-# Quick test script for AI Model Registry
-# Tests multiple EmitC models (MNIST + YOLO)
 
-set -e
+set -euo pipefail
 
-cd "$(dirname "$0")/.."
+SCRIPT_DIR=$(cd -- "$(dirname "$0")" && pwd)
+REPO_ROOT=$(cd -- "$SCRIPT_DIR/.." && pwd)
+
+cd "$REPO_ROOT"
 
 echo "=========================================="
-echo "  AI Model Registry Test"
+echo "  Supported AI Runtime Validation"
 echo "=========================================="
-echo ""
+echo
 
-# Step 1: Build
-echo "[1/2] Building..."
-pixi run -e rv32 build
+echo "[1/1] Running supported rv32 AI validation..."
+pixi run -e rv32 validate-supported-rv32
 
-# Step 2: Test
-echo "[2/2] Running test in QEMU..."
-echo ""
-echo "=========================================="
-pixi run -e rv32 test-registry 2>&1 | tee /tmp/ai_registry_test.log
-echo "=========================================="
-echo ""
-echo "✓ Test complete!"
-echo "Log saved to: /tmp/ai_registry_test.log"
+echo
+echo "Supported AI runtime validation complete."

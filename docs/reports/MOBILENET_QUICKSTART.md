@@ -1,5 +1,7 @@
 # MobileNet Quick Start Guide
 
+Historical note: this quick start captures an older MobileNet and RV64-oriented experiment. It is not part of the supported matrix; use `zoo/workflow.md` and `docs/AI_CANONICAL_PATH.md` for the maintained AI path.
+
 ## 🎯 Goal
 
 Generate a functional MobileNet model for your RISC-V RTOS project.
@@ -87,10 +89,10 @@ iree-compile \
 
 ```bash
 # Copy to project
-cp mobilenet_v3_small_emitc.c /home/mingshi/Project/PF/rtos/ai/
+cp mobilenet_v3_small_emitc.c ai/
 
-# Update CMakeLists
-cd /home/mingshi/Project/PF/rtos
+# From the repository root, update CMakeLists
+cd <repo-root>
 
 # Edit ai/CMakeLists.txt or add directly to AI_SOURCES
 echo 'list(APPEND AI_SOURCES ${CMAKE_SOURCE_DIR}/ai/mobilenet_v3_small_emitc.c)' \
@@ -216,5 +218,5 @@ iree-compile --iree-input-type=tflite \
   -o mobilenet_v3_emitc.c
 
 # 4. Integrate
-cp mobilenet_v3_emitc.c /home/mingshi/Project/PF/rtos/ai/
+cp mobilenet_v3_emitc.c ai/
 ```

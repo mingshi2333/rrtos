@@ -28,50 +28,64 @@ init-iree = "test -d third_party/iree/.git || git submodule update --init --recu
 # Build Picolibc package (pixi build will automatically choose the correct package)
 build-picolibc = "pixi build"
 
-# Legacy build script (deprecated, kept for backward compatibility)
-build-picolibc-legacy = "sh scripts/build_picolibc.sh"
-
 clean = "rm -rf build"
 
 # === Model Conversion Tasks ===
 # Usage: pixi run convert-model <tflite_path> <output_name>
 # Example: pixi run convert-model zoo/models/medium/mobilenet_v2_0.35_128_int8.tflite mobilenet_v2_035_128
 convert-model = "cd zoo/scripts && ./tflite_to_iree_c.sh -a rv32"
-size = "llvm-size -A -x build/mobilenet_test"
 rebuild = { depends-on = ["clean", "configure", "build"] }
 
-sim-simple = "qemu-system-riscv64 -machine virt -nographic -bios none -kernel build/iree_simple_test"
-sim-mobilenet = "qemu-system-riscv64 -machine virt -nographic -bios none -kernel build/mobilenet_test"
-sim-renode = "renode --disable-xwt --console -e 's @test_renode.resc; sleep 5; quit'"
-
-verify = { depends-on = ["build", "sim-simple"] }
+rf-validate-example = "python scripts/research_framework/validate_case.py --schema docs/research_framework/05_CANONICAL_SCHEMA_V0.yaml --case docs/research_framework/examples/RC-0001.case.yaml --strict"
+rf-validate-example-2 = "python scripts/research_framework/validate_case.py --schema docs/research_framework/05_CANONICAL_SCHEMA_V0.yaml --case docs/research_framework/examples/RC-0002.case.yaml --strict"
+rf-validate-workflow = "python scripts/research_framework/validate_workflow_doc.py --doc docs/research_framework/06_AGENT_WORKFLOW_DRAFT.md"
+rf-scan-placeholders = "python scripts/research_framework/scan_placeholders.py --root docs/research_framework --exclude templates"
+rf-gate = "python scripts/research_framework/run_ci_gates.py --schema docs/research_framework/05_CANONICAL_SCHEMA_V0.yaml --cases-dir docs/research_framework/examples --workflow-doc docs/research_framework/06_AGENT_WORKFLOW_DRAFT.md --docs-dir docs/research_framework"
+rf-validate-negative = "sh -c '! python scripts/research_framework/validate_case.py --schema docs/research_framework/05_CANONICAL_SCHEMA_V0.yaml --case docs/research_framework/examples_negative/RC-FAIL.invalid.yaml --strict'"
+rf-regression = { depends-on = ["rf-validate-example", "rf-validate-example-2", "rf-validate-workflow", "rf-scan-placeholders", "rf-validate-negative", "rf-gate"] }
+beu1000-irq-consistency = "python scripts/be_u1000/validate_interrupt_consistency.py --board-config boards/be_u1000/board_config.h --repl scripts/simulation/be_u1000.repl"
+beu1000-bootlog-check = "python scripts/be_u1000/check_boot_log.py --log logs/be_u1000_boot.log --expect-irq-model CLIC"
+beu1000-bootlog-check-sim = "python scripts/be_u1000/check_boot_log.py --log logs/be_u1000_boot_sim.log --expect-irq-model CLIC"
+validate-supported-ai = "python scripts/validate_supported_ai_path.py"
+validate-mnist-runtime = "python scripts/run_mnist_validation.py --kernel build/apps/mnist_app/mnist_validation --log logs/mnist_validation_qemu.log"
+observe-mnist-runtime-renode = "python scripts/run_mnist_validation_renode.py --kernel build/apps/mnist_app/mnist_validation --log logs/mnist_validation_renode.log"
+compare-mnist-runtime-platforms = "python scripts/compare_mnist_validation_logs.py --qemu-log logs/mnist_validation_qemu.log --renode-log logs/mnist_validation_renode.log"
+validate-mnist-runtime-dual = { depends-on = ["validate-mnist-runtime", "observe-mnist-runtime-renode", "compare-mnist-runtime-platforms"] }
+validate-supported-rv32 = { depends-on = ["validate-supported-ai", "configure", "build", "validate-mnist-runtime"] }
 
 [feature.rv64.dependencies]
 picolibc-rv64 = { path = "packages/picolibc-rv64" }
 
 [feature.rv64.tasks]
-configure = "cmake -B build -DCMAKE_TOOLCHAIN_FILE=cmake/riscv64-pixi.cmake -DCMAKE_BUILD_TYPE=MinSizeRel"
+configure = "cmake -B build -DCMAKE_TOOLCHAIN_FILE=cmake/riscv64-pixi.cmake -DCMAKE_BUILD_TYPE=MinSizeRel -DOS_SMP_EN=OFF"
 build = "cmake --build build"
-sim-mobilenet = "qemu-system-riscv64 -machine virt -nographic -bios none -kernel build/mobilenet_test"
-sim-renode = "renode --console --disable-xwt scripts/simulation/mobilenet_test.resc"
 
 [feature.rv32.dependencies]
 picolibc-rv32 = { path = "packages/picolibc-rv32" }
 compiler-rt = ">=21.1.8,<22"
 
 [feature.rv32.tasks]
-configure = "cmake -B build -DCMAKE_TOOLCHAIN_FILE=cmake/riscv32-pixi.cmake -DARCH_BITS=32 -DARCH=riscv -DCMAKE_BUILD_TYPE=MinSizeRel"
-configure-flash = "cmake -B build -DCMAKE_TOOLCHAIN_FILE=cmake/riscv32-pixi.cmake -DARCH_BITS=32 -DARCH=riscv -DCMAKE_BUILD_TYPE=MinSizeRel -DLINKER_SCRIPT=arch/riscv/link_flash.ld"
+configure = "cmake -B build -DCMAKE_TOOLCHAIN_FILE=cmake/riscv32-pixi.cmake -DARCH_BITS=32 -DARCH=riscv -DCMAKE_BUILD_TYPE=MinSizeRel -DOS_SMP_EN=OFF"
+configure-flash = "cmake -B build -DCMAKE_TOOLCHAIN_FILE=cmake/riscv32-pixi.cmake -DARCH_BITS=32 -DARCH=riscv -DCMAKE_BUILD_TYPE=MinSizeRel -DLINKER_SCRIPT=arch/riscv/link_flash.ld -DOS_SMP_EN=OFF"
 build = "cmake --build build"
 sim-ai = "qemu-system-riscv32 -machine virt -nographic -m 4M -bios none -kernel build/apps/ai_demo/ai_demo"
 sim-renode-ai = "renode --console --disable-xwt scripts/simulation/ai_demo_rv32.resc"
-test-registry = "timeout 15 qemu-system-riscv32 -machine virt -nographic -m 4M -bios none -kernel build/apps/ai_registry_test/ai_registry_test"
 ai-gen = { cmd = "python3 scripts/ai_codegen.py", description = "Generate AI model registry and wrappers from ai_models.yaml" }
 
-# Alias for backward compatibility
-sim-mobilenet = "pixi run sim-qemu"
+[feature.be_u1000.dependencies]
+picolibc-rv32 = { path = "packages/picolibc-rv32" }
+compiler-rt = ">=21.1.8,<22"
+
+[feature.be_u1000.tasks]
+configure = "cmake -B build-be_u1000 -DCMAKE_TOOLCHAIN_FILE=cmake/riscv32-pixi.cmake -DARCH_BITS=32 -DCONFIG_BOARD=be_u1000 -DCMAKE_BUILD_TYPE=MinSizeRel -DOS_SMP_EN=OFF"
+build = "cmake --build build-be_u1000"
+sim-be_u1000 = "renode --console --disable-xwt scripts/simulation/be_u1000.resc"
+validate-irq-map = "python scripts/be_u1000/validate_interrupt_consistency.py --board-config boards/be_u1000/board_config.h --repl scripts/simulation/be_u1000.repl"
+validate-bootlog = "python scripts/be_u1000/check_boot_log.py --log logs/be_u1000_boot_sim.log --expect-irq-model CLIC"
+validate-supported = { depends-on = ["configure", "build", "validate-irq-map", "validate-bootlog"] }
 
 [environments]
 default = ["rv64"]
 rv64 = ["rv64"]
 rv32 = ["rv32"]
+be-u1000 = ["be_u1000"]

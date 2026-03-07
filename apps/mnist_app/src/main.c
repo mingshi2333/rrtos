@@ -4,13 +4,11 @@
 #include <math.h>
 #include "ai_models.h"
 #include "ai_model_registry.h"
+#include "os_config.h"
 #include "os_kernel.h"
+#include "hal_board.h"
 #include "hal_uart.h"
 #include "hal_clint.h"
-
-// Hardware addresses (ESP32-C3)
-#define UART0_BASE  0x60000000
-#define CLINT_BASE  0x60023000
 
 // Task configuration
 static os_tcb_t ai_tcb;
@@ -55,8 +53,7 @@ void ai_main_task(void *arg) {
 
 void os_kernel_main(void) {
     // 1. Hardware Init
-    hal_uart_init(UART0_BASE, 115200);
-    hal_clint_init(CLINT_BASE);
+    hal_board_init();
     
     printf("Booting AI App: mnist_app...\n");
 

@@ -1,8 +1,8 @@
 /**
  * @file ai_model_registry.h
- * @brief AI Model Registry - EmitC Model Management
+ * @brief Canonical AI Model Registry runtime for supported IREE/EmitC models
  * 
- * Provides model registration, lookup, and metadata management functions
+ * Supported AI integrations in rrtos SHALL use this header.
  */
 
 #ifndef AI_MODEL_REGISTRY_H
@@ -211,7 +211,11 @@ typedef void (*ai_inference_callback_t)(
 );
 
 /**
- * @brief Asynchronous inference (non-blocking)
+ * @brief Compatibility async entrypoint.
+ *
+ * The current supported implementation completes inference synchronously and
+ * invokes the callback before returning. Callers MUST NOT assume queued or
+ * scheduler-integrated execution.
  * 
  * @param handle Model handle
  * @param input Input tensors

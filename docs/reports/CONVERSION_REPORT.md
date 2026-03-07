@@ -115,14 +115,14 @@ module {
 
 | File | Purpose | Status |
 |------|---------|--------|
-| `/home/mingshi/Project/PF/rtos/compile_models_to_emitc.sh` | Shell script for batch compilation | Deprecated (TFLite not supported) |
-| `/home/mingshi/Project/PF/rtos/convert_tflite_to_tosa.py` | Python TFLite→TOSA converter | Not implemented (no tool exists) |
-| `/home/mingshi/Project/PF/rtos/convert_all_to_emitc.py` | TFLite→ONNX→EmitC pipeline | Failed (quantization unsupported) |
-| `/home/mingshi/Project/PF/rtos/convert_tflite_iree.py` | TensorFlow+IREE pipeline | Failed (format mismatch) |
+| `/home/mingshi/Project/PF/rrtos/compile_models_to_emitc.sh` | Shell script for batch compilation | Deprecated and later removed (TFLite not supported) |
+| `/home/mingshi/Project/PF/rrtos/convert_tflite_to_tosa.py` | Python TFLite→TOSA converter | Not implemented and later removed |
+| `/home/mingshi/Project/PF/rrtos/convert_all_to_emitc.py` | TFLite→ONNX→EmitC pipeline | Failed (quantization unsupported), later removed |
+| `/home/mingshi/Project/PF/rrtos/convert_tflite_iree.py` | TensorFlow+IREE pipeline | Failed (format mismatch), later removed |
 | `/tmp/RIOT-ML/` | Cloned RIOT-ML repository | ✅ Ready |
-| `/home/mingshi/Project/PF/rtos/onnx_models/` | ONNX intermediates (2 corrupt files) | ⚠️ Unusable |
-| `/home/mingshi/Project/PF/rtos/emitc_models/` | Output directory (empty) | Created |
-| `/home/mingshi/Project/PF/rtos/stablehlo_models/` | StableHLO intermediates (empty) | Created |
+| `/home/mingshi/Project/PF/rrtos/onnx_models/` | ONNX intermediates (2 corrupt files) | ⚠️ Unusable historical output |
+| `/home/mingshi/Project/PF/rrtos/emitc_models/` | Output directory (empty) | Historical scratch output |
+| `/home/mingshi/Project/PF/rrtos/stablehlo_models/` | StableHLO intermediates (empty) | Historical scratch output |
 
 ## Recommendations
 

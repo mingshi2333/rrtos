@@ -19,7 +19,7 @@ Picolibc 1.8.10 has been successfully integrated into the RISC-V RTOS project, r
   - thread-local-storage: false (Disables TLS)
   - semihost: false (Disables semihosting)
 
-**Installation Location**: `/home/mingshi/Project/PF/rtos/third_party/picolibc/riscv64-unknown-elf/`
+**Installation Location**: historical local install under `/home/mingshi/Project/PF/rrtos/third_party/picolibc/riscv64-unknown-elf/`
 
 **Generated Files**:
 - `libc.a` (22MB) - Complete C standard library
@@ -72,14 +72,14 @@ Picolibc 1.8.10 has been successfully integrated into the RISC-V RTOS project, r
 
 ## Known Issues
 
-### 1. ai_test Application Build Failure ⚠️
+### 1. Historical `ai_test` application mismatch ⚠️
 
-**Reason**: Example code does not match the actual API
+**Reason**: The old example app did not match the actual API at the time
 - Different field names in `ai_tensor_t` struct
 - Incorrect `ai_model_invoke` parameters
 - RTOS API call errors
 
-**Solution**: Rewrite `ai_test/main.c` to match the actual API (this is expected as example code requires adaptation).
+**Current status**: `apps/ai_test` has since been removed during supported-path cleanup, so this is historical context rather than an open action item.
 
 ### 2. errno Variable Definition Conflict (Mitigated)
 
@@ -90,9 +90,9 @@ This was resolved using weak symbols, resulting in no actual conflict.
 
 ### Short-term
 
-1. **Fix ai_test application** - Rewrite test code according to actual API.
-2. **Verify time functions** - Confirm `_gettimeofday` return values are correct.
-3. **Test printf/scanf** - Verify full `stdio` functionality.
+1. **Verify time functions** - Confirm `_gettimeofday` return values are correct.
+2. **Test printf/scanf** - Verify full `stdio` functionality.
+3. **Keep historical notes current** - Mark removed example apps as archival context instead of pending work.
 
 ### Mid-term
 

@@ -5,7 +5,7 @@
 set -e
 
 # ================= Configuration =================
-IREE_TOOLCHAIN_ROOT="/home/mingshi/.mamba/envs/iree-toolchain310/bin"
+IREE_TOOLCHAIN_ROOT="${IREE_TOOLCHAIN_ROOT:-}"
 SCRIPT_DIR=$(cd -- "$(dirname "$0")" && pwd)
 OUTPUT_DIR="$SCRIPT_DIR/../iree_static"
 TEMP_DIR="/tmp/iree_build_temp"
@@ -60,13 +60,24 @@ mkdir -p "$TEMP_DIR"
 
 echo "=== Starting Conversion: $INPUT_TFLITE -> $OUTPUT_NAME ==="
 
+run_iree_tool() {
+    local tool_name="$1"
+    shift
+
+    if [ -n "$IREE_TOOLCHAIN_ROOT" ] && [ -x "$IREE_TOOLCHAIN_ROOT/$tool_name" ]; then
+        "$IREE_TOOLCHAIN_ROOT/$tool_name" "$@"
+    else
+        "$tool_name" "$@"
+    fi
+}
+
 echo "[1/3] Importing TFLite to MLIR..."
-"$IREE_TOOLCHAIN_ROOT/iree-import-tflite" \
+run_iree_tool iree-import-tflite \
     "$INPUT_TFLITE" \
     -o "$TEMP_DIR/$OUTPUT_NAME.mlir"
 
 echo "[2/3] Optimizing & Stripping Signedness (ui8 -> i8)..."
-"$IREE_TOOLCHAIN_ROOT/iree-opt" \
+run_iree_tool iree-opt \
     --pass-pipeline='builtin.module(func.func(iree-tosa-strip-signedness))' \
     "$TEMP_DIR/$OUTPUT_NAME.mlir" \
     -o "$TEMP_DIR/${OUTPUT_NAME}_opt.mlir"
@@ -75,7 +86,7 @@ echo "[2/3] Optimizing & Stripping Signedness (ui8 -> i8)..."
 sed -i "s/^module /module @${OUTPUT_NAME} /" "$TEMP_DIR/${OUTPUT_NAME}_opt.mlir"
 
 echo "[3/3] Compiling to EmitC + Object ($ARCH) [Optimized]..."
-"$IREE_TOOLCHAIN_ROOT/iree-compile" \
+run_iree_tool iree-compile \
     --iree-hal-target-backends=llvm-cpu \
     --iree-llvmcpu-target-triple="$TARGET_TRIPLE" \
     --iree-llvmcpu-target-cpu-features="$CPU_FEATURES" \
@@ -98,7 +109,7 @@ echo "[3/3] Compiling to EmitC + Object ($ARCH) [Optimized]..."
     -o "$OUTPUT_DIR/$OUTPUT_NAME.h"
 
 echo "[4/4] Compiling to VM Bytecode + Static Library..."
-"$IREE_TOOLCHAIN_ROOT/iree-compile" \
+run_iree_tool iree-compile \
     --iree-hal-target-backends=llvm-cpu \
     --iree-llvmcpu-target-triple="$TARGET_TRIPLE" \
     --iree-llvmcpu-target-cpu-features="$CPU_FEATURES" \

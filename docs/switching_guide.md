@@ -1,60 +1,53 @@
-# Architecture Switching Guide
+# Target and Validation Guide
 
-The project `ai_demo` supports two primary RISC-V architecture configurations.
+This repository currently has two supported working lanes and a smaller set of experimental paths.
 
-## 1. Architecture Configuration Comparison
+## Supported lanes
 
-| Configuration | RV32 (Default) | RV64 (Performance) |
-| --- | --- | --- |
-| **CPU Arch** | `rv32imac` | `rv64imafdcv` |
-| **Vectorization** | ❌ No (Scalar) | ✅ Yes (Vector 1.0) |
-| **YOLO Performance** | ~4800ms (@100MHz) | ~615ms (@100MHz) |
-| **Dependencies** | host libgcc (32-bit compat) | host libgcc (64-bit native) |
-| **Stability** | ⭐⭐⭐⭐⭐ (High Compatibility) | ⭐⭐⭐⭐ (Host Dependency) |
+### 1. Canonical AI lane
 
-## 2. Switching Steps
-
-### Switch to RV32 (32-bit Scalar)
-This is the default stable mode, suitable for low-cost MCUs (e.g., ESP32-C3, BL602).
+Use this when you are working on the supported AI runtime path.
 
 ```bash
-# 1. Re-convert model (using RV32 parameters)
-pixi run convert-model zoo/models/tiny/st_mnist_28_int8.tflite st_mnist_28
-
-# 2. Clean and compile
 pixi run -e rv32 configure
 pixi run -e rv32 build
-
-# 3. Run simulation (RV32)
-pixi run sim
+pixi run -e rv32 validate-supported-rv32
 ```
 
-### Switch to RV64 (64-bit Vector)
-This is the high-performance mode, suitable for high-end cores with Vector extensions (e.g., C906, Ara).
+Use QEMU for the normative gate:
+
+- `pixi run -e rv32 validate-mnist-runtime`
+
+Use Renode only for comparison or observation:
+
+- `pixi run -e rv32 observe-mnist-runtime-renode`
+- `pixi run -e rv32 compare-mnist-runtime-platforms`
+
+### 2. Supported BE-U1000 lane
+
+Use this when you are validating the current supported board bring-up path.
 
 ```bash
-# 1. Re-convert model (using RV64 + Vector parameters)
-# (Currently manual adjustment in scripts/tflite_to_iree_c.sh may be needed)
-
-# 2. Clean and compile
-pixi run -e rv64 configure
-pixi run -e rv64 build
-
-# 3. Run simulation (RV64)
-pixi run sim
+pixi run -e be-u1000 validate-supported
 ```
 
-## 3. Configuration Modification Points (Reference)
+This lane covers:
 
-If you need to manually modify the configuration, it mainly involves the following files:
+- board build
+- interrupt-map consistency
+- simulated boot-log validation
 
-1.  **`cmake/riscv[32/64]-pixi.cmake`**:
-    *   Defines the cross-compilation toolchain and libgcc search paths.
-    *   RV64 requires proper `execute_process` to find Host GCC libraries.
-2.  **`scripts/tflite_to_iree_c.sh`**:
-    *   RV32: `CPU_FEATURES="+m,+a,+f,+d,+c"`
-    *   RV64: `CPU_FEATURES="+m,+a,+f,+d,+c,+v"` (Enable Vector)
-3.  **Renode Script (`.resc` / `.repl`)**:
-    *   Ensure the CPU type and extensions in the `.repl` file match the target architecture.
+## Experimental lanes
 
-*Last Updated: Jan 19, 2025*
+The following remain in-tree, but they are not the main evidence of correctness:
+
+- `apps/ai_demo`
+- RV64 historical experiments
+- older model-specific simulation notes under `docs/reports/`
+- historical model-specific Renode scripts under `scripts/simulation/`
+
+## Which simulator to use
+
+- Use `QEMU` for canonical AI runtime regression on `qemu_virt`
+- Use `Renode` for BE-U1000 board, interrupt, and peripheral behavior checks
+- Use optional `QEMU` vs `Renode` AI comparison only when you want cross-platform confidence on the canonical AI sample batch

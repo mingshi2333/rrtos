@@ -1,5 +1,7 @@
 # MobileNet Model Generation Guide for IREE EmitC
 
+Historical note: this guide documents an older MobileNet and RV64-focused workflow that is not part of the current supported matrix. Keep it for reference only, and prefer `zoo/workflow.md`, `docs/AI_CANONICAL_PATH.md`, and `apps/mnist_app/README.md` for the maintained path.
+
 ## Overview
 
 This guide describes how to generate MobileNet models in IREE EmitC format for bare-metal RISC-V RTOS environments.
@@ -111,10 +113,10 @@ iree-compile \
 
 ```bash
 # Copy the generated EmitC file to the project
-cp mobilenet_v1_emitc.c /home/mingshi/Project/PF/rtos/ai/
+cp mobilenet_v1_emitc.c ai/
 
 # Update ai/iree_sources.cmake
-cat >> /home/mingshi/Project/PF/rtos/ai/iree_sources.cmake << 'EOFCMAKE'
+cat >> ai/iree_sources.cmake << 'EOFCMAKE'
 
 # MobileNet EmitC Module
 set(AI_SOURCES
@@ -124,7 +126,7 @@ set(AI_SOURCES
 EOFCMAKE
 
 # Recompile
-cd /home/mingshi/Project/PF/rtos/build
+cd build
 cmake ..
 make rv_aios_ai
 ```
@@ -271,7 +273,7 @@ iree-compile \
   -o mobilenet_v3_emitc.c
 
 # Integrate into the project
-cp mobilenet_v3_emitc.c /home/mingshi/Project/PF/rtos/ai/
+cp mobilenet_v3_emitc.c ai/
 ```
 
 ---

@@ -1,4 +1,7 @@
 # Memory Analysis Report: AI-RTOS System
+
+Historical note: this report documents an older `ai_demo` and YOLO-focused RV64 experiment. It is kept for reference and is not part of the current supported validation matrix.
+
 **Date:** January 20, 2026  
 **Target Application:** `ai_demo` (YOLOv1-Tiny INT8)  
 **Platform:** RISC-V 64-bit (Custom RTOS)

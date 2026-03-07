@@ -1,0 +1,67 @@
+case_id: RC-0001
+title: "Frame-time regression in model-switch path"
+owner: perf-team
+objective: "Identify root cause for p95 frame-time increase after model-switch path update."
+
+hypothesis:
+  primary: "Regression comes from model-switch synchronization overhead."
+  alternatives:
+    - "Regression comes from memory arena pressure."
+    - "Regression comes from scheduling jitter."
+
+environment:
+  hardware: "rv32-sim"
+  os: "sim-runtime"
+  driver: "renode-1.15"
+  tool_versions:
+    pixi: "0.x"
+    cmake: "3.x"
+    python: "3.11+"
+
+procedure:
+  entrypoint: "pixi run -e rv32 sim-renode-ai"
+  params:
+    scenario: regression-a
+    seed: "42"
+  warmup_count: 3
+  measured_count: 20
+
+artifacts:
+  captures:
+    - "s3://research-artifacts/RC-0001/RUN-20260306-AB12CD/capture.rdc"
+  traces:
+    - "s3://research-artifacts/RC-0001/RUN-20260306-AB12CD/trace.json"
+  logs:
+    - "s3://research-artifacts/RC-0001/RUN-20260306-AB12CD/run.log"
+  metrics_raw:
+    - "s3://research-artifacts/RC-0001/RUN-20260306-AB12CD/metrics.json"
+
+results:
+  metrics:
+    - name: frame_time_ms_p95
+      value: 24.8
+      unit: ms
+    - name: frame_time_ms_p50
+      value: 17.1
+      unit: ms
+  variance_note: "Stable within expected simulator jitter band."
+
+conclusion:
+  statement: "Model-switch path causes measurable p95 frame-time increase under this scenario."
+  evidence_grade: G2
+  applicability_scope: "Linux rv32 simulation path"
+  uncertainty_note: "Needs confirmation on hardware board run."
+
+replay:
+  command: "pixi run -e rv32 sim-renode-ai -- --scenario regression-a --seed 42"
+  expected_outputs:
+    - "metrics.json generated"
+    - "frame_time_ms_p95 present"
+  pass_fail_rule: "p95 <= 25.5ms"
+
+provenance:
+  source_commit: abc1234
+  source_branch: feature/perf-study
+  actor: analyst-01
+  generated_by: validate_case.py
+  generated_at: "2026-03-06T10:00:00Z"
