@@ -10,6 +10,10 @@
 - `docs/BE_U1000_RUNTIME_VALIDATION_MATRIX.md` - staged supported/experimental runtime validation story for BE-U1000
 - `docs/BE_U1000_SDK_COMPARISON.md` - SDK-to-rrtos feature comparison and added board HAL supplements
 - `docs/EVU_BA_PINMAP.md` - EVU-BA-2.3 connector/header pin mapping recovered from the schematic tail pages
+- `docs/EVU_BA_2_3_BOARD_INVENTORY.md` - proof that the active `be_u1000` lane is already EVU-BA-2.3-shaped and what is complete vs partial
+- `docs/EVU_BA_2_3_RTOS_BRINGUP_BASELINE.md` - repo-vs-mainstream RTOS baseline for the current EVU-BA-2.3 board lane
+- `docs/EVU_BA_2_3_PHASE1_VALIDATION_PLAN.md` - phase-one validation plan for the current EVU-BA-2.3 board lane
+- `docs/EVU_BA_2_3_COMPLETION_BACKLOG.md` - prioritized unfinished work for EVU-BA-2.3 board completion
 - `docs/BV_APPLICATION_INTEGRATION_PLAN.md` - explicit BV mapping status, blocking gaps, and provisional core-assignment rule
 - `docs/BE_U1000_READINESS_ACCEPTANCE.md` - acceptance checklist for the current BE-U1000 readiness change
 - `docs/RRTOS_MULTICORE_BOUNDARIES.md` - kernel/arch/board layering and recommended core-role split

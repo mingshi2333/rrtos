@@ -8,11 +8,13 @@
 // CPU: RISC-V RV32IMAFC
 cpu0: CPU.RiscV32 @ sysbus
     cpuType: "rv32imafc_zicsr_zifencei"
+    privilegeArchitecture: PrivilegedArchitecture.PrivUnratified
     timeProvider: clint
     hartId: 0
 
 cpu1: CPU.RiscV32 @ sysbus
     cpuType: "rv32imafc_zicsr_zifencei"
+    privilegeArchitecture: PrivilegedArchitecture.PrivUnratified
     timeProvider: clint
     hartId: 1
 
@@ -26,6 +28,15 @@ clint: IRQControllers.CoreLevelInterruptor @ sysbus 0x02000000
     [2, 3] -> cpu1@[3, 7]    // cpu1: IPI(3), Timer(7)
 
 // CLIC-compatible direct IRQ wiring: UART sources routed to cpu0 IRQ IDs
+
+clic: IRQControllers.CoreLocalInterruptController @ {
+        sysbus <0x04000000, +0x10000>;
+        cpu0 <0x1000, +0x4A1>
+    }
+    cpu: cpu0
+    machineLevelBits: 8
+    supervisorLevelBits: 8
+    modeBits: 0
 
 // Memory: TCMA (64 KB) — Core0/Core1 fast code/data
 tcma: Memory.MappedMemory @ sysbus 0x40010000
@@ -97,6 +108,316 @@ elif req_get("isRead", "IsRead"):
         req_set_value(0x1)  # RXFLR
     elif req_get("offset", "Offset") == 0x60:
         req_set_value(last_tx)
+    else:
+        req_set_value(0x0)
+'''
+
+canfd0: Python.PythonPeripheral @ sysbus 0x11010000
+    size: 0x1000
+    initable: true
+    script: '''
+def req_get(*names):
+    for name in names:
+        if hasattr(request, name):
+            return getattr(request, name)
+    raise AttributeError("missing request attributes: %s" % (", ".join(names),))
+
+def req_set_value(value):
+    if hasattr(request, "Value"):
+        request.Value = value
+    else:
+        request.value = value
+
+STATUS_READY = 0x01
+STATUS_TX_FIFO_SPACE = 0x02
+STATUS_RX_PENDING = 0x04
+STATUS_LOOPBACK = 0x08
+STATUS_IRQ_PENDING = 0x10
+STATUS_ERROR = 0x20
+
+IRQ_TX_COMPLETE = 0x01
+IRQ_RX_READY = 0x02
+IRQ_ERROR = 0x04
+
+CMD_TX_KICK = 0x01
+CMD_RX_POP = 0x02
+
+def recompute_status():
+    global status
+    status = 0
+    if ctrl & 0x1:
+        status |= STATUS_READY | STATUS_TX_FIFO_SPACE
+    if ctrl & 0x2:
+        status |= STATUS_LOOPBACK
+    if rx_fifo_level:
+        status |= STATUS_RX_PENDING
+    if irq_status & irq_enable:
+        status |= STATUS_IRQ_PENDING
+    if error_status:
+        status |= STATUS_ERROR
+
+def update_irq_line(irq_num):
+    global irq_asserted
+    clic = self.GetMachine()["sysbus.clic"]
+    should_assert = (irq_status & irq_enable) != 0
+    if should_assert and not irq_asserted:
+        clic.OnGPIO(irq_num, True)
+        irq_asserted = True
+    elif not should_assert and irq_asserted:
+        clic.OnGPIO(irq_num, False)
+        irq_asserted = False
+
+if req_get("isInit", "IsInit"):
+    ctrl = 0
+    bitrate = 0
+    irq_enable = 0
+    irq_status = 0
+    error_status = 0
+    irq_asserted = False
+    status = 0
+    tx_fifo_level = 0
+    rx_fifo_level = 0
+    tx_id = 0
+    tx_dlc = 0
+    tx_data0 = 0
+    tx_data1 = 0
+    rx_id = 0
+    rx_dlc = 0
+    rx_data0 = 0
+    rx_data1 = 0
+    signature = 0x43414E46
+elif req_get("isWrite", "IsWrite"):
+    offset = req_get("offset", "Offset")
+    value = req_get("value", "Value") & 0xFFFFFFFF
+    if offset == 0x00:
+        ctrl = value
+    elif offset == 0x04:
+        bitrate = value
+    elif offset == 0x10:
+        irq_enable = value & 0x7
+    elif offset == 0x14:
+        irq_status &= ~value
+    elif offset == 0x18:
+        error_status &= ~value
+    elif offset == 0x24:
+        tx_id = value
+    elif offset == 0x28:
+        tx_dlc = value
+    elif offset == 0x2C:
+        tx_data0 = value
+    elif offset == 0x30:
+        tx_data1 = value
+    elif offset == 0x0C:
+        if value & CMD_TX_KICK:
+            if (ctrl & 0x3) == 0x3 and bitrate != 0 and (tx_dlc & 0xFF) <= 8:
+                rx_id = tx_id
+                rx_dlc = tx_dlc & 0xFF
+                rx_data0 = tx_data0
+                rx_data1 = tx_data1
+                tx_fifo_level = 0
+                rx_fifo_level = 1
+                irq_status |= IRQ_TX_COMPLETE | IRQ_RX_READY
+                error_status = 0
+            else:
+                irq_status |= IRQ_ERROR
+                error_status |= 0x1
+        if value & CMD_RX_POP:
+            rx_fifo_level = 0
+    recompute_status()
+    update_irq_line(32)
+elif req_get("isRead", "IsRead"):
+    offset = req_get("offset", "Offset")
+    if offset == 0x00:
+        req_set_value(ctrl)
+    elif offset == 0x04:
+        req_set_value(bitrate)
+    elif offset == 0x08:
+        req_set_value(status)
+    elif offset == 0x0C:
+        req_set_value(0x0)
+    elif offset == 0x10:
+        req_set_value(irq_enable)
+    elif offset == 0x14:
+        req_set_value(irq_status)
+    elif offset == 0x18:
+        req_set_value(error_status)
+    elif offset == 0x1C:
+        req_set_value(tx_fifo_level)
+    elif offset == 0x20:
+        req_set_value(rx_fifo_level)
+    elif offset == 0x24:
+        req_set_value(tx_id)
+    elif offset == 0x28:
+        req_set_value(tx_dlc)
+    elif offset == 0x2C:
+        req_set_value(tx_data0)
+    elif offset == 0x30:
+        req_set_value(tx_data1)
+    elif offset == 0x34:
+        req_set_value(rx_id)
+    elif offset == 0x38:
+        req_set_value(rx_dlc)
+    elif offset == 0x3C:
+        req_set_value(rx_data0)
+    elif offset == 0x40:
+        req_set_value(rx_data1)
+    elif offset == 0x44:
+        req_set_value(signature)
+    else:
+        req_set_value(0x0)
+'''
+
+canfd1: Python.PythonPeripheral @ sysbus 0x13010000
+    size: 0x1000
+    initable: true
+    script: '''
+def req_get(*names):
+    for name in names:
+        if hasattr(request, name):
+            return getattr(request, name)
+    raise AttributeError("missing request attributes: %s" % (", ".join(names),))
+
+def req_set_value(value):
+    if hasattr(request, "Value"):
+        request.Value = value
+    else:
+        request.value = value
+
+STATUS_READY = 0x01
+STATUS_TX_FIFO_SPACE = 0x02
+STATUS_RX_PENDING = 0x04
+STATUS_LOOPBACK = 0x08
+STATUS_IRQ_PENDING = 0x10
+STATUS_ERROR = 0x20
+
+IRQ_TX_COMPLETE = 0x01
+IRQ_RX_READY = 0x02
+IRQ_ERROR = 0x04
+
+CMD_TX_KICK = 0x01
+CMD_RX_POP = 0x02
+
+def recompute_status():
+    global status
+    status = 0
+    if ctrl & 0x1:
+        status |= STATUS_READY | STATUS_TX_FIFO_SPACE
+    if ctrl & 0x2:
+        status |= STATUS_LOOPBACK
+    if rx_fifo_level:
+        status |= STATUS_RX_PENDING
+    if irq_status & irq_enable:
+        status |= STATUS_IRQ_PENDING
+    if error_status:
+        status |= STATUS_ERROR
+
+def update_irq_line(irq_num):
+    global irq_asserted
+    clic = self.GetMachine()["sysbus.clic"]
+    should_assert = (irq_status & irq_enable) != 0
+    if should_assert and not irq_asserted:
+        clic.OnGPIO(irq_num, True)
+        irq_asserted = True
+    elif not should_assert and irq_asserted:
+        clic.OnGPIO(irq_num, False)
+        irq_asserted = False
+
+if req_get("isInit", "IsInit"):
+    ctrl = 0
+    bitrate = 0
+    irq_enable = 0
+    irq_status = 0
+    error_status = 0
+    irq_asserted = False
+    status = 0
+    tx_fifo_level = 0
+    rx_fifo_level = 0
+    tx_id = 0
+    tx_dlc = 0
+    tx_data0 = 0
+    tx_data1 = 0
+    rx_id = 0
+    rx_dlc = 0
+    rx_data0 = 0
+    rx_data1 = 0
+    signature = 0x43414E46
+elif req_get("isWrite", "IsWrite"):
+    offset = req_get("offset", "Offset")
+    value = req_get("value", "Value") & 0xFFFFFFFF
+    if offset == 0x00:
+        ctrl = value
+    elif offset == 0x04:
+        bitrate = value
+    elif offset == 0x10:
+        irq_enable = value & 0x7
+    elif offset == 0x14:
+        irq_status &= ~value
+    elif offset == 0x18:
+        error_status &= ~value
+    elif offset == 0x24:
+        tx_id = value
+    elif offset == 0x28:
+        tx_dlc = value
+    elif offset == 0x2C:
+        tx_data0 = value
+    elif offset == 0x30:
+        tx_data1 = value
+    elif offset == 0x0C:
+        if value & CMD_TX_KICK:
+            if (ctrl & 0x3) == 0x3 and bitrate != 0 and (tx_dlc & 0xFF) <= 8:
+                rx_id = tx_id
+                rx_dlc = tx_dlc & 0xFF
+                rx_data0 = tx_data0
+                rx_data1 = tx_data1
+                tx_fifo_level = 0
+                rx_fifo_level = 1
+                irq_status |= IRQ_TX_COMPLETE | IRQ_RX_READY
+                error_status = 0
+            else:
+                irq_status |= IRQ_ERROR
+                error_status |= 0x1
+        if value & CMD_RX_POP:
+            rx_fifo_level = 0
+    recompute_status()
+    update_irq_line(49)
+elif req_get("isRead", "IsRead"):
+    offset = req_get("offset", "Offset")
+    if offset == 0x00:
+        req_set_value(ctrl)
+    elif offset == 0x04:
+        req_set_value(bitrate)
+    elif offset == 0x08:
+        req_set_value(status)
+    elif offset == 0x0C:
+        req_set_value(0x0)
+    elif offset == 0x10:
+        req_set_value(irq_enable)
+    elif offset == 0x14:
+        req_set_value(irq_status)
+    elif offset == 0x18:
+        req_set_value(error_status)
+    elif offset == 0x1C:
+        req_set_value(tx_fifo_level)
+    elif offset == 0x20:
+        req_set_value(rx_fifo_level)
+    elif offset == 0x24:
+        req_set_value(tx_id)
+    elif offset == 0x28:
+        req_set_value(tx_dlc)
+    elif offset == 0x2C:
+        req_set_value(tx_data0)
+    elif offset == 0x30:
+        req_set_value(tx_data1)
+    elif offset == 0x34:
+        req_set_value(rx_id)
+    elif offset == 0x38:
+        req_set_value(rx_dlc)
+    elif offset == 0x3C:
+        req_set_value(rx_data0)
+    elif offset == 0x40:
+        req_set_value(rx_data1)
+    elif offset == 0x44:
+        req_set_value(signature)
     else:
         req_set_value(0x0)
 '''

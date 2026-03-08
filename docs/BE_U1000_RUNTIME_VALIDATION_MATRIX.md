@@ -2,6 +2,9 @@
 
 This matrix records the staged runtime validation story for the `be_u1000` board path.
 
+It elaborates board-stage evidence for `be_u1000`, but it does not replace the
+normative support-status decisions in `docs/SUPPORTED_MATRIX.md`.
+
 ## Status labels
 
 - `supported`: part of the default supported workflow
@@ -21,9 +24,10 @@ This matrix records the staged runtime validation story for the `be_u1000` board
 
 ## Current interpretation
 
-- `S0` is the supported fallback behavior: both demo tasks share a single scheduler lane and the board self-test passes.
+- `S0` is the supported fallback behavior: both demo tasks share a single scheduler lane (`OS_CFG_CPU_COUNT=1` with `OS_SMP_EN=OFF`) and the board self-test passes.
 - `S1` through `S5` remain experimental because they rely on an approximate Renode model and are not part of the declared supported matrix.
 - Core2 remains reserved/helper only; no current stage promotes it into generic SMP.
+- Promotion of any later stage requires the support registry, command surface, and blocking CI to be updated in the same change.
 
 ## Remaining unresolved items
 

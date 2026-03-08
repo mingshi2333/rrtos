@@ -47,11 +47,15 @@ beu1000-irq-consistency = "python scripts/be_u1000/validate_interrupt_consistenc
 beu1000-bootlog-check = "python scripts/be_u1000/check_boot_log.py --log logs/be_u1000_boot.log --expect-irq-model CLIC"
 beu1000-bootlog-check-sim = "python scripts/be_u1000/check_boot_log.py --log logs/be_u1000_boot_sim.log --expect-irq-model CLIC"
 validate-supported-ai = "python scripts/validate_supported_ai_path.py"
+validate-config-authority = "python scripts/validate_config_authority.py"
+validate-bsp-seam = "python scripts/validate_bsp_seam.py"
+validate-support-contract = "python scripts/validate_support_contract.py"
 validate-mnist-runtime = "python scripts/run_mnist_validation.py --kernel build/apps/mnist_app/mnist_validation --log logs/mnist_validation_qemu.log"
 observe-mnist-runtime-renode = "python scripts/run_mnist_validation_renode.py --kernel build/apps/mnist_app/mnist_validation --log logs/mnist_validation_renode.log"
 compare-mnist-runtime-platforms = "python scripts/compare_mnist_validation_logs.py --qemu-log logs/mnist_validation_qemu.log --renode-log logs/mnist_validation_renode.log"
+# Supported rv32 gate; dual-platform compare remains observation-only.
 validate-mnist-runtime-dual = { depends-on = ["validate-mnist-runtime", "observe-mnist-runtime-renode", "compare-mnist-runtime-platforms"] }
-validate-supported-rv32 = { depends-on = ["validate-supported-ai", "configure", "build", "report-footprint", "validate-mnist-runtime"] }
+validate-supported-rv32 = { depends-on = ["validate-config-authority", "validate-bsp-seam", "validate-support-contract", "validate-supported-ai", "configure", "build", "report-footprint", "validate-mnist-runtime"] }
 
 [feature.rv64.dependencies]
 picolibc-rv64 = { path = "packages/picolibc-rv64" }
@@ -93,7 +97,8 @@ validate-irq-map = "python scripts/be_u1000/validate_interrupt_consistency.py --
 validate-irq-map-sdk = "sh -c 'test -n \"$BE_U1000_SDK_HEADER\" && python scripts/be_u1000/validate_interrupt_consistency.py --board-config boards/be_u1000/board_config.h --repl scripts/simulation/be_u1000.repl --sdk-header \"$BE_U1000_SDK_HEADER\" || { echo \"BE_U1000_SDK_HEADER is not set\" >&2; exit 2; }'"
 validate-bootlog = "python scripts/be_u1000/check_boot_log.py --log logs/be_u1000_boot_sim.log --expect-irq-model CLIC"
 validate-selftest-sim = "python scripts/be_u1000/run_smp_runtime.py --kernel build-be_u1000/rrtos_be_u1000.elf --binary build-be_u1000/rrtos_be_u1000.bin --log logs/be_u1000_boot_sim.log --summary logs/be_u1000_selftest_runtime.md --sleep-seconds 4 --check-bootlog --expect-irq-model CLIC --expect-single-core-fallback --expect-qspi-signature 0x31505351 0x5F4C444D 0x00010010 0xA55A3CC3"
-validate-supported = { depends-on = ["configure", "build", "report-footprint", "validate-irq-map", "validate-selftest-sim"] }
+# Supported BE-U1000 gate; SMP runtime stages remain experimental.
+validate-supported = { depends-on = ["validate-config-authority", "validate-bsp-seam", "validate-support-contract", "configure", "build", "report-footprint", "validate-irq-map", "validate-selftest-sim"] }
 
 [environments]
 default = ["rv64"]

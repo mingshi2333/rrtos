@@ -1,21 +1,21 @@
-#include <stdint.h>
+#include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
+#include "hal_canfd.h"
 #include "os_kernel.h"
 #include "os_config.h"
 #include "hal_board.h"
 #include "hal_clint.h"
+#include "hal_flash.h"
 #include "hal_gpio.h"
 #include "hal_i2c.h"
+#include "hal_irq.h"
 #include "hal_spi.h"
 #include "hal_uart.h"
 
 #if OS_CFG_SMP_EN
 #include "riscv_csr.h"
-#endif
-
-#if defined(CONFIG_BOARD_BE_U1000)
-#include "board_config.h"
 #endif
 
 #if OS_CFG_SMP_EN
@@ -35,101 +35,387 @@ static volatile uint32_t g_balance_seen_mask;
 #endif
 
 #define SELFTEST_SPI_TIMEOUT  100000u
-#define QSPI1_SIM_SIG0        0x31505351u
-#define QSPI1_SIM_SIG1        0x5F4C444Du
-#define QSPI1_SIM_SIG2        0x00010010u
-#define QSPI1_SIM_SIG3        0xA55A3CC3u
+#define SELFTEST_CANFD_TIMEOUT 100000u
+#define CANFD_IRQ_SEEN(index) (1u << (index))
+
+static volatile uint32_t g_canfd_irq_seen_mask;
+static volatile uint32_t g_canfd_irq_count[HAL_BOARD_CANFD_CONTROLLER_COUNT];
+static hal_board_canfd_profile_t g_canfd_profiles[HAL_BOARD_CANFD_CONTROLLER_COUNT];
+
+static bool canfd_frames_match(const hal_canfd_frame_t *lhs, const hal_canfd_frame_t *rhs)
+{
+    uint8_t i;
+
+    if (lhs->id != rhs->id || lhs->len != rhs->len) {
+        return false;
+    }
+
+    for (i = 0; i < lhs->len; ++i) {
+        if (lhs->data[i] != rhs->data[i]) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+static bool wait_for_canfd_irq(uint32_t irq_mask, uint32_t timeout)
+{
+    uint32_t i;
+
+    for (i = 0; i < timeout; ++i) {
+        if ((g_canfd_irq_seen_mask & irq_mask) != 0u) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+static const char *selftest_label(const char *label, const char *fallback);
+
+#if defined(CONFIG_BOARD_BE_U1000)
+static void canfd_irq_handler(uint32_t irq_num)
+{
+    uint32_t index;
+
+    for (index = 0; index < HAL_BOARD_CANFD_CONTROLLER_COUNT; ++index) {
+        const char *name = selftest_label(g_canfd_profiles[index].label, "CANFD");
+
+        if (irq_num != g_canfd_profiles[index].irq_num) {
+            continue;
+        }
+
+        (void)hal_canfd_irq_enable(0u);
+        (void)hal_canfd_irq_ack(HAL_CANFD_IRQ_TX_COMPLETE |
+                                HAL_CANFD_IRQ_RX_READY |
+                                HAL_CANFD_IRQ_ERROR);
+        g_canfd_irq_seen_mask |= CANFD_IRQ_SEEN(index);
+        ++g_canfd_irq_count[index];
+        os_print("[IRQ] %s external: OK (irq=%u count=%u)\n",
+                 name,
+                 irq_num,
+                 g_canfd_irq_count[index]);
+        break;
+    }
+}
+#endif
 
 static void report_pinmux_result(const char *name, hal_board_pinmux_group_t group)
 {
+    const char *label = name ? name : hal_board_pinmux_group_name(group);
+
     if (hal_board_apply_pinmux_group(group) == 0) {
-        os_print("[SELFTEST] %s pinmux: OK\n", name);
+        os_print("[SELFTEST] %s pinmux: OK\n", label);
     } else {
-        os_print("[SELFTEST] %s pinmux: FAIL\n", name);
+        os_print("[SELFTEST] %s pinmux: FAIL\n", label);
+    }
+}
+
+static const char *selftest_label(const char *label, const char *fallback)
+{
+    return label ? label : fallback;
+}
+
+static void report_canfd_result(const hal_board_canfd_profile_t *profile,
+                                uint32_t index);
+
+static void run_gpio_selftest(const hal_board_selftest_profile_t *profile)
+{
+    const hal_board_gpio_resource_t *led_gpio = &profile->led_gpio;
+    const hal_board_gpio_resource_t *button_gpio = &profile->button_gpio;
+
+    report_pinmux_result(NULL, profile->led_pinmux_group);
+    report_pinmux_result(NULL, profile->button_pinmux_group);
+
+    hal_gpio_init(led_gpio->base);
+    if (led_gpio->available &&
+        hal_gpio_set_direction(led_gpio->pin, true) == 0 &&
+        hal_gpio_write(led_gpio->pin, true) == 0 &&
+        hal_gpio_toggle(led_gpio->pin) == 0) {
+        os_print("[CHK] GPIO init: OK (base=0x%x pin=%u)\n",
+                 (uint32_t)led_gpio->base,
+                 (uint32_t)led_gpio->pin);
+        os_print("[SELFTEST] %s: OK (%s)\n",
+                 selftest_label(led_gpio->label, "LED GPIO"),
+                 selftest_label(led_gpio->location, "n/a"));
+    } else {
+        os_print("[CHK] GPIO init: FAIL\n");
+        os_print("[SELFTEST] %s: FAIL\n",
+                 selftest_label(led_gpio->label, "LED GPIO"));
+    }
+
+    if (button_gpio->available &&
+        hal_gpio_set_direction(button_gpio->pin, false) == 0) {
+        os_print("[SELFTEST] %s: OK (%s level=%u)\n",
+                 selftest_label(button_gpio->label, "button GPIO"),
+                 selftest_label(button_gpio->location, "n/a"),
+                 hal_gpio_read(button_gpio->pin) ? 1u : 0u);
+    } else {
+        os_print("[SELFTEST] %s: FAIL\n",
+                 selftest_label(button_gpio->label, "button GPIO"));
+    }
+}
+
+static void run_serial_bus_selftest(const hal_board_selftest_profile_t *profile)
+{
+    const hal_board_diag_config_t *diag_config = &profile->diag;
+    uint8_t spi_rx = 0;
+
+    report_pinmux_result(NULL, profile->i2c_pinmux_group);
+    if (diag_config->available &&
+        hal_i2c_init(diag_config->i2c_base, diag_config->i2c_bus_hz) == 0) {
+        os_print("[CHK] I2C init: OK (base=0x%x hz=%u)\n",
+                 (uint32_t)diag_config->i2c_base,
+                 (uint32_t)diag_config->i2c_bus_hz);
+        os_print("[SELFTEST] %s: OK (%s, %uHz)\n",
+                 selftest_label(diag_config->i2c_label, "I2C"),
+                 selftest_label(diag_config->i2c_route, "n/a"),
+                 (uint32_t)diag_config->i2c_bus_hz);
+    } else {
+        os_print("[CHK] I2C init: FAIL\n");
+        os_print("[SELFTEST] %s: FAIL\n",
+                 selftest_label(diag_config->i2c_label, "I2C"));
+    }
+
+    report_pinmux_result(NULL, profile->spi_pinmux_group);
+    if (diag_config->available &&
+        hal_spi_init(diag_config->spi_base, diag_config->spi_baud_div, HAL_SPI_MODE0) == 0 &&
+        hal_spi_transfer(0xA5u, &spi_rx, SELFTEST_SPI_TIMEOUT) == 0) {
+        os_print("[CHK] SPI init: OK (base=0x%x div=%u)\n",
+                 (uint32_t)diag_config->spi_base,
+                 (uint32_t)diag_config->spi_baud_div);
+        os_print("[SELFTEST] %s: OK (%s rx=0x%x)\n",
+                 selftest_label(diag_config->spi_label, "SPI"),
+                 selftest_label(diag_config->spi_route, "n/a"),
+                 spi_rx);
+    } else {
+        os_print("[CHK] SPI init: FAIL\n");
+        os_print("[SELFTEST] %s: FAIL\n",
+                 selftest_label(diag_config->spi_label, "SPI"));
+    }
+}
+
+static void run_flash_selftest(const hal_board_selftest_profile_t *profile)
+{
+    const hal_board_flash_profile_t *flash_profile = &profile->flash;
+    uint32_t qspi_sig0 = 0;
+    uint32_t qspi_sig1 = 0;
+    uint32_t qspi_sig2 = 0;
+    uint32_t qspi_sig3 = 0;
+    hal_flash_info_t flash_info = {0};
+    bool qspi_sample_valid = false;
+
+    report_pinmux_result(NULL, profile->flash_pinmux_group);
+    os_print("[SELFTEST] %s ready: ctrl=0x%x window=0x%x (%s)\n",
+             selftest_label(flash_profile->label, "flash"),
+             (uint32_t)flash_profile->ctrl_base,
+             (uint32_t)flash_profile->window_base,
+             selftest_label(flash_profile->ready_note, selftest_label(flash_profile->route, "n/a")));
+    if (flash_profile->available &&
+        hal_flash_init(flash_profile->window_base, flash_profile->window_size) == 0) {
+        os_print("[CHK] FLASH init: OK (base=0x%x size=0x%x)\n",
+                 (uint32_t)flash_profile->window_base,
+                 (uint32_t)flash_profile->window_size);
+        if (hal_flash_read_u32(0u, &qspi_sig0) == 0 &&
+            hal_flash_read_u32(4u, &qspi_sig1) == 0 &&
+            hal_flash_read_u32(8u, &qspi_sig2) == 0 &&
+            hal_flash_read_u32(12u, &qspi_sig3) == 0) {
+            qspi_sample_valid = true;
+            os_print("[CHK] FLASH read: OK (offset=0x0 len=16)\n");
+            os_print("[SELFTEST] %s window sample: 0x%x 0x%x 0x%x 0x%x\n",
+                     selftest_label(flash_profile->label, "flash"),
+                     qspi_sig0, qspi_sig1, qspi_sig2, qspi_sig3);
+        } else {
+            os_print("[CHK] FLASH read: FAIL\n");
+        }
+
+        if (hal_flash_get_info(&flash_info) == 0) {
+            os_print("[CHK] FLASH identify: OK (jedec=0x%x page=%u sector=%u size=0x%x)\n",
+                     flash_info.jedec_id,
+                     flash_info.page_size,
+                     flash_info.sector_size,
+                     flash_info.capacity_bytes);
+        } else {
+            os_print("[CHK] FLASH identify: FAIL\n");
+        }
+    } else {
+        os_print("[CHK] FLASH init: FAIL\n");
+    }
+    if (qspi_sample_valid &&
+        qspi_sig0 == flash_profile->expected_signature[0] &&
+        qspi_sig1 == flash_profile->expected_signature[1] &&
+        qspi_sig2 == flash_profile->expected_signature[2] &&
+        qspi_sig3 == flash_profile->expected_signature[3]) {
+        os_print("[SELFTEST] %s window read: OK (%s)\n",
+                 selftest_label(flash_profile->label, "flash"),
+                 selftest_label(flash_profile->window_match_note, selftest_label(flash_profile->window_read_note, "sample matched")));
+    } else {
+        os_print("[SELFTEST] %s window read: %s\n",
+                 selftest_label(flash_profile->label, "flash"),
+                 selftest_label(flash_profile->window_capture_note, "sample captured"));
+    }
+    if (flash_info.jedec_id == flash_profile->jedec_id &&
+        flash_info.page_size == flash_profile->page_size &&
+        flash_info.sector_size == flash_profile->sector_size &&
+        flash_info.capacity_bytes == flash_profile->capacity_bytes) {
+        os_print("[SELFTEST] %s identify: OK (%s)\n",
+                 selftest_label(flash_profile->label, "flash"),
+                 selftest_label(flash_profile->identify_match_note, selftest_label(flash_profile->identify_note, "profile matched")));
+    } else if (flash_info.jedec_id != 0u) {
+        os_print("[SELFTEST] %s identify: %s\n",
+                 selftest_label(flash_profile->label, "flash"),
+                 selftest_label(flash_profile->identify_capture_note, "sample captured"));
+    }
+}
+
+static void run_canfd_selftest(const hal_board_selftest_profile_t *profile)
+{
+    uint32_t index;
+
+    for (index = 0; index < HAL_BOARD_CANFD_CONTROLLER_COUNT; ++index) {
+        g_canfd_profiles[index] = profile->canfd[index];
+        report_canfd_result(&g_canfd_profiles[index], index);
+    }
+}
+
+static void report_canfd_result(const hal_board_canfd_profile_t *profile,
+                                uint32_t index)
+{
+    hal_canfd_config_t config;
+    hal_canfd_state_t state;
+    hal_canfd_frame_t tx_frame = {0};
+    hal_canfd_frame_t rx_frame = {0};
+    uint8_t i;
+    uint32_t irq_mask = CANFD_IRQ_SEEN(index);
+    const char *name = selftest_label(profile ? profile->label : NULL, "CANFD");
+
+    if (!profile || index >= HAL_BOARD_CANFD_CONTROLLER_COUNT || !profile->available) {
+        os_print("[CHK] %s init: FAIL\n", name);
+        return;
+    }
+
+    report_pinmux_result(name, profile->pinmux_group);
+
+    config.nominal_bitrate = profile->bitrate;
+    config.internal_loopback = true;
+    tx_frame.id = profile->frame_id;
+    tx_frame.len = (uint8_t)profile->frame_len;
+    for (i = 0; i < tx_frame.len; ++i) {
+        tx_frame.data[i] = (uint8_t)(profile->payload_seed + i);
+    }
+
+    g_canfd_irq_seen_mask &= ~irq_mask;
+    g_canfd_irq_count[index] = 0u;
+
+    hal_irq_register_handler(profile->irq_num, canfd_irq_handler);
+    hal_irq_set_priority(profile->irq_num, 1u);
+    hal_irq_enable(profile->irq_num);
+    os_print("[CHK] %s irq-arm: OK (irq=%u)\n", name, profile->irq_num);
+
+    if (hal_canfd_init(profile->base, &config) == 0) {
+        os_print("[CHK] %s init: OK (base=0x%x bitrate=%u loopback=1)\n",
+                 name,
+                 (uint32_t)profile->base,
+                 profile->bitrate);
+        if (hal_canfd_irq_enable(HAL_CANFD_IRQ_TX_COMPLETE |
+                                 HAL_CANFD_IRQ_RX_READY |
+                                 HAL_CANFD_IRQ_ERROR) == 0 &&
+            hal_canfd_get_state(&state) == 0 &&
+            state.error_status == HAL_CANFD_ERROR_NONE) {
+            os_print("[CHK] %s state: OK (status=0x%x irq=0x%x err=0x%x txflr=%u rxflr=%u)\n",
+                     name,
+                     state.status,
+                     state.irq_status,
+                     state.error_status,
+                     state.tx_fifo_level,
+                     state.rx_fifo_level);
+        } else {
+            os_print("[CHK] %s state: FAIL\n", name);
+            return;
+        }
+
+        if (hal_canfd_tx_enqueue(&tx_frame, SELFTEST_CANFD_TIMEOUT) == 0 &&
+            hal_canfd_get_state(&state) == 0 &&
+            state.error_status == HAL_CANFD_ERROR_NONE) {
+            os_print("[CHK] %s path: OK (status=0x%x irq=0x%x err=0x%x txflr=%u rxflr=%u)\n",
+                     name,
+                     state.status,
+                     state.irq_status,
+                     state.error_status,
+                     state.tx_fifo_level,
+                     state.rx_fifo_level);
+        } else {
+            os_print("[CHK] %s path: FAIL\n", name);
+            return;
+        }
+
+        if (wait_for_canfd_irq(irq_mask, SELFTEST_CANFD_TIMEOUT)) {
+            os_print("[CHK] %s irq-fire: OK (irq=%u count=%u)\n",
+                     name,
+                     profile->irq_num,
+                     g_canfd_irq_count[index]);
+        } else {
+            os_print("[CHK] %s irq-fire: FAIL\n", name);
+            return;
+        }
+
+        if (hal_canfd_rx_dequeue(&rx_frame, SELFTEST_CANFD_TIMEOUT) == 0 &&
+            hal_canfd_irq_ack(HAL_CANFD_IRQ_TX_COMPLETE |
+                              HAL_CANFD_IRQ_RX_READY |
+                              HAL_CANFD_IRQ_ERROR) == 0 &&
+            hal_canfd_get_state(&state) == 0 &&
+            state.error_status == HAL_CANFD_ERROR_NONE &&
+            canfd_frames_match(&tx_frame, &rx_frame)) {
+            os_print("[CHK] %s loopback: OK (id=0x%x len=%u)\n",
+                     name,
+                     tx_frame.id,
+                     (uint32_t)tx_frame.len);
+            os_print("[CHK] %s settle: OK (status=0x%x irq=0x%x err=0x%x txflr=%u rxflr=%u)\n",
+                     name,
+                     state.status,
+                     state.irq_status,
+                     state.error_status,
+                     state.tx_fifo_level,
+                     state.rx_fifo_level);
+            os_print("[SELFTEST] %s loopback: OK (base=0x%x bitrate=%u id=0x%x)\n",
+                     name,
+                     (uint32_t)profile->base,
+                     profile->bitrate,
+                     tx_frame.id);
+            if (profile->route) {
+                os_print("[SELFTEST] %s route: %s\n", name, profile->route);
+            }
+            if (profile->loopback_note) {
+                os_print("[SELFTEST] %s loopback note: %s\n",
+                         name,
+                         profile->loopback_note);
+            }
+        } else {
+            os_print("[CHK] %s loopback: FAIL\n", name);
+        }
+    } else {
+        os_print("[CHK] %s init: FAIL\n", name);
     }
 }
 
 #if defined(CONFIG_BOARD_BE_U1000)
 static void board_bus_self_check(void)
 {
-    uint8_t spi_rx = 0;
-    volatile const uint32_t *qspi1_window = (volatile const uint32_t *)BE_U1000_QSPI1_BASE;
-    uint32_t qspi_sig0;
-    uint32_t qspi_sig1;
-    uint32_t qspi_sig2;
-    uint32_t qspi_sig3;
+    hal_board_selftest_profile_t selftest_profile;
 
-    report_pinmux_result("UART0", HAL_BOARD_PINMUX_GROUP_CONSOLE_UART0);
-    report_pinmux_result("USER_LED", HAL_BOARD_PINMUX_GROUP_USER_LED);
-    report_pinmux_result("USER_BUTTON", HAL_BOARD_PINMUX_GROUP_USER_BUTTON);
+    hal_board_get_selftest_profile(&selftest_profile);
 
-    hal_gpio_init(BE_U1000_USER_LED_GPIO_BASE);
-    if (hal_gpio_set_direction(BE_U1000_USER_LED_GPIO_PIN, true) == 0 &&
-        hal_gpio_write(BE_U1000_USER_LED_GPIO_PIN, true) == 0 &&
-        hal_gpio_toggle(BE_U1000_USER_LED_GPIO_PIN) == 0) {
-        os_print("[CHK] GPIO init: OK (base=0x%x pin=%u)\n",
-                 (uint32_t)BE_U1000_USER_LED_GPIO_BASE,
-                 (uint32_t)BE_U1000_USER_LED_GPIO_PIN);
-        os_print("[SELFTEST] USER_LED GPIO: OK (PC0)\n");
-    } else {
-        os_print("[CHK] GPIO init: FAIL\n");
-        os_print("[SELFTEST] USER_LED GPIO: FAIL\n");
+    if (!selftest_profile.available) {
+        os_print("[CHK] board selftest profile: FAIL\n");
+        return;
     }
 
-    if (hal_gpio_set_direction(BE_U1000_USER_BTN_GPIO_PIN, false) == 0) {
-        os_print("[SELFTEST] USER_BUTTON GPIO: OK (PC13 level=%u)\n",
-                 hal_gpio_read(BE_U1000_USER_BTN_GPIO_PIN) ? 1u : 0u);
-    } else {
-        os_print("[SELFTEST] USER_BUTTON GPIO: FAIL\n");
-    }
-
-    report_pinmux_result("I2C0 header", HAL_BOARD_PINMUX_GROUP_HEADER_I2C0);
-    if (hal_i2c_init(BE_U1000_HEADER_I2C_BASE, BE_U1000_DIAG_I2C_BUS_HZ) == 0) {
-        os_print("[CHK] I2C init: OK (base=0x%x hz=%u)\n",
-                 (uint32_t)BE_U1000_HEADER_I2C_BASE,
-                 (uint32_t)BE_U1000_DIAG_I2C_BUS_HZ);
-        os_print("[SELFTEST] I2C0 controller: OK (PA4/PA5, 100kHz)\n");
-    } else {
-        os_print("[CHK] I2C init: FAIL\n");
-        os_print("[SELFTEST] I2C0 controller: FAIL\n");
-    }
-
-    report_pinmux_result("SPI1 header", HAL_BOARD_PINMUX_GROUP_HEADER_SPI1);
-    if (hal_spi_init(BE_U1000_HEADER_SPI_BASE, BE_U1000_DIAG_SPI_BAUD_DIV, HAL_SPI_MODE0) == 0 &&
-        hal_spi_transfer(0xA5u, &spi_rx, SELFTEST_SPI_TIMEOUT) == 0) {
-        os_print("[CHK] SPI init: OK (base=0x%x div=%u)\n",
-                 (uint32_t)BE_U1000_HEADER_SPI_BASE,
-                 (uint32_t)BE_U1000_DIAG_SPI_BAUD_DIV);
-        os_print("[SELFTEST] SPI1 controller: OK (PA8..PA11 rx=0x%x)\n", spi_rx);
-    } else {
-        os_print("[CHK] SPI init: FAIL\n");
-        os_print("[SELFTEST] SPI1 controller: FAIL\n");
-    }
-
-    report_pinmux_result("QSPI1", HAL_BOARD_PINMUX_GROUP_QSPI1);
-    os_print("[SELFTEST] QSPI1 ready: ctrl=0x%x window=0x%x (PB0..PB5)\n",
-             (uint32_t)BE_U1000_QSPI1_CTRL_BASE,
-             (uint32_t)BE_U1000_QSPI1_BASE);
-    qspi_sig0 = qspi1_window[0];
-    qspi_sig1 = qspi1_window[1];
-    qspi_sig2 = qspi1_window[2];
-    qspi_sig3 = qspi1_window[3];
-    os_print("[SELFTEST] QSPI1 window sample: 0x%x 0x%x 0x%x 0x%x\n",
-             qspi_sig0, qspi_sig1, qspi_sig2, qspi_sig3);
-    if (qspi_sig0 == QSPI1_SIM_SIG0 && qspi_sig1 == QSPI1_SIM_SIG1 &&
-        qspi_sig2 == QSPI1_SIM_SIG2 && qspi_sig3 == QSPI1_SIM_SIG3) {
-        os_print("[SELFTEST] QSPI1 window read: OK (sim signature)\n");
-    } else {
-        os_print("[SELFTEST] QSPI1 window read: sample captured\n");
-    }
-
-    report_pinmux_result("CANFD0", HAL_BOARD_PINMUX_GROUP_CANFD0);
-    os_print("[SELFTEST] CANFD0 ready: base=0x%x pins=PA14/PA15\n",
-             (uint32_t)BE_U1000_CANFD0_BASE);
-
-    report_pinmux_result("CANFD1", HAL_BOARD_PINMUX_GROUP_CANFD1);
-    os_print("[SELFTEST] CANFD1 ready: base=0x%x pins=PB6/PB7\n",
-             (uint32_t)BE_U1000_CANFD1_BASE);
+    report_pinmux_result(NULL, selftest_profile.console_pinmux_group);
+    run_gpio_selftest(&selftest_profile);
+    run_serial_bus_selftest(&selftest_profile);
+    run_flash_selftest(&selftest_profile);
+    run_canfd_selftest(&selftest_profile);
 }
 #endif
 
@@ -216,9 +502,12 @@ static void balance_task_entry(void *arg) {
 #endif
 
 void os_kernel_main(void) {
+    hal_board_execution_profile_t execution_profile;
+
     hal_board_init();
     hal_board_print_banner();
     os_print("[BOOT] RUN_MARKER: 0x%x\n", (uint32_t)hal_clint_mtime_get());
+    hal_board_get_execution_profile(&execution_profile);
 
 #if OS_CFG_IRQ_MODEL_CLIC
     os_print("[BOOT] IRQ model: CLIC\n");
@@ -232,7 +521,9 @@ void os_kernel_main(void) {
     os_kernel_init();
 
 #if OS_CFG_SMP_EN
-    os_print("[SMP] role-plan: core0=boot core1=worker core2=reserved\n");
+    if (execution_profile.available && execution_profile.role_plan) {
+        os_print("[SMP] role-plan: %s\n", execution_profile.role_plan);
+    }
     os_smp_init();
     os_smp_start_cpus();
     if (os_smp_cpu_online(1)) {
@@ -250,10 +541,14 @@ void os_kernel_main(void) {
     os_task_set_affinity(&worker_task_tcb, 1);
     os_task_create(&balance_task_tcb, "balance", balance_task_entry, NULL,
                    12, balance_task_stack, sizeof(balance_task_stack));
-    os_print("[SMP] task-map: control->core0 worker->core1 core2=reserved\n");
+    if (execution_profile.available && execution_profile.task_map_smp) {
+        os_print("[SMP] task-map: %s\n", execution_profile.task_map_smp);
+    }
     os_smp_release_cpus();
 #else
-    os_print("[BOOT] task-map: control+worker share single core\n");
+    if (execution_profile.available && execution_profile.task_map_single) {
+        os_print("[BOOT] task-map: %s\n", execution_profile.task_map_single);
+    }
 #endif
 
     os_print("[BOOT] Starting scheduler...\n");

@@ -26,7 +26,7 @@
 #define OS_CFG_ARCH_BITS            64
 #endif
 
-/** @brief CPU clock frequency in Hz */
+/** @brief CPU clock frequency in Hz (fallback default; build layer overrides for supported lanes) */
 #ifndef OS_CFG_CPU_FREQ_HZ
 #define OS_CFG_CPU_FREQ_HZ          100000000UL
 #endif
@@ -34,7 +34,7 @@
 /** @brief System tick frequency in Hz */
 #define OS_CFG_TICK_FREQ_HZ         1000
 
-/** @brief Timer clock frequency in Hz */
+/** @brief Timer clock frequency in Hz (fallback default; build layer overrides for supported lanes) */
 #ifndef OS_CFG_TIMER_FREQ_HZ
 #define OS_CFG_TIMER_FREQ_HZ        10000000UL
 #endif
@@ -71,19 +71,31 @@
 /* Multi-Core Configuration                                                   */
 /*===========================================================================*/
 
-/** @brief Enable SMP support */
+/** @brief Enable SMP support (fallback default; selected lane policy comes from build definitions) */
 #ifndef OS_CFG_SMP_EN
 #define OS_CFG_SMP_EN               0
 #endif
 
-/** @brief Maximum number of CPU cores */
+/** @brief Maximum number of CPU cores (fallback compile-time ceiling; selected lane may override) */
 #ifndef OS_CFG_CPU_MAX
 #define OS_CFG_CPU_MAX              1
 #endif
 
-/** @brief Number of active CPU cores */
+/** @brief Number of active CPU cores (fallback schedulable-core count; selected lane may override) */
 #ifndef OS_CFG_CPU_COUNT
 #define OS_CFG_CPU_COUNT            1
+#endif
+
+#if OS_CFG_CPU_COUNT < 1
+#error "OS_CFG_CPU_COUNT must be at least 1"
+#endif
+
+#if OS_CFG_CPU_COUNT > OS_CFG_CPU_MAX
+#error "OS_CFG_CPU_COUNT must not exceed OS_CFG_CPU_MAX"
+#endif
+
+#if !OS_CFG_SMP_EN && (OS_CFG_CPU_COUNT != 1)
+#error "OS_CFG_CPU_COUNT must be 1 when OS_CFG_SMP_EN is disabled"
 #endif
 
 /** @brief Enable AMP mode support */
@@ -160,7 +172,7 @@
 /* AI Runtime Configuration                                                   */
 /*===========================================================================*/
 
-/** @brief Enable AI runtime */
+/** @brief Enable AI runtime (fallback default; selected lane policy comes from build definitions) */
 #ifndef OS_CFG_AI_EN
 #define OS_CFG_AI_EN                1
 #endif
@@ -188,7 +200,7 @@
 /* Federated Learning Configuration                                           */
 /*===========================================================================*/
 
-/** @brief Enable federated learning */
+/** @brief Enable federated learning (fallback default; selected lane policy comes from build definitions) */
 #ifndef OS_CFG_FL_EN
 #define OS_CFG_FL_EN                1
 #endif

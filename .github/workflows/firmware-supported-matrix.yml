@@ -18,8 +18,12 @@ on:
       - "scripts/compare_mnist_validation_logs.py"
       - "scripts/test_ai_registry.sh"
       - "scripts/validate_supported_ai_path.py"
+      - "scripts/validate_config_authority.py"
+      - "scripts/validate_bsp_seam.py"
+      - "scripts/validate_support_contract.py"
       - "scripts/be_u1000/**"
       - "docs/SUPPORTED_MATRIX.md"
+      - "docs/BE_U1000_RUNTIME_VALIDATION_MATRIX.md"
       - "docs/README.md"
       - "docs/AI_CANONICAL_PATH.md"
       - "docs/switching_guide.md"
@@ -42,8 +46,12 @@ on:
       - "scripts/compare_mnist_validation_logs.py"
       - "scripts/test_ai_registry.sh"
       - "scripts/validate_supported_ai_path.py"
+      - "scripts/validate_config_authority.py"
+      - "scripts/validate_bsp_seam.py"
+      - "scripts/validate_support_contract.py"
       - "scripts/be_u1000/**"
       - "docs/SUPPORTED_MATRIX.md"
+      - "docs/BE_U1000_RUNTIME_VALIDATION_MATRIX.md"
       - "docs/README.md"
       - "docs/AI_CANONICAL_PATH.md"
       - "docs/switching_guide.md"
@@ -53,6 +61,8 @@ on:
   workflow_dispatch:
 
 jobs:
+  # Blocking CI for supported lanes only. Observation and experimental lanes
+  # remain outside this workflow unless promoted in the support registry.
   rv32-supported:
     runs-on: ubuntu-latest
     steps:

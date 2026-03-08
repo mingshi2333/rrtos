@@ -169,6 +169,25 @@ def main() -> int:
         "[CHK] GPIO init: OK",
         "[CHK] SPI init: OK",
         "[CHK] I2C init: OK",
+        "[CHK] FLASH init: OK",
+        "[CHK] FLASH read: OK",
+        "[CHK] FLASH identify: OK",
+        "[CHK] CANFD0 irq-arm: OK",
+        "[CHK] CANFD0 init: OK",
+        "[CHK] CANFD0 state: OK",
+        "[CHK] CANFD0 path: OK",
+        "[IRQ] CANFD0 external: OK",
+        "[CHK] CANFD0 irq-fire: OK",
+        "[CHK] CANFD0 loopback: OK",
+        "[CHK] CANFD0 settle: OK",
+        "[CHK] CANFD1 irq-arm: OK",
+        "[CHK] CANFD1 init: OK",
+        "[CHK] CANFD1 state: OK",
+        "[CHK] CANFD1 path: OK",
+        "[IRQ] CANFD1 external: OK",
+        "[CHK] CANFD1 irq-fire: OK",
+        "[CHK] CANFD1 loopback: OK",
+        "[CHK] CANFD1 settle: OK",
         "[BOOT] Starting scheduler...",
     ]
     ordered_tokens = [
@@ -267,6 +286,40 @@ def main() -> int:
         expected_spi_div = resolve_int("BE_U1000_DIAG_SPI_BAUD_DIV", defs, cache, set())
         expected_i2c_base = resolve_int("BE_U1000_DIAG_I2C_BASE", defs, cache, set())
         expected_i2c_hz = resolve_int("BE_U1000_DIAG_I2C_BUS_HZ", defs, cache, set())
+        expected_flash_base = resolve_int("BE_U1000_QSPI1_BASE", defs, cache, set())
+        expected_flash_size = resolve_int("BE_U1000_QSPI1_SIZE", defs, cache, set())
+        expected_flash_jedec = resolve_int(
+            "BE_U1000_DIAG_FLASH_JEDEC_ID", defs, cache, set()
+        )
+        expected_flash_page_size = resolve_int(
+            "BE_U1000_DIAG_FLASH_PAGE_SIZE", defs, cache, set()
+        )
+        expected_flash_sector_size = resolve_int(
+            "BE_U1000_DIAG_FLASH_SECTOR_SIZE", defs, cache, set()
+        )
+        expected_flash_capacity = resolve_int(
+            "BE_U1000_DIAG_FLASH_CAPACITY_BYTES", defs, cache, set()
+        )
+        expected_canfd0_base = resolve_int(
+            "BE_U1000_DIAG_CANFD0_BASE", defs, cache, set()
+        )
+        expected_canfd1_base = resolve_int(
+            "BE_U1000_DIAG_CANFD1_BASE", defs, cache, set()
+        )
+        expected_canfd_bitrate = resolve_int(
+            "BE_U1000_DIAG_CANFD_BITRATE", defs, cache, set()
+        )
+        expected_canfd_frame_len = resolve_int(
+            "BE_U1000_DIAG_CANFD_FRAME_LEN", defs, cache, set()
+        )
+        expected_canfd0_id = resolve_int(
+            "BE_U1000_DIAG_CANFD0_FRAME_ID", defs, cache, set()
+        )
+        expected_canfd1_id = resolve_int(
+            "BE_U1000_DIAG_CANFD1_FRAME_ID", defs, cache, set()
+        )
+        expected_canfd0_irq = resolve_int("BE_U1000_IRQ_CANFD0", defs, cache, set())
+        expected_canfd1_irq = resolve_int("BE_U1000_IRQ_CANFD1", defs, cache, set())
     except ValueError as exc:
         failures.append(f"failed to resolve board config defines: {exc}")
         expected_gpio_base = 0
@@ -275,6 +328,20 @@ def main() -> int:
         expected_spi_div = 0
         expected_i2c_base = 0
         expected_i2c_hz = 0
+        expected_flash_base = 0
+        expected_flash_size = 0
+        expected_flash_jedec = 0
+        expected_flash_page_size = 0
+        expected_flash_sector_size = 0
+        expected_flash_capacity = 0
+        expected_canfd0_base = 0
+        expected_canfd1_base = 0
+        expected_canfd_bitrate = 0
+        expected_canfd_frame_len = 0
+        expected_canfd0_id = 0
+        expected_canfd1_id = 0
+        expected_canfd0_irq = 0
+        expected_canfd1_irq = 0
 
     gpio_line = re.search(
         r"\[CHK\] GPIO init: OK \(base=0x([0-9a-fA-F]+) pin=(\d+)\)", txt
@@ -326,6 +393,200 @@ def main() -> int:
             failures.append(
                 f"I2C bus-hz mismatch: board={expected_i2c_hz} log={i2c_hz}"
             )
+
+    flash_init_line = re.search(
+        r"\[CHK\] FLASH init: OK \(base=0x([0-9a-fA-F]+) size=0x([0-9a-fA-F]+)\)",
+        txt,
+    )
+    if flash_init_line is None:
+        failures.append("missing detailed FLASH init line")
+    else:
+        flash_base = int(flash_init_line.group(1), 16)
+        flash_size = int(flash_init_line.group(2), 16)
+        if flash_base != expected_flash_base:
+            failures.append(
+                f"FLASH base mismatch: board=0x{expected_flash_base:x} log=0x{flash_base:x}"
+            )
+        if flash_size != expected_flash_size:
+            failures.append(
+                f"FLASH size mismatch: board=0x{expected_flash_size:x} log=0x{flash_size:x}"
+            )
+
+    flash_read_line = re.search(
+        r"\[CHK\] FLASH read: OK \(offset=0x([0-9a-fA-F]+) len=(\d+)\)",
+        txt,
+    )
+    if flash_read_line is None:
+        failures.append("missing detailed FLASH read line")
+    else:
+        flash_offset = int(flash_read_line.group(1), 16)
+        flash_len = int(flash_read_line.group(2), 10)
+        if flash_offset != 0:
+            failures.append(
+                f"FLASH read offset mismatch: expected 0 got {flash_offset}"
+            )
+        if flash_len != 16:
+            failures.append(f"FLASH read length mismatch: expected 16 got {flash_len}")
+
+    flash_identify_line = re.search(
+        r"\[CHK\] FLASH identify: OK \(jedec=0x([0-9a-fA-F]+) page=(\d+) sector=(\d+) size=0x([0-9a-fA-F]+)\)",
+        txt,
+    )
+    if flash_identify_line is None:
+        failures.append("missing detailed FLASH identify line")
+    else:
+        flash_jedec = int(flash_identify_line.group(1), 16)
+        flash_page_size = int(flash_identify_line.group(2), 10)
+        flash_sector_size = int(flash_identify_line.group(3), 10)
+        flash_capacity = int(flash_identify_line.group(4), 16)
+        if flash_jedec != expected_flash_jedec:
+            failures.append(
+                f"FLASH jedec mismatch: board=0x{expected_flash_jedec:x} log=0x{flash_jedec:x}"
+            )
+        if flash_page_size != expected_flash_page_size:
+            failures.append(
+                f"FLASH page-size mismatch: board={expected_flash_page_size} log={flash_page_size}"
+            )
+        if flash_sector_size != expected_flash_sector_size:
+            failures.append(
+                f"FLASH sector-size mismatch: board={expected_flash_sector_size} log={flash_sector_size}"
+            )
+        if flash_capacity != expected_flash_capacity:
+            failures.append(
+                f"FLASH capacity mismatch: board=0x{expected_flash_capacity:x} log=0x{flash_capacity:x}"
+            )
+
+    for controller_name, expected_base, expected_id, expected_irq_num in [
+        ("CANFD0", expected_canfd0_base, expected_canfd0_id, expected_canfd0_irq),
+        ("CANFD1", expected_canfd1_base, expected_canfd1_id, expected_canfd1_irq),
+    ]:
+        irq_arm_line = re.search(
+            rf"\[CHK\] {controller_name} irq-arm: OK \(irq=(\d+)\)",
+            txt,
+        )
+        if irq_arm_line is None:
+            failures.append(f"missing detailed {controller_name} irq-arm line")
+        else:
+            irq_arm = int(irq_arm_line.group(1), 10)
+            if irq_arm != expected_irq_num:
+                failures.append(
+                    f"{controller_name} irq-arm mismatch: board={expected_irq_num} log={irq_arm}"
+                )
+
+        canfd_init_line = re.search(
+            rf"\[CHK\] {controller_name} init: OK \(base=0x([0-9a-fA-F]+) bitrate=(\d+) loopback=(\d+)\)",
+            txt,
+        )
+        if canfd_init_line is None:
+            failures.append(f"missing detailed {controller_name} init line")
+        else:
+            canfd_base = int(canfd_init_line.group(1), 16)
+            canfd_bitrate = int(canfd_init_line.group(2), 10)
+            canfd_loopback = int(canfd_init_line.group(3), 10)
+            if canfd_base != expected_base:
+                failures.append(
+                    f"{controller_name} base mismatch: board=0x{expected_base:x} log=0x{canfd_base:x}"
+                )
+            if canfd_bitrate != expected_canfd_bitrate:
+                failures.append(
+                    f"{controller_name} bitrate mismatch: board={expected_canfd_bitrate} log={canfd_bitrate}"
+                )
+            if canfd_loopback != 1:
+                failures.append(
+                    f"{controller_name} loopback flag mismatch: expected 1 got {canfd_loopback}"
+                )
+
+        for stage_name, expected_irqs, expected_txflr, expected_rxflr in [
+            ("state", {0}, 0, 0),
+            ("path", {0, 3}, 0, 1),
+            ("settle", {0}, 0, 0),
+        ]:
+            canfd_state_line = re.search(
+                rf"\[CHK\] {controller_name} {stage_name}: OK \(status=0x([0-9a-fA-F]+) irq=0x([0-9a-fA-F]+) err=0x([0-9a-fA-F]+) txflr=(\d+) rxflr=(\d+)\)",
+                txt,
+            )
+            if canfd_state_line is None:
+                failures.append(f"missing detailed {controller_name} {stage_name} line")
+            else:
+                canfd_status = int(canfd_state_line.group(1), 16)
+                canfd_irq = int(canfd_state_line.group(2), 16)
+                canfd_err = int(canfd_state_line.group(3), 16)
+                canfd_txflr = int(canfd_state_line.group(4), 10)
+                canfd_rxflr = int(canfd_state_line.group(5), 10)
+                if canfd_status == 0:
+                    failures.append(
+                        f"{controller_name} {stage_name} status must be non-zero"
+                    )
+                if canfd_irq not in expected_irqs:
+                    failures.append(
+                        f"{controller_name} {stage_name} irq mismatch: expected one of {sorted(expected_irqs)} got {canfd_irq}"
+                    )
+                if canfd_err != 0:
+                    failures.append(
+                        f"{controller_name} {stage_name} error mismatch: expected 0 got {canfd_err}"
+                    )
+                if canfd_txflr != expected_txflr:
+                    failures.append(
+                        f"{controller_name} {stage_name} txflr mismatch: expected {expected_txflr} got {canfd_txflr}"
+                    )
+                if canfd_rxflr != expected_rxflr:
+                    failures.append(
+                        f"{controller_name} {stage_name} rxflr mismatch: expected {expected_rxflr} got {canfd_rxflr}"
+                    )
+
+        irq_external_line = re.search(
+            rf"\[IRQ\] {controller_name} external: OK \(irq=(\d+) count=(\d+)\)",
+            txt,
+        )
+        if irq_external_line is None:
+            failures.append(f"missing detailed {controller_name} external irq line")
+        else:
+            irq_external_num = int(irq_external_line.group(1), 10)
+            irq_external_count = int(irq_external_line.group(2), 10)
+            if irq_external_num != expected_irq_num:
+                failures.append(
+                    f"{controller_name} external irq mismatch: board={expected_irq_num} log={irq_external_num}"
+                )
+            if irq_external_count < 1:
+                failures.append(
+                    f"{controller_name} external irq count mismatch: expected >=1 got {irq_external_count}"
+                )
+
+        irq_fire_line = re.search(
+            rf"\[CHK\] {controller_name} irq-fire: OK \(irq=(\d+) count=(\d+)\)",
+            txt,
+        )
+        if irq_fire_line is None:
+            failures.append(f"missing detailed {controller_name} irq-fire line")
+        else:
+            irq_fire_num = int(irq_fire_line.group(1), 10)
+            irq_fire_count = int(irq_fire_line.group(2), 10)
+            if irq_fire_num != expected_irq_num:
+                failures.append(
+                    f"{controller_name} irq-fire mismatch: board={expected_irq_num} log={irq_fire_num}"
+                )
+            if irq_fire_count < 1:
+                failures.append(
+                    f"{controller_name} irq-fire count mismatch: expected >=1 got {irq_fire_count}"
+                )
+
+        canfd_loopback_line = re.search(
+            rf"\[CHK\] {controller_name} loopback: OK \(id=0x([0-9a-fA-F]+) len=(\d+)\)",
+            txt,
+        )
+        if canfd_loopback_line is None:
+            failures.append(f"missing detailed {controller_name} loopback line")
+        else:
+            canfd_id = int(canfd_loopback_line.group(1), 16)
+            canfd_len = int(canfd_loopback_line.group(2), 10)
+            if canfd_id != expected_id:
+                failures.append(
+                    f"{controller_name} frame-id mismatch: board=0x{expected_id:x} log=0x{canfd_id:x}"
+                )
+            if canfd_len != expected_canfd_frame_len:
+                failures.append(
+                    f"{controller_name} frame-len mismatch: board={expected_canfd_frame_len} log={canfd_len}"
+                )
 
     if expect_qspi_signature is not None:
         try:

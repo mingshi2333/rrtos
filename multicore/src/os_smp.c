@@ -21,6 +21,10 @@ extern volatile uint32_t _hart_ready[];
 
 #if OS_CFG_SMP_EN
 
+#if OS_CFG_CPU_COUNT < 2
+#error "OS_CFG_CPU_COUNT must be at least 2 when OS_CFG_SMP_EN is enabled"
+#endif
+
 /*===========================================================================*/
 /* Private Data                                                               */
 /*===========================================================================*/
@@ -34,7 +38,7 @@ static volatile uint32_t g_cpu_ready_mask;
 /** Online secondary CPUs released into scheduler startup */
 static volatile uint32_t g_scheduler_release_mask;
 
-/** IPI pending flags per CPU */
+/** IPI pending flags indexed by compile-time CPU ceiling slots */
 static volatile uint32_t g_ipi_pending[OS_CFG_CPU_MAX];
 
 /** Load balance mode */
@@ -43,10 +47,10 @@ static os_lb_mode_t g_lb_mode = OS_LB_HYBRID;
 /** Load balance lock */
 static os_spinlock_t g_lb_lock = OS_SPINLOCK_INIT;
 
-/** SMP statistics per CPU */
+/** SMP statistics indexed by compile-time CPU ceiling slots */
 static os_smp_stats_t g_smp_stats[OS_CFG_CPU_MAX];
 
-/** Remote function call data */
+/** Remote function call data indexed by compile-time CPU ceiling slots */
 typedef struct {
     os_smp_call_func_t  func;
     void                *arg;
@@ -56,7 +60,7 @@ typedef struct {
 
 static os_smp_call_t g_smp_call[OS_CFG_CPU_MAX];
 
-/** Per-CPU load tracking (running average) */
+/** Per-CPU load tracking indexed by compile-time CPU ceiling slots */
 static volatile uint32_t g_cpu_load[OS_CFG_CPU_MAX];
 
 /** Load balance timer */
@@ -359,7 +363,7 @@ void os_ipi_send(os_cpu_t cpu, uint32_t reason) {
         return;
     }
     
-    if (cpu >= OS_CFG_CPU_MAX) {
+    if (cpu >= OS_CFG_CPU_COUNT) {
         return;
     }
     
@@ -491,14 +495,14 @@ os_err_t os_smp_migrate_task(os_tcb_t *tcb, os_cpu_t target) {
 }
 
 uint32_t os_smp_get_cpu_load(os_cpu_t cpu) {
-    if (cpu >= OS_CFG_CPU_MAX) {
+    if (cpu >= OS_CFG_CPU_COUNT) {
         return 0;
     }
     return g_cpu_load[cpu];
 }
 
 os_err_t os_smp_get_stats(os_cpu_t cpu, os_smp_stats_t *stats) {
-    if (cpu >= OS_CFG_CPU_MAX || !stats) {
+    if (cpu >= OS_CFG_CPU_COUNT || !stats) {
         return OS_EINVAL;
     }
     
@@ -507,7 +511,7 @@ os_err_t os_smp_get_stats(os_cpu_t cpu, os_smp_stats_t *stats) {
 }
 
 bool os_smp_cpu_online(os_cpu_t cpu) {
-    if (cpu >= OS_CFG_CPU_MAX) {
+    if (cpu >= OS_CFG_CPU_COUNT) {
         return false;
     }
     return (g_cpu_online_mask & (1U << cpu)) != 0;
@@ -541,7 +545,7 @@ void os_smp_cpu_unpin(void) {
 
 os_err_t os_smp_call_on_cpu(os_cpu_t cpu, os_smp_call_func_t func, 
                             void *arg, bool wait) {
-    if (cpu >= OS_CFG_CPU_MAX || !func) {
+    if (cpu >= OS_CFG_CPU_COUNT || !func) {
         return OS_EINVAL;
     }
     

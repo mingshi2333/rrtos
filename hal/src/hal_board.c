@@ -5,6 +5,11 @@
 #include "hal_uart.h"
 #include "os_config.h"
 
+typedef enum {
+    HAL_BOARD_GPIO_USER_LED = 0,
+    HAL_BOARD_GPIO_USER_BUTTON,
+} hal_board_gpio_role_t;
+
 #if defined(CONFIG_BOARD_BE_U1000)
 #include "board_config.h"
 
@@ -201,7 +206,7 @@ void hal_board_init(void) {
     hal_clint_init(OS_CFG_CLINT_BASE);
 
 #if OS_CFG_IRQ_MODEL_CLIC
-    hal_irq_init_clic(0);
+    hal_irq_init_clic(BE_U1000_CLIC_BASE);
 #else
     hal_irq_init_plic(OS_CFG_PLIC_BASE);
 #endif
@@ -226,28 +231,243 @@ void hal_board_print_banner(void) {
 #endif
 }
 
-void hal_board_get_diag_config(hal_board_diag_config_t *config) {
+static void hal_board_fill_diag_config(hal_board_diag_config_t *config) {
     if (!config) {
         return;
     }
 
     config->available = false;
-    config->gpio_base = 0;
-    config->gpio_pin = 0;
     config->spi_base = 0;
     config->spi_baud_div = 0;
     config->i2c_base = 0;
     config->i2c_bus_hz = 0;
+    config->spi_label = NULL;
+    config->spi_route = NULL;
+    config->i2c_label = NULL;
+    config->i2c_route = NULL;
 
 #if defined(CONFIG_BOARD_BE_U1000)
-    config->gpio_base = BE_U1000_DIAG_GPIO_BASE;
-    config->gpio_pin = BE_U1000_DIAG_GPIO_PIN;
     config->spi_base = BE_U1000_DIAG_SPI_BASE;
     config->spi_baud_div = BE_U1000_DIAG_SPI_BAUD_DIV;
     config->i2c_base = BE_U1000_DIAG_I2C_BASE;
     config->i2c_bus_hz = BE_U1000_DIAG_I2C_BUS_HZ;
+    config->spi_label = "SPI1 controller";
+    config->spi_route = "PA8..PA11";
+    config->i2c_label = "I2C0 controller";
+    config->i2c_route = "PA4/PA5";
     config->available = true;
 #endif
+}
+
+static void hal_board_fill_gpio_resource(hal_board_gpio_role_t role,
+                                         hal_board_gpio_resource_t *resource)
+{
+    if (!resource) {
+        return;
+    }
+
+    resource->base = 0;
+    resource->pin = 0;
+    resource->label = NULL;
+    resource->location = NULL;
+    resource->available = false;
+
+#if defined(CONFIG_BOARD_BE_U1000)
+    switch (role) {
+    case HAL_BOARD_GPIO_USER_LED:
+        resource->base = BE_U1000_USER_LED_GPIO_BASE;
+        resource->pin = BE_U1000_USER_LED_GPIO_PIN;
+        resource->label = "USER_LED GPIO";
+        resource->location = "PC0";
+        resource->available = true;
+        break;
+    case HAL_BOARD_GPIO_USER_BUTTON:
+        resource->base = BE_U1000_USER_BTN_GPIO_BASE;
+        resource->pin = BE_U1000_USER_BTN_GPIO_PIN;
+        resource->label = "USER_BUTTON GPIO";
+        resource->location = "PC13";
+        resource->available = true;
+        break;
+    default:
+        break;
+    }
+#else
+    (void)role;
+#endif
+}
+
+static void hal_board_fill_flash_profile(hal_board_flash_profile_t *profile)
+{
+    if (!profile) {
+        return;
+    }
+
+    profile->ctrl_base = 0;
+    profile->window_base = 0;
+    profile->window_size = 0;
+    profile->expected_signature[0] = 0;
+    profile->expected_signature[1] = 0;
+    profile->expected_signature[2] = 0;
+    profile->expected_signature[3] = 0;
+    profile->jedec_id = 0;
+    profile->page_size = 0;
+    profile->sector_size = 0;
+    profile->capacity_bytes = 0;
+    profile->label = NULL;
+    profile->route = NULL;
+    profile->ready_note = NULL;
+    profile->window_read_note = NULL;
+    profile->window_match_note = NULL;
+    profile->window_capture_note = NULL;
+    profile->identify_note = NULL;
+    profile->identify_match_note = NULL;
+    profile->identify_capture_note = NULL;
+    profile->available = false;
+
+#if defined(CONFIG_BOARD_BE_U1000)
+    profile->ctrl_base = BE_U1000_QSPI1_CTRL_BASE;
+    profile->window_base = BE_U1000_QSPI1_BASE;
+    profile->window_size = BE_U1000_QSPI1_SIZE;
+    profile->expected_signature[0] = 0x31505351u;
+    profile->expected_signature[1] = 0x5F4C444Du;
+    profile->expected_signature[2] = 0x00010010u;
+    profile->expected_signature[3] = 0xA55A3CC3u;
+    profile->jedec_id = BE_U1000_DIAG_FLASH_JEDEC_ID;
+    profile->page_size = BE_U1000_DIAG_FLASH_PAGE_SIZE;
+    profile->sector_size = BE_U1000_DIAG_FLASH_SECTOR_SIZE;
+    profile->capacity_bytes = BE_U1000_DIAG_FLASH_CAPACITY_BYTES;
+    profile->label = "QSPI1";
+    profile->route = "PB0..PB5";
+    profile->ready_note = "flash window mapped";
+    profile->window_read_note = "flash HAL + sim signature";
+    profile->window_match_note = "expected boot signature matched";
+    profile->window_capture_note = "flash sample captured for evidence";
+    profile->identify_note = "sim flash header";
+    profile->identify_match_note = "flash geometry matched profile";
+    profile->identify_capture_note = "flash identify sample captured for evidence";
+    profile->available = true;
+#endif
+}
+
+static void hal_board_fill_canfd_profile(uint32_t index, hal_board_canfd_profile_t *profile)
+{
+    if (!profile) {
+        return;
+    }
+
+    profile->base = 0;
+    profile->bitrate = 0;
+    profile->frame_id = 0;
+    profile->irq_num = 0;
+    profile->frame_len = 0;
+    profile->payload_seed = 0;
+    profile->pinmux_group = HAL_BOARD_PINMUX_GROUP_CANFD0;
+    profile->label = NULL;
+    profile->route = NULL;
+    profile->loopback_note = NULL;
+    profile->available = false;
+
+#if defined(CONFIG_BOARD_BE_U1000)
+    profile->bitrate = BE_U1000_DIAG_CANFD_BITRATE;
+    profile->frame_len = BE_U1000_DIAG_CANFD_FRAME_LEN;
+
+    if (index == 0u) {
+        profile->base = BE_U1000_DIAG_CANFD0_BASE;
+        profile->frame_id = BE_U1000_DIAG_CANFD0_FRAME_ID;
+        profile->irq_num = BE_U1000_IRQ_CANFD0;
+        profile->pinmux_group = HAL_BOARD_PINMUX_GROUP_CANFD0;
+        profile->payload_seed = 0xA0u;
+        profile->label = "CANFD0";
+        profile->route = "PA14/PA15";
+        profile->loopback_note = "internal loopback";
+        profile->available = true;
+    } else if (index == 1u) {
+        profile->base = BE_U1000_DIAG_CANFD1_BASE;
+        profile->frame_id = BE_U1000_DIAG_CANFD1_FRAME_ID;
+        profile->irq_num = BE_U1000_IRQ_CANFD1;
+        profile->pinmux_group = HAL_BOARD_PINMUX_GROUP_CANFD1;
+        profile->payload_seed = 0xB0u;
+        profile->label = "CANFD1";
+        profile->route = "PB6/PB7";
+        profile->loopback_note = "internal loopback";
+        profile->available = true;
+    }
+#else
+    (void)index;
+#endif
+}
+
+void hal_board_get_execution_profile(hal_board_execution_profile_t *profile)
+{
+    if (!profile) {
+        return;
+    }
+
+    profile->schedulable_cores = 0;
+    profile->reserved_helper_mask = 0;
+    profile->role_plan = NULL;
+    profile->task_map_smp = NULL;
+    profile->task_map_single = NULL;
+    profile->available = false;
+
+#if defined(CONFIG_BOARD_BE_U1000)
+    profile->schedulable_cores = 2u;
+    profile->reserved_helper_mask = 1u << 2;
+    profile->role_plan = "core0=boot core1=worker core2=reserved";
+    profile->task_map_smp = "control->core0 worker->core1 core2=reserved";
+    profile->task_map_single = "control+worker share single core";
+    profile->available = true;
+#endif
+}
+
+void hal_board_get_selftest_profile(hal_board_selftest_profile_t *profile)
+{
+    if (!profile) {
+        return;
+    }
+
+    profile->console_pinmux_group = HAL_BOARD_PINMUX_GROUP_CONSOLE_UART0;
+    profile->led_pinmux_group = HAL_BOARD_PINMUX_GROUP_USER_LED;
+    profile->button_pinmux_group = HAL_BOARD_PINMUX_GROUP_USER_BUTTON;
+    profile->i2c_pinmux_group = HAL_BOARD_PINMUX_GROUP_HEADER_I2C0;
+    profile->spi_pinmux_group = HAL_BOARD_PINMUX_GROUP_HEADER_SPI1;
+    profile->flash_pinmux_group = HAL_BOARD_PINMUX_GROUP_QSPI1;
+    hal_board_fill_gpio_resource(HAL_BOARD_GPIO_USER_LED, &profile->led_gpio);
+    hal_board_fill_gpio_resource(HAL_BOARD_GPIO_USER_BUTTON, &profile->button_gpio);
+    hal_board_fill_diag_config(&profile->diag);
+    hal_board_fill_flash_profile(&profile->flash);
+    hal_board_fill_canfd_profile(0u, &profile->canfd[0]);
+    hal_board_fill_canfd_profile(1u, &profile->canfd[1]);
+
+#if defined(CONFIG_BOARD_BE_U1000)
+    profile->available = true;
+#else
+    profile->available = false;
+#endif
+}
+
+const char *hal_board_pinmux_group_name(hal_board_pinmux_group_t group)
+{
+    switch (group) {
+    case HAL_BOARD_PINMUX_GROUP_CONSOLE_UART0:
+        return "UART0";
+    case HAL_BOARD_PINMUX_GROUP_USER_LED:
+        return "USER_LED";
+    case HAL_BOARD_PINMUX_GROUP_USER_BUTTON:
+        return "USER_BUTTON";
+    case HAL_BOARD_PINMUX_GROUP_HEADER_I2C0:
+        return "I2C0 header";
+    case HAL_BOARD_PINMUX_GROUP_HEADER_SPI1:
+        return "SPI1 header";
+    case HAL_BOARD_PINMUX_GROUP_QSPI1:
+        return "QSPI1";
+    case HAL_BOARD_PINMUX_GROUP_CANFD0:
+        return "CANFD0";
+    case HAL_BOARD_PINMUX_GROUP_CANFD1:
+        return "CANFD1";
+    default:
+        return "unknown";
+    }
 }
 
 int hal_board_apply_pinmux_group(hal_board_pinmux_group_t group)

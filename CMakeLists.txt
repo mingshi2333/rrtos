@@ -45,24 +45,41 @@ option(OS_DEBUG "Enable debug build" ON)
 option(RRTOS_BUILD_EXPERIMENTAL_APPS "Build experimental apps and legacy AI demos" OFF)
 
 # Board Selection
+# Immutable board facts live under boards/<board>/board_config.h.
+# This top-level file owns selected build/runtime policy for the current lane.
 set(CONFIG_BOARD "qemu_virt" CACHE STRING "Target board (qemu_virt, be_u1000)")
 if(CONFIG_BOARD STREQUAL "be_u1000")
     set(CONFIG_BOARD_BE_U1000 ON)
     add_definitions(-DCONFIG_BOARD_BE_U1000=1)
     add_definitions(-DCONFIG_IRQ_MODEL_CLIC=1)
     include_directories(${CMAKE_SOURCE_DIR}/boards/be_u1000)
+    add_subdirectory(boards/be_u1000)
+    if(DEFINED BOARD_INCLUDES)
+        include_directories(${BOARD_INCLUDES})
+    endif()
 endif()
 
+# Effective runtime values for the selected lane.
+# - OS_CFG_CPU_MAX: compile-time execution ceiling derived from board selection
+# - OS_CFG_CPU_COUNT: active RTOS-schedulable core count for the selected lane
+# - OS_CFG_CPU_FREQ_HZ / OS_CFG_TIMER_FREQ_HZ: effective runtime frequencies
 set(OS_CFG_CPU_FREQ_HZ_VALUE 100000000UL)
 set(OS_CFG_TIMER_FREQ_HZ_VALUE 10000000UL)
 set(OS_CFG_CPU_MAX_VALUE 1)
 set(OS_CFG_CPU_COUNT_VALUE 1)
 
 if(CONFIG_BOARD_BE_U1000)
+    # BE-U1000 board facts currently imply a 3-core physical maximum and a
+    # 2-core main-cluster lane, but the build still selects the effective
+    # RTOS-schedulable-core policy for the current configuration.
     set(OS_CFG_CPU_FREQ_HZ_VALUE 200000000UL)
     set(OS_CFG_TIMER_FREQ_HZ_VALUE 1000000UL)
     set(OS_CFG_CPU_MAX_VALUE 3)
-    set(OS_CFG_CPU_COUNT_VALUE 2)
+    if(OS_SMP_EN)
+        set(OS_CFG_CPU_COUNT_VALUE 2)
+    else()
+        set(OS_CFG_CPU_COUNT_VALUE 1)
+    endif()
 endif()
 
 if(OS_SMP_EN)
@@ -83,6 +100,8 @@ else()
     set(OS_CFG_FL_EN_VALUE 0)
 endif()
 
+# Export the selected build/runtime policy as compile definitions.
+# config/os_config.h provides fallback defaults only when these are absent.
 add_compile_definitions(
     OS_CFG_SMP_EN=${OS_CFG_SMP_EN_VALUE}
     OS_CFG_AI_EN=${OS_CFG_AI_EN_VALUE}
@@ -121,11 +140,10 @@ endif()
 
 # Linker Script
 if(CONFIG_BOARD_BE_U1000)
-    set(BE_U1000_MEMORY_MODEL "tcm" CACHE STRING "BE-U1000 memory model (tcm or flash)")
-    if(BE_U1000_MEMORY_MODEL STREQUAL "flash")
-        set(LINKER_SCRIPT "${CMAKE_SOURCE_DIR}/boards/be_u1000/link_be_u1000_flash.ld" CACHE FILEPATH "Linker script" FORCE)
+    if(DEFINED BOARD_LINKER_SCRIPT)
+        set(LINKER_SCRIPT "${BOARD_LINKER_SCRIPT}" CACHE FILEPATH "Linker script" FORCE)
     else()
-        set(LINKER_SCRIPT "${CMAKE_SOURCE_DIR}/boards/be_u1000/link_be_u1000_tcm.ld" CACHE FILEPATH "Linker script" FORCE)
+        message(FATAL_ERROR "BOARD_LINKER_SCRIPT must be exported by boards/be_u1000/CMakeLists.txt")
     endif()
 elseif(NOT DEFINED LINKER_SCRIPT)
     set(LINKER_SCRIPT "${CMAKE_SOURCE_DIR}/arch/${ARCH}/link.ld")
@@ -198,13 +216,6 @@ target_link_libraries(rv_aios_rtos INTERFACE
 # ============================================================================
 if(OS_AI_EN)
     add_subdirectory(ai)
-endif()
-
-# ============================================================================
-# Board Support
-# ============================================================================
-if(CONFIG_BOARD_BE_U1000)
-    add_subdirectory(boards/be_u1000)
 endif()
 
 # ============================================================================

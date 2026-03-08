@@ -5,6 +5,9 @@
 
 #if OS_CFG_SMP_EN
 #include "os_smp.h"
+#define OS_SCHED_CPU_SLOTS OS_CFG_CPU_COUNT
+#else
+#define OS_SCHED_CPU_SLOTS 1
 #endif
 
 extern void os_context_switch(void **from_sp, void **to_sp);
@@ -14,10 +17,10 @@ extern void os_heap_init(void);
 static os_spinlock_t g_sched_lock = OS_SPINLOCK_INIT;
 static os_list_t g_ready_list[OS_CFG_PRIO_MAX];
 static uint8_t g_ready_bitmap[(OS_CFG_PRIO_MAX + 7) / 8];
-static os_tcb_t *g_current_task[OS_CFG_CPU_MAX];
+static os_tcb_t *g_current_task[OS_SCHED_CPU_SLOTS];
 static volatile os_tick_t g_tick_count;
-static os_tcb_t g_idle_tcb[OS_CFG_CPU_MAX];
-static uint8_t g_idle_stack[OS_CFG_CPU_MAX][OS_CFG_IDLE_STACK_SIZE];
+static os_tcb_t g_idle_tcb[OS_SCHED_CPU_SLOTS];
+static uint8_t g_idle_stack[OS_SCHED_CPU_SLOTS][OS_CFG_IDLE_STACK_SIZE];
 static volatile bool g_kernel_running = false;
 static os_tcb_t *g_task_table[OS_CFG_TASK_MAX];
 static uint32_t g_task_count;
@@ -286,7 +289,7 @@ void os_kernel_start(void) {
     
     g_kernel_running = true;
     
-    uint64_t next_tick = hal_clint_mtime_get() + (OS_CFG_CPU_FREQ_HZ / OS_CFG_TICK_FREQ_HZ);
+    uint64_t next_tick = hal_clint_mtime_get() + (OS_CFG_TIMER_FREQ_HZ / OS_CFG_TICK_FREQ_HZ);
     hal_clint_mtimecmp_set(cpu, next_tick);
     
     csr_set(mie, MIE_MTIE | MIE_MSIE);

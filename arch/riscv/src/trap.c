@@ -29,7 +29,7 @@ void os_trap_handler(void *sp) {
             case 7:
                 {
                     uint64_t next = hal_clint_mtime_get() + 
-                                   (OS_CFG_CPU_FREQ_HZ / OS_CFG_TICK_FREQ_HZ);
+                                   (OS_CFG_TIMER_FREQ_HZ / OS_CFG_TICK_FREQ_HZ);
                     hal_clint_mtimecmp_set(cpu, next);
                     os_tick_handler();
                 }

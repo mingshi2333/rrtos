@@ -94,7 +94,7 @@ void os_smp_secondary_start(void);
 /**
  * @brief Send Inter-Processor Interrupt
  * 
- * @param cpu       Target CPU (OS_CPU_ANY for all)
+ * @param cpu       Target schedulable CPU (`< OS_CFG_CPU_COUNT`, or `OS_CPU_ANY` for all)
  * @param reason    IPI reason code
  */
 void os_ipi_send(os_cpu_t cpu, uint32_t reason);
@@ -139,7 +139,7 @@ os_err_t os_smp_migrate_task(os_tcb_t *tcb, os_cpu_t target);
 /**
  * @brief Get CPU load (0-100)
  * 
- * @param cpu       CPU to query
+ * @param cpu       Schedulable CPU to query (`< OS_CFG_CPU_COUNT`)
  * @return Load percentage
  */
 uint32_t os_smp_get_cpu_load(os_cpu_t cpu);
@@ -147,7 +147,7 @@ uint32_t os_smp_get_cpu_load(os_cpu_t cpu);
 /**
  * @brief Get SMP statistics for a CPU
  * 
- * @param cpu       CPU to query
+ * @param cpu       Schedulable CPU to query (`< OS_CFG_CPU_COUNT`)
  * @param stats     Output statistics
  * @return OS_EOK on success
  */
@@ -156,7 +156,7 @@ os_err_t os_smp_get_stats(os_cpu_t cpu, os_smp_stats_t *stats);
 /**
  * @brief Check if CPU is online
  * 
- * @param cpu       CPU to check
+ * @param cpu       Schedulable CPU to check (`< OS_CFG_CPU_COUNT`)
  * @return true if online
  */
 bool os_smp_cpu_online(os_cpu_t cpu);
@@ -183,7 +183,7 @@ void os_smp_cpu_unpin(void);
 /**
  * @brief Execute function on target CPU
  * 
- * @param cpu       Target CPU
+ * @param cpu       Target schedulable CPU (`< OS_CFG_CPU_COUNT`)
  * @param func      Function to execute
  * @param arg       Function argument
  * @param wait      Wait for completion
