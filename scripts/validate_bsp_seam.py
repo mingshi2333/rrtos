@@ -40,6 +40,11 @@ def main() -> None:
         "typedef struct {\n    hal_board_pinmux_group_t console_pinmux_group;",
         "hal/include/hal_board.h",
     )
+    require(hal_board_h, "uint32_t canfd_count;", "hal/include/hal_board.h")
+    require(hal_board_h, "uint8_t spi_probe_tx;", "hal/include/hal_board.h")
+    require(hal_board_h, "uint32_t window_sample_offset;", "hal/include/hal_board.h")
+    require(hal_board_h, "uint32_t window_sample_words;", "hal/include/hal_board.h")
+    require(hal_board_h, "bool internal_loopback;", "hal/include/hal_board.h")
     forbid(hal_board_h, "uintptr_t gpio_base;", "hal/include/hal_board.h")
     forbid(hal_board_h, "uint32_t gpio_pin;", "hal/include/hal_board.h")
     forbid(hal_board_h, "} hal_board_gpio_role_t;", "hal/include/hal_board.h")
@@ -128,14 +133,34 @@ def main() -> None:
         'selftest_label(flash_profile->identify_capture_note, "sample captured")',
         "apps/be_u1000_demo/main.c",
     )
+    require(beu_demo, "hal_gpio_init(button_gpio->base);", "apps/be_u1000_demo/main.c")
     require(beu_demo, "profile->payload_seed + i", "apps/be_u1000_demo/main.c")
     require(beu_demo, "[SELFTEST] %s route: %s", "apps/be_u1000_demo/main.c")
     require(beu_demo, "HAL_BOARD_CANFD_CONTROLLER_COUNT", "apps/be_u1000_demo/main.c")
     require(beu_demo, "CANFD_IRQ_SEEN(index)", "apps/be_u1000_demo/main.c")
+    require(beu_demo, "profile->canfd_count", "apps/be_u1000_demo/main.c")
+    require(beu_demo, "g_canfd_profile_count", "apps/be_u1000_demo/main.c")
+    require(beu_demo, "diag_config->spi_probe_tx", "apps/be_u1000_demo/main.c")
+    require(
+        beu_demo, "flash_profile->window_sample_offset", "apps/be_u1000_demo/main.c"
+    )
+    require(beu_demo, "flash_profile->window_sample_words", "apps/be_u1000_demo/main.c")
+    require(beu_demo, "report_flash_sample(", "apps/be_u1000_demo/main.c")
+    require(beu_demo, "profile->internal_loopback", "apps/be_u1000_demo/main.c")
     forbid(beu_demo, "CANFD0_IRQ_SEEN", "apps/be_u1000_demo/main.c")
     forbid(beu_demo, "CANFD1_IRQ_SEEN", "apps/be_u1000_demo/main.c")
     forbid(beu_demo, "g_canfd_profiles[0]", "apps/be_u1000_demo/main.c")
     forbid(beu_demo, "g_canfd_profiles[1]", "apps/be_u1000_demo/main.c")
+    forbid(
+        beu_demo,
+        "for (index = 0; index < HAL_BOARD_CANFD_CONTROLLER_COUNT; ++index)",
+        "apps/be_u1000_demo/main.c",
+    )
+    forbid(beu_demo, "hal_spi_transfer(0xA5u", "apps/be_u1000_demo/main.c")
+    forbid(beu_demo, "hal_flash_read_u32(0u", "apps/be_u1000_demo/main.c")
+    forbid(beu_demo, "window sample: 0x%x 0x%x 0x%x 0x%x", "apps/be_u1000_demo/main.c")
+    forbid(beu_demo, "config.internal_loopback = true;", "apps/be_u1000_demo/main.c")
+    forbid(beu_demo, "loopback=1)", "apps/be_u1000_demo/main.c")
     forbid(beu_demo, "lane_bias =", "apps/be_u1000_demo/main.c")
 
     print("BSP seam checks passed.")

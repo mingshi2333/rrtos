@@ -7,6 +7,7 @@
 typedef struct {
     uintptr_t spi_base;
     uint32_t spi_baud_div;
+    uint8_t spi_probe_tx;
     uintptr_t i2c_base;
     uint32_t i2c_bus_hz;
     const char *spi_label;
@@ -28,6 +29,8 @@ typedef struct {
     uintptr_t ctrl_base;
     uintptr_t window_base;
     uint32_t window_size;
+    uint32_t window_sample_offset;
+    uint32_t window_sample_words;
     uint32_t expected_signature[4];
     uint32_t jedec_id;
     uint32_t page_size;
@@ -67,6 +70,7 @@ typedef struct {
     const char *label;
     const char *route;
     const char *loopback_note;
+    bool internal_loopback;
     bool available;
 } hal_board_canfd_profile_t;
 
@@ -88,6 +92,7 @@ typedef struct {
     hal_board_pinmux_group_t i2c_pinmux_group;
     hal_board_pinmux_group_t spi_pinmux_group;
     hal_board_pinmux_group_t flash_pinmux_group;
+    uint32_t canfd_count;
     hal_board_gpio_resource_t led_gpio;
     hal_board_gpio_resource_t button_gpio;
     hal_board_diag_config_t diag;

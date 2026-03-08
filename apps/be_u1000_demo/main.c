@@ -41,6 +41,7 @@ static volatile uint32_t g_balance_seen_mask;
 static volatile uint32_t g_canfd_irq_seen_mask;
 static volatile uint32_t g_canfd_irq_count[HAL_BOARD_CANFD_CONTROLLER_COUNT];
 static hal_board_canfd_profile_t g_canfd_profiles[HAL_BOARD_CANFD_CONTROLLER_COUNT];
+static uint32_t g_canfd_profile_count;
 
 static bool canfd_frames_match(const hal_canfd_frame_t *lhs, const hal_canfd_frame_t *rhs)
 {
@@ -79,7 +80,7 @@ static void canfd_irq_handler(uint32_t irq_num)
 {
     uint32_t index;
 
-    for (index = 0; index < HAL_BOARD_CANFD_CONTROLLER_COUNT; ++index) {
+    for (index = 0; index < g_canfd_profile_count; ++index) {
         const char *name = selftest_label(g_canfd_profiles[index].label, "CANFD");
 
         if (irq_num != g_canfd_profiles[index].irq_num) {
@@ -117,6 +118,19 @@ static const char *selftest_label(const char *label, const char *fallback)
     return label ? label : fallback;
 }
 
+static void report_flash_sample(const char *label,
+                                const uint32_t *words,
+                                uint32_t count)
+{
+    uint32_t i;
+
+    os_print("[SELFTEST] %s window sample:", label);
+    for (i = 0; i < count; ++i) {
+        os_print(" 0x%x", words[i]);
+    }
+    os_print("\n");
+}
+
 static void report_canfd_result(const hal_board_canfd_profile_t *profile,
                                 uint32_t index);
 
@@ -145,8 +159,12 @@ static void run_gpio_selftest(const hal_board_selftest_profile_t *profile)
                  selftest_label(led_gpio->label, "LED GPIO"));
     }
 
+    hal_gpio_init(button_gpio->base);
     if (button_gpio->available &&
         hal_gpio_set_direction(button_gpio->pin, false) == 0) {
+        os_print("[CHK] GPIO init: OK (base=0x%x pin=%u)\n",
+                 (uint32_t)button_gpio->base,
+                 (uint32_t)button_gpio->pin);
         os_print("[SELFTEST] %s: OK (%s level=%u)\n",
                  selftest_label(button_gpio->label, "button GPIO"),
                  selftest_label(button_gpio->location, "n/a"),
@@ -181,7 +199,7 @@ static void run_serial_bus_selftest(const hal_board_selftest_profile_t *profile)
     report_pinmux_result(NULL, profile->spi_pinmux_group);
     if (diag_config->available &&
         hal_spi_init(diag_config->spi_base, diag_config->spi_baud_div, HAL_SPI_MODE0) == 0 &&
-        hal_spi_transfer(0xA5u, &spi_rx, SELFTEST_SPI_TIMEOUT) == 0) {
+        hal_spi_transfer(diag_config->spi_probe_tx, &spi_rx, SELFTEST_SPI_TIMEOUT) == 0) {
         os_print("[CHK] SPI init: OK (base=0x%x div=%u)\n",
                  (uint32_t)diag_config->spi_base,
                  (uint32_t)diag_config->spi_baud_div);
@@ -199,12 +217,16 @@ static void run_serial_bus_selftest(const hal_board_selftest_profile_t *profile)
 static void run_flash_selftest(const hal_board_selftest_profile_t *profile)
 {
     const hal_board_flash_profile_t *flash_profile = &profile->flash;
-    uint32_t qspi_sig0 = 0;
-    uint32_t qspi_sig1 = 0;
-    uint32_t qspi_sig2 = 0;
-    uint32_t qspi_sig3 = 0;
+    uint32_t qspi_sig[4] = {0};
+    uint32_t sample_offset = flash_profile->window_sample_offset;
+    uint32_t sample_words = flash_profile->window_sample_words;
+    uint32_t i;
     hal_flash_info_t flash_info = {0};
     bool qspi_sample_valid = false;
+
+    if (sample_words > 4u) {
+        sample_words = 4u;
+    }
 
     report_pinmux_result(NULL, profile->flash_pinmux_group);
     os_print("[SELFTEST] %s ready: ctrl=0x%x window=0x%x (%s)\n",
@@ -217,15 +239,21 @@ static void run_flash_selftest(const hal_board_selftest_profile_t *profile)
         os_print("[CHK] FLASH init: OK (base=0x%x size=0x%x)\n",
                  (uint32_t)flash_profile->window_base,
                  (uint32_t)flash_profile->window_size);
-        if (hal_flash_read_u32(0u, &qspi_sig0) == 0 &&
-            hal_flash_read_u32(4u, &qspi_sig1) == 0 &&
-            hal_flash_read_u32(8u, &qspi_sig2) == 0 &&
-            hal_flash_read_u32(12u, &qspi_sig3) == 0) {
-            qspi_sample_valid = true;
-            os_print("[CHK] FLASH read: OK (offset=0x0 len=16)\n");
-            os_print("[SELFTEST] %s window sample: 0x%x 0x%x 0x%x 0x%x\n",
-                     selftest_label(flash_profile->label, "flash"),
-                     qspi_sig0, qspi_sig1, qspi_sig2, qspi_sig3);
+        qspi_sample_valid = sample_words == 4u;
+        for (i = 0; i < sample_words; ++i) {
+            if (hal_flash_read_u32(sample_offset + (i * sizeof(uint32_t)), &qspi_sig[i]) != 0) {
+                qspi_sample_valid = false;
+                break;
+            }
+        }
+
+        if (qspi_sample_valid) {
+            os_print("[CHK] FLASH read: OK (offset=0x%x len=%u)\n",
+                     sample_offset,
+                     sample_words * (uint32_t)sizeof(uint32_t));
+            report_flash_sample(selftest_label(flash_profile->label, "flash"),
+                                qspi_sig,
+                                sample_words);
         } else {
             os_print("[CHK] FLASH read: FAIL\n");
         }
@@ -243,10 +271,10 @@ static void run_flash_selftest(const hal_board_selftest_profile_t *profile)
         os_print("[CHK] FLASH init: FAIL\n");
     }
     if (qspi_sample_valid &&
-        qspi_sig0 == flash_profile->expected_signature[0] &&
-        qspi_sig1 == flash_profile->expected_signature[1] &&
-        qspi_sig2 == flash_profile->expected_signature[2] &&
-        qspi_sig3 == flash_profile->expected_signature[3]) {
+        qspi_sig[0] == flash_profile->expected_signature[0] &&
+        qspi_sig[1] == flash_profile->expected_signature[1] &&
+        qspi_sig[2] == flash_profile->expected_signature[2] &&
+        qspi_sig[3] == flash_profile->expected_signature[3]) {
         os_print("[SELFTEST] %s window read: OK (%s)\n",
                  selftest_label(flash_profile->label, "flash"),
                  selftest_label(flash_profile->window_match_note, selftest_label(flash_profile->window_read_note, "sample matched")));
@@ -272,8 +300,15 @@ static void run_flash_selftest(const hal_board_selftest_profile_t *profile)
 static void run_canfd_selftest(const hal_board_selftest_profile_t *profile)
 {
     uint32_t index;
+    uint32_t canfd_count = profile->canfd_count;
 
-    for (index = 0; index < HAL_BOARD_CANFD_CONTROLLER_COUNT; ++index) {
+    if (canfd_count > HAL_BOARD_CANFD_CONTROLLER_COUNT) {
+        canfd_count = HAL_BOARD_CANFD_CONTROLLER_COUNT;
+    }
+
+    g_canfd_profile_count = canfd_count;
+
+    for (index = 0; index < canfd_count; ++index) {
         g_canfd_profiles[index] = profile->canfd[index];
         report_canfd_result(&g_canfd_profiles[index], index);
     }
@@ -298,7 +333,7 @@ static void report_canfd_result(const hal_board_canfd_profile_t *profile,
     report_pinmux_result(name, profile->pinmux_group);
 
     config.nominal_bitrate = profile->bitrate;
-    config.internal_loopback = true;
+    config.internal_loopback = profile->internal_loopback;
     tx_frame.id = profile->frame_id;
     tx_frame.len = (uint8_t)profile->frame_len;
     for (i = 0; i < tx_frame.len; ++i) {
@@ -314,10 +349,11 @@ static void report_canfd_result(const hal_board_canfd_profile_t *profile,
     os_print("[CHK] %s irq-arm: OK (irq=%u)\n", name, profile->irq_num);
 
     if (hal_canfd_init(profile->base, &config) == 0) {
-        os_print("[CHK] %s init: OK (base=0x%x bitrate=%u loopback=1)\n",
+        os_print("[CHK] %s init: OK (base=0x%x bitrate=%u loopback=%u)\n",
                  name,
                  (uint32_t)profile->base,
-                 profile->bitrate);
+                 profile->bitrate,
+                 profile->internal_loopback ? 1u : 0u);
         if (hal_canfd_irq_enable(HAL_CANFD_IRQ_TX_COMPLETE |
                                  HAL_CANFD_IRQ_RX_READY |
                                  HAL_CANFD_IRQ_ERROR) == 0 &&

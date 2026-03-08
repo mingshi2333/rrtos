@@ -141,6 +141,12 @@ def main() -> int:
         nargs="+",
         help="Require a QSPI1 sample line matching one or more hex words",
     )
+    _ = ap.add_argument(
+        "--expect-qspi-offset",
+        type=lambda value: int(value, 0),
+        default=0,
+        help="Expected flash window sample offset for boot log validation",
+    )
     args = ap.parse_args()
     log_arg = cast(str, args.log)
     expect_irq_model = cast(str, args.expect_irq_model)
@@ -150,6 +156,7 @@ def main() -> int:
     expect_single_core_fallback = cast(bool, args.expect_single_core_fallback)
     expect_task_affinity = cast(list[str], args.expect_task_affinity)
     expect_qspi_signature = cast(list[str] | None, args.expect_qspi_signature)
+    expect_qspi_offset = cast(int, args.expect_qspi_offset)
 
     path = Path(log_arg)
     board_config_path = Path(board_config_arg)
@@ -280,8 +287,18 @@ def main() -> int:
     try:
         defs = parse_defines(board_config_path)
         cache: dict[str, int] = {}
-        expected_gpio_base = resolve_int("BE_U1000_DIAG_GPIO_BASE", defs, cache, set())
-        expected_gpio_pin = resolve_int("BE_U1000_DIAG_GPIO_PIN", defs, cache, set())
+        expected_led_gpio_base = resolve_int(
+            "BE_U1000_USER_LED_GPIO_BASE", defs, cache, set()
+        )
+        expected_led_gpio_pin = resolve_int(
+            "BE_U1000_USER_LED_GPIO_PIN", defs, cache, set()
+        )
+        expected_button_gpio_base = resolve_int(
+            "BE_U1000_USER_BTN_GPIO_BASE", defs, cache, set()
+        )
+        expected_button_gpio_pin = resolve_int(
+            "BE_U1000_USER_BTN_GPIO_PIN", defs, cache, set()
+        )
         expected_spi_base = resolve_int("BE_U1000_DIAG_SPI_BASE", defs, cache, set())
         expected_spi_div = resolve_int("BE_U1000_DIAG_SPI_BAUD_DIV", defs, cache, set())
         expected_i2c_base = resolve_int("BE_U1000_DIAG_I2C_BASE", defs, cache, set())
@@ -322,8 +339,10 @@ def main() -> int:
         expected_canfd1_irq = resolve_int("BE_U1000_IRQ_CANFD1", defs, cache, set())
     except ValueError as exc:
         failures.append(f"failed to resolve board config defines: {exc}")
-        expected_gpio_base = 0
-        expected_gpio_pin = 0
+        expected_led_gpio_base = 0
+        expected_led_gpio_pin = 0
+        expected_button_gpio_base = 0
+        expected_button_gpio_pin = 0
         expected_spi_base = 0
         expected_spi_div = 0
         expected_i2c_base = 0
@@ -343,22 +362,22 @@ def main() -> int:
         expected_canfd0_irq = 0
         expected_canfd1_irq = 0
 
-    gpio_line = re.search(
+    gpio_lines = re.findall(
         r"\[CHK\] GPIO init: OK \(base=0x([0-9a-fA-F]+) pin=(\d+)\)", txt
     )
-    if gpio_line is None:
+    if not gpio_lines:
         failures.append("missing detailed GPIO init line")
     else:
-        gpio_base = int(gpio_line.group(1), 16)
-        gpio_pin = int(gpio_line.group(2), 10)
-        if gpio_base != expected_gpio_base:
-            failures.append(
-                f"GPIO base mismatch: board=0x{expected_gpio_base:x} log=0x{gpio_base:x}"
-            )
-        if gpio_pin != expected_gpio_pin:
-            failures.append(
-                f"GPIO pin mismatch: board={expected_gpio_pin} log={gpio_pin}"
-            )
+        actual_gpio_pairs = {(int(base, 16), int(pin, 10)) for base, pin in gpio_lines}
+        expected_gpio_pairs = {
+            (expected_led_gpio_base, expected_led_gpio_pin),
+            (expected_button_gpio_base, expected_button_gpio_pin),
+        }
+        for expected_base, expected_pin in expected_gpio_pairs:
+            if (expected_base, expected_pin) not in actual_gpio_pairs:
+                failures.append(
+                    f"missing GPIO init evidence for base=0x{expected_base:x} pin={expected_pin}"
+                )
 
     spi_line = re.search(
         r"\[CHK\] SPI init: OK \(base=0x([0-9a-fA-F]+) div=(\d+)\)", txt
@@ -421,12 +440,22 @@ def main() -> int:
     else:
         flash_offset = int(flash_read_line.group(1), 16)
         flash_len = int(flash_read_line.group(2), 10)
-        if flash_offset != 0:
+        expected_flash_len = 16
+        if expect_qspi_signature is not None:
+            try:
+                expected_flash_len = (
+                    len(parse_expected_qspi_signature_args(expect_qspi_signature)) * 4
+                )
+            except ValueError as exc:
+                failures.append(str(exc))
+        if flash_offset != expect_qspi_offset:
             failures.append(
-                f"FLASH read offset mismatch: expected 0 got {flash_offset}"
+                f"FLASH read offset mismatch: expected {expect_qspi_offset} got {flash_offset}"
             )
-        if flash_len != 16:
-            failures.append(f"FLASH read length mismatch: expected 16 got {flash_len}")
+        if flash_len != expected_flash_len:
+            failures.append(
+                f"FLASH read length mismatch: expected {expected_flash_len} got {flash_len}"
+            )
 
     flash_identify_line = re.search(
         r"\[CHK\] FLASH identify: OK \(jedec=0x([0-9a-fA-F]+) page=(\d+) sector=(\d+) size=0x([0-9a-fA-F]+)\)",
@@ -594,7 +623,7 @@ def main() -> int:
         except ValueError as exc:
             failures.append(str(exc))
         else:
-            qspi_line = re.search(r"\[SELFTEST\] QSPI1 window sample: (.+)", txt)
+            qspi_line = re.search(r"\[SELFTEST\] .+ window sample: (.+)", txt)
             if qspi_line is None:
                 failures.append("missing QSPI1 window sample line")
             else:

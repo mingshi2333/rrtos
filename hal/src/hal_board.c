@@ -239,6 +239,7 @@ static void hal_board_fill_diag_config(hal_board_diag_config_t *config) {
     config->available = false;
     config->spi_base = 0;
     config->spi_baud_div = 0;
+    config->spi_probe_tx = 0;
     config->i2c_base = 0;
     config->i2c_bus_hz = 0;
     config->spi_label = NULL;
@@ -249,6 +250,7 @@ static void hal_board_fill_diag_config(hal_board_diag_config_t *config) {
 #if defined(CONFIG_BOARD_BE_U1000)
     config->spi_base = BE_U1000_DIAG_SPI_BASE;
     config->spi_baud_div = BE_U1000_DIAG_SPI_BAUD_DIV;
+    config->spi_probe_tx = 0xA5u;
     config->i2c_base = BE_U1000_DIAG_I2C_BASE;
     config->i2c_bus_hz = BE_U1000_DIAG_I2C_BUS_HZ;
     config->spi_label = "SPI1 controller";
@@ -305,6 +307,8 @@ static void hal_board_fill_flash_profile(hal_board_flash_profile_t *profile)
     profile->ctrl_base = 0;
     profile->window_base = 0;
     profile->window_size = 0;
+    profile->window_sample_offset = 0;
+    profile->window_sample_words = 0;
     profile->expected_signature[0] = 0;
     profile->expected_signature[1] = 0;
     profile->expected_signature[2] = 0;
@@ -328,6 +332,8 @@ static void hal_board_fill_flash_profile(hal_board_flash_profile_t *profile)
     profile->ctrl_base = BE_U1000_QSPI1_CTRL_BASE;
     profile->window_base = BE_U1000_QSPI1_BASE;
     profile->window_size = BE_U1000_QSPI1_SIZE;
+    profile->window_sample_offset = 0u;
+    profile->window_sample_words = 4u;
     profile->expected_signature[0] = 0x31505351u;
     profile->expected_signature[1] = 0x5F4C444Du;
     profile->expected_signature[2] = 0x00010010u;
@@ -365,6 +371,7 @@ static void hal_board_fill_canfd_profile(uint32_t index, hal_board_canfd_profile
     profile->label = NULL;
     profile->route = NULL;
     profile->loopback_note = NULL;
+    profile->internal_loopback = false;
     profile->available = false;
 
 #if defined(CONFIG_BOARD_BE_U1000)
@@ -380,6 +387,7 @@ static void hal_board_fill_canfd_profile(uint32_t index, hal_board_canfd_profile
         profile->label = "CANFD0";
         profile->route = "PA14/PA15";
         profile->loopback_note = "internal loopback";
+        profile->internal_loopback = true;
         profile->available = true;
     } else if (index == 1u) {
         profile->base = BE_U1000_DIAG_CANFD1_BASE;
@@ -390,6 +398,7 @@ static void hal_board_fill_canfd_profile(uint32_t index, hal_board_canfd_profile
         profile->label = "CANFD1";
         profile->route = "PB6/PB7";
         profile->loopback_note = "internal loopback";
+        profile->internal_loopback = true;
         profile->available = true;
     }
 #else
@@ -432,6 +441,7 @@ void hal_board_get_selftest_profile(hal_board_selftest_profile_t *profile)
     profile->i2c_pinmux_group = HAL_BOARD_PINMUX_GROUP_HEADER_I2C0;
     profile->spi_pinmux_group = HAL_BOARD_PINMUX_GROUP_HEADER_SPI1;
     profile->flash_pinmux_group = HAL_BOARD_PINMUX_GROUP_QSPI1;
+    profile->canfd_count = 0;
     hal_board_fill_gpio_resource(HAL_BOARD_GPIO_USER_LED, &profile->led_gpio);
     hal_board_fill_gpio_resource(HAL_BOARD_GPIO_USER_BUTTON, &profile->button_gpio);
     hal_board_fill_diag_config(&profile->diag);
@@ -440,6 +450,7 @@ void hal_board_get_selftest_profile(hal_board_selftest_profile_t *profile)
     hal_board_fill_canfd_profile(1u, &profile->canfd[1]);
 
 #if defined(CONFIG_BOARD_BE_U1000)
+    profile->canfd_count = HAL_BOARD_CANFD_CONTROLLER_COUNT;
     profile->available = true;
 #else
     profile->available = false;
