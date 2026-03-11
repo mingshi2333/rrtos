@@ -239,7 +239,7 @@ example_instances:
     seed: "42"
     warmup_count: 3
     measured_count: 20
-    script_entrypoint: "pixi run -e rv32 sim-renode-ai"
+    script_entrypoint: "renode --console --disable-xwt scripts/simulation/ai_demo_rv32.resc"
     script_args: ["--scenario", "regression-a"]
     source_commit: "abc1234"
     source_branch: "feature/perf-study"

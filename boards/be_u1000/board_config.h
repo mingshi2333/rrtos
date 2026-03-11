@@ -6,6 +6,10 @@
  * Core0/Core1: Main compute cores with 64KB TCMA + 96KB TCMB
  * Core2: Monitor core with 2KB TCMA + 8KB TCMB (limited resources)
  *
+ * This header is the single source of truth for immutable board facts only.
+ * Build-selected lane policy such as OS_CFG_CPU_COUNT, OS_CFG_SMP_EN, and
+ * feature toggles is chosen by the top-level CMake configuration.
+ *
  * Interrupt model: CLIC (Core-Local Interrupt Controller) — NOT standard PLIC
  * Timer: Standard CLINT mtime/mtimecmp at 0x02000000
  */
@@ -17,10 +21,10 @@
  * CPU Configuration
  * ========================================================================= */
 #define BE_U1000_BOARD_VARIANT      "EVU-BA"
-#define BE_U1000_NUM_CORES          3       /* Core0, Core1 (main), Core2 (monitor) */
-#define BE_U1000_NUM_MAIN_CORES     2       /* Core0 + Core1 for RTOS scheduling */
-#define BE_U1000_TIMER_FREQ         1000000 /* 1 MHz mtime clock (F_TIMER_PULSE) */
-#define BE_U1000_CPU_FREQ           200000000 /* 200 MHz core clock (typical) */
+#define BE_U1000_NUM_CORES          3         /* Core0, Core1 (main), Core2 (monitor) */
+#define BE_U1000_NUM_MAIN_CORES     2         /* Core0 + Core1 lane available to RTOS scheduling */
+#define BE_U1000_TIMER_FREQ         1000000UL /* 1 MHz mtime clock (F_TIMER_PULSE) */
+#define BE_U1000_CPU_FREQ           200000000UL /* 200 MHz core clock (typical) */
 
 /* ============================================================================
  * Interrupt Controller — CLIC (NOT PLIC)

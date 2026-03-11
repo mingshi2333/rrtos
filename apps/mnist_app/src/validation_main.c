@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
 
 #include "ai_model_registry.h"
 #include "ai_models.h"
@@ -10,6 +11,38 @@
 static os_tcb_t validation_tcb;
 static uint64_t validation_stack[8192];
 
+enum {
+    AI_TENSOR_SHAPE_CAPACITY = 4,
+};
+
+_Static_assert(
+    AI_TENSOR_SHAPE_CAPACITY ==
+        (sizeof(((ai_tensor_t *)0)->shape) / sizeof(((ai_tensor_t *)0)->shape[0])),
+    "AI_TENSOR_SHAPE_CAPACITY must match ai_tensor_t.shape capacity");
+
+_Static_assert(
+    AI_TENSOR_SHAPE_CAPACITY ==
+        (sizeof(((ai_tensor_spec_t *)0)->dims) / sizeof(((ai_tensor_spec_t *)0)->dims[0])),
+    "AI_TENSOR_SHAPE_CAPACITY must match ai_tensor_spec_t.dims capacity");
+
+static void ai_tensor_from_spec(ai_tensor_t *tensor,
+                                const ai_tensor_spec_t *spec,
+                                void *data,
+                                size_t size) {
+    uint32_t ndim;
+    uint32_t i;
+
+    memset(tensor, 0, sizeof(*tensor));
+    ndim = spec->ndim < AI_TENSOR_SHAPE_CAPACITY ? spec->ndim : AI_TENSOR_SHAPE_CAPACITY;
+    tensor->data = data;
+    tensor->dtype = spec->dtype;
+    tensor->ndim = ndim;
+    tensor->size = size;
+    for (i = 0; i < ndim; ++i) {
+        tensor->shape[i] = spec->dims[i];
+    }
+}
+
 static void ai_validation_halt(void) {
     while (1) {
         os_task_delay(1000);
@@ -19,6 +52,10 @@ static void ai_validation_halt(void) {
 static void ai_validation_task(void *arg) {
     ai_model_handle_t handle;
     ai_perf_stats_t stats;
+    ai_tensor_spec_t input_spec;
+    ai_tensor_spec_t output_spec;
+    ai_tensor_t input_tensor;
+    ai_tensor_t output_tensor;
     ai_st_mnist_28_input_t input;
     ai_st_mnist_28_output_t output;
     mnist_validation_observation_t observation;
@@ -54,13 +91,33 @@ static void ai_validation_task(void *arg) {
         ai_validation_halt();
     }
 
+    if (ai_model_get_input_info(handle, 0u, &input_spec) != 0 ||
+        ai_model_get_output_info(handle, 0u, &output_spec) != 0) {
+        printf("AI_VALIDATION_FAIL: model tensor metadata unavailable\n");
+        ai_validation_halt();
+    }
+
+    if (input_spec.ndim > AI_TENSOR_SHAPE_CAPACITY ||
+        output_spec.ndim > AI_TENSOR_SHAPE_CAPACITY) {
+        printf(
+            "AI_VALIDATION_FAIL: tensor metadata ndim exceeds local shape capacity (input=%u output=%u max=%u)\n",
+            input_spec.ndim,
+            output_spec.ndim,
+            AI_TENSOR_SHAPE_CAPACITY);
+        ai_validation_halt();
+    }
+
     for (sample_index = 0; sample_index < sample_count; ++sample_index) {
         const mnist_validation_sample_t *sample = &samples[sample_index];
 
         ai_model_reset_perf_stats(handle);
         mnist_validation_fill_input(&input, sample);
+        ai_tensor_from_spec(&input_tensor, &input_spec, input.tensor_0,
+                            sizeof(input.tensor_0));
+        ai_tensor_from_spec(&output_tensor, &output_spec, output.tensor_0,
+                            sizeof(output.tensor_0));
 
-        ret = ai_st_mnist_28_run(&input, &output);
+        ret = ai_infer_sync(handle, &input_tensor, 1u, &output_tensor, 1u, 0u);
         if (ret != 0) {
             printf("AI_VALIDATION_FAIL: sample=%s inference failed (%d)\n",
                    sample->id,

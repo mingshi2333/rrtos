@@ -2,6 +2,8 @@
 
 This document describes the current supported model-codegen workflow used by the canonical AI path in `rrtos`.
 
+Historical research or simulation entrypoints may still appear elsewhere in archived docs, but they are not part of the maintained pixi task surface.
+
 ## Scope
 
 This workflow is for the supported RV32 registry-backed AI path used by `apps/mnist_app`.

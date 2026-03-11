@@ -25,17 +25,12 @@ pyyaml = ">=6.0.3,<7"
 # Initialize IREE submodule
 init-iree = "test -d third_party/iree/.git || git submodule update --init --recursive third_party/iree"
 
-# Build Picolibc package (pixi build will automatically choose the correct package)
-build-picolibc = "pixi build"
-
 clean = "rm -rf build"
 
 # === Model Conversion Tasks ===
 # Usage: pixi run convert-model <tflite_path> <output_name>
 # Example: pixi run convert-model zoo/models/medium/mobilenet_v2_0.35_128_int8.tflite mobilenet_v2_035_128
 convert-model = "cd zoo/scripts && ./tflite_to_iree_c.sh -a rv32"
-rebuild = { depends-on = ["clean", "configure", "build"] }
-
 rf-validate-example = "python scripts/research_framework/validate_case.py --schema docs/research_framework/05_CANONICAL_SCHEMA_V0.yaml --case docs/research_framework/examples/RC-0001.case.yaml --strict"
 rf-validate-example-2 = "python scripts/research_framework/validate_case.py --schema docs/research_framework/05_CANONICAL_SCHEMA_V0.yaml --case docs/research_framework/examples/RC-0002.case.yaml --strict"
 rf-validate-workflow = "python scripts/research_framework/validate_workflow_doc.py --doc docs/research_framework/06_AGENT_WORKFLOW_DRAFT.md"
@@ -46,6 +41,7 @@ rf-regression = { depends-on = ["rf-validate-example", "rf-validate-example-2", 
 beu1000-irq-consistency = "python scripts/be_u1000/validate_interrupt_consistency.py --board-config boards/be_u1000/board_config.h --repl scripts/simulation/be_u1000.repl"
 beu1000-bootlog-check = "python scripts/be_u1000/check_boot_log.py --log logs/be_u1000_boot.log --expect-irq-model CLIC"
 beu1000-bootlog-check-sim = "python scripts/be_u1000/check_boot_log.py --log logs/be_u1000_boot_sim.log --expect-irq-model CLIC"
+# Canonical AI contract check; the full supported AI gate remains validate-supported-rv32.
 validate-supported-ai = "python scripts/validate_supported_ai_path.py"
 validate-config-authority = "python scripts/validate_config_authority.py"
 validate-bsp-seam = "python scripts/validate_bsp_seam.py"
@@ -53,16 +49,8 @@ validate-support-contract = "python scripts/validate_support_contract.py"
 validate-mnist-runtime = "python scripts/run_mnist_validation.py --kernel build/apps/mnist_app/mnist_validation --log logs/mnist_validation_qemu.log"
 observe-mnist-runtime-renode = "python scripts/run_mnist_validation_renode.py --kernel build/apps/mnist_app/mnist_validation --log logs/mnist_validation_renode.log"
 compare-mnist-runtime-platforms = "python scripts/compare_mnist_validation_logs.py --qemu-log logs/mnist_validation_qemu.log --renode-log logs/mnist_validation_renode.log"
-# Supported rv32 gate; dual-platform compare remains observation-only.
-validate-mnist-runtime-dual = { depends-on = ["validate-mnist-runtime", "observe-mnist-runtime-renode", "compare-mnist-runtime-platforms"] }
+# Supported rv32 gate; Renode comparison remains observation-only and is invoked explicitly.
 validate-supported-rv32 = { depends-on = ["validate-config-authority", "validate-bsp-seam", "validate-support-contract", "validate-supported-ai", "configure", "build", "report-footprint", "validate-mnist-runtime"] }
-
-[feature.rv64.dependencies]
-picolibc-rv64 = { path = "packages/picolibc-rv64" }
-
-[feature.rv64.tasks]
-configure = "cmake -B build -DCMAKE_TOOLCHAIN_FILE=cmake/riscv64-pixi.cmake -DCMAKE_BUILD_TYPE=MinSizeRel -DOS_SMP_EN=OFF"
-build = "cmake --build build"
 
 [feature.rv32.dependencies]
 picolibc-rv32 = { path = "packages/picolibc-rv32" }
@@ -73,8 +61,6 @@ configure = "cmake -B build -DCMAKE_TOOLCHAIN_FILE=cmake/riscv32-pixi.cmake -DAR
 configure-flash = "cmake -B build -DCMAKE_TOOLCHAIN_FILE=cmake/riscv32-pixi.cmake -DARCH_BITS=32 -DARCH=riscv -DCMAKE_BUILD_TYPE=MinSizeRel -DLINKER_SCRIPT=arch/riscv/link_flash.ld -DOS_SMP_EN=OFF"
 build = "cmake --build build"
 report-footprint = "python scripts/report_build_footprint.py --label mnist_validation --image build/apps/mnist_app/mnist_validation --kernel-archive build/kernel/librv_aios_kernel.a --cache build/CMakeCache.txt --linker-script arch/riscv/link.ld --map build/apps/mnist_app/mnist_validation.map --output build/apps/mnist_app/mnist_validation_footprint.md"
-sim-ai = "qemu-system-riscv32 -machine virt -nographic -m 4M -bios none -kernel build/apps/ai_demo/ai_demo"
-sim-renode-ai = "renode --console --disable-xwt scripts/simulation/ai_demo_rv32.resc"
 ai-gen = { cmd = "python3 scripts/ai_codegen.py", description = "Generate AI model registry and wrappers from ai_models.yaml" }
 
 [feature.be_u1000.dependencies]
@@ -85,23 +71,12 @@ compiler-rt = ">=21.1.8,<22"
 configure = "cmake -B build-be_u1000 -DCMAKE_TOOLCHAIN_FILE=cmake/riscv32-pixi.cmake -DARCH_BITS=32 -DCONFIG_BOARD=be_u1000 -DCMAKE_BUILD_TYPE=MinSizeRel -DOS_SMP_EN=OFF"
 build = "cmake --build build-be_u1000"
 report-footprint = "python scripts/report_build_footprint.py --label rrtos_be_u1000 --image build-be_u1000/rrtos_be_u1000.elf --kernel-archive build-be_u1000/kernel/librv_aios_kernel.a --cache build-be_u1000/CMakeCache.txt --linker-script boards/be_u1000/link_be_u1000_tcm.ld --map build-be_u1000/rrtos_be_u1000.map --output build-be_u1000/rrtos_be_u1000_footprint.md"
-probe-smp-build = "python scripts/be_u1000/run_smp_probe.py --build-dir build-be_u1000_smp_probe --log logs/be_u1000_smp_probe.log --summary logs/be_u1000_smp_probe.md"
-run-smp-runtime = "python scripts/be_u1000/run_smp_runtime.py --kernel build-be_u1000_smp_probe/rrtos_be_u1000.elf --log logs/be_u1000_smp_boot.log --summary logs/be_u1000_smp_runtime_probe.md --sleep-seconds 4"
-check-smp-bootlog = "python scripts/be_u1000/check_boot_log.py --log logs/be_u1000_smp_boot.log --expect-irq-model CLIC --expect-smp-online-count 2 --require-smp-ipi"
-validate-smp-runtime = { depends-on = ["probe-smp-build", "run-smp-runtime", "check-smp-bootlog"] }
-validate-smp-affinity-experimental = "python scripts/be_u1000/run_smp_runtime.py --kernel build-be_u1000_smp_probe/rrtos_be_u1000.elf --log logs/be_u1000_smp_boot.log --summary logs/be_u1000_smp_runtime_affinity_probe.md --sleep-seconds 4 --check-bootlog --expect-irq-model CLIC --expect-smp-online-count 2 --require-smp-ipi --expect-task-affinity control:Core0 --expect-task-affinity worker:Core1"
-validate-smp-balance-experimental = "python scripts/be_u1000/run_smp_runtime.py --kernel build-be_u1000_smp_probe/rrtos_be_u1000.elf --log logs/be_u1000_smp_balance.log --summary logs/be_u1000_smp_runtime_balance_probe.md --sleep-seconds 4 --check-bootlog --expect-irq-model CLIC --expect-smp-online-count 2 --require-smp-ipi --expect-task-affinity balance:Core0 --expect-task-affinity balance:Core1"
-validate-runtime-stages-experimental = { depends-on = ["probe-smp-build", "validate-selftest-sim", "validate-smp-affinity-experimental", "validate-smp-balance-experimental"] }
-sim-be_u1000 = "renode --console --disable-xwt scripts/simulation/be_u1000.resc"
 validate-irq-map = "python scripts/be_u1000/validate_interrupt_consistency.py --board-config boards/be_u1000/board_config.h --repl scripts/simulation/be_u1000.repl"
-validate-irq-map-sdk = "sh -c 'test -n \"$BE_U1000_SDK_HEADER\" && python scripts/be_u1000/validate_interrupt_consistency.py --board-config boards/be_u1000/board_config.h --repl scripts/simulation/be_u1000.repl --sdk-header \"$BE_U1000_SDK_HEADER\" || { echo \"BE_U1000_SDK_HEADER is not set\" >&2; exit 2; }'"
-validate-bootlog = "python scripts/be_u1000/check_boot_log.py --log logs/be_u1000_boot_sim.log --expect-irq-model CLIC"
 validate-selftest-sim = "python scripts/be_u1000/run_smp_runtime.py --kernel build-be_u1000/rrtos_be_u1000.elf --binary build-be_u1000/rrtos_be_u1000.bin --log logs/be_u1000_boot_sim.log --summary logs/be_u1000_selftest_runtime.md --sleep-seconds 4 --check-bootlog --expect-irq-model CLIC --expect-single-core-fallback --expect-qspi-signature 0x31505351 0x5F4C444D 0x00010010 0xA55A3CC3"
-# Supported BE-U1000 gate; SMP runtime stages remain experimental.
+# Supported BE-U1000 gate.
 validate-supported = { depends-on = ["validate-config-authority", "validate-bsp-seam", "validate-support-contract", "configure", "build", "report-footprint", "validate-irq-map", "validate-selftest-sim"] }
 
 [environments]
-default = ["rv64"]
-rv64 = ["rv64"]
+default = ["rv32"]
 rv32 = ["rv32"]
 be-u1000 = ["be_u1000"]

@@ -2,12 +2,12 @@
 
 ## Authoritative docs
 
-- `docs/SUPPORTED_MATRIX.md` - what is currently supported vs experimental
+- `docs/SUPPORTED_MATRIX.md` - RTOS-first supported firmware lanes, subordinate AI extensions, and experimental scope
 - `docs/AI_CANONICAL_PATH.md` - canonical AI API, codegen path, and runtime validation rules
 - `docs/CURRENT_FOOTPRINT_BASELINE.md` - current supported-lane footprint summary from generated build artifacts
 - `docs/FOOTPRINT_OPTIMIZATION_BACKLOG.md` - ranked low-risk and medium-risk footprint work with expected gain, risk, and dependency
 - `docs/BE_U1000_MULTICORE_NOTES.md` - board facts, repo assumptions, and staged multicore strategy for BE-U1000
-- `docs/BE_U1000_RUNTIME_VALIDATION_MATRIX.md` - staged supported/experimental runtime validation story for BE-U1000
+- `docs/BE_U1000_RUNTIME_VALIDATION_MATRIX.md` - supported runtime validation story plus historical SMP notes for BE-U1000
 - `docs/BE_U1000_SDK_COMPARISON.md` - SDK-to-rrtos feature comparison and added board HAL supplements
 - `docs/EVU_BA_PINMAP.md` - EVU-BA-2.3 connector/header pin mapping recovered from the schematic tail pages
 - `docs/EVU_BA_2_3_BOARD_INVENTORY.md` - proof that the active `be_u1000` lane is already EVU-BA-2.3-shaped and what is complete vs partial
@@ -44,6 +44,6 @@ These files capture prior investigation or migration context. They are useful fo
 
 1. `README.md`
 2. `docs/SUPPORTED_MATRIX.md`
-3. `docs/AI_CANONICAL_PATH.md`
-4. `docs/switching_guide.md`
-5. `apps/mnist_app/README.md` or `boards/be_u1000/DFU_FLASHING_GUIDE.md`
+3. `docs/switching_guide.md`
+4. `docs/AI_CANONICAL_PATH.md`
+5. `boards/be_u1000/DFU_FLASHING_GUIDE.md` or `apps/mnist_app/README.md`

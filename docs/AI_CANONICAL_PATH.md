@@ -19,6 +19,9 @@
 ## Expectations
 
 - The supported path uses registry-backed synchronous inference.
+- The supported validation entrypoint is `apps/mnist_app/src/validation_main.c`, and it proves the public contract through `ai_model_find_by_name()`, `ai_model_get_input_info()`, `ai_model_get_output_info()`, and `ai_infer_sync()`.
+- Generated wrappers such as `ai_st_mnist_28_run()` remain convenience glue and do not replace the public registry contract as the supported proof path.
+- The maintained pixi AI task surface is `validate-supported-ai`, `validate-mnist-runtime`, `observe-mnist-runtime-renode`, and `compare-mnist-runtime-platforms`; redundant composite aliases should not be reintroduced.
 - `ai_infer_async()` is a compatibility wrapper and must not be treated as queued execution.
 - Generated model descriptors must include model name, tensor metadata, and memory estimate fields when available.
 - Legacy `ai_runtime.h` consumers are experimental until migrated to the registry contract.

@@ -19,7 +19,7 @@ environment:
     python: "3.11+"
 
 procedure:
-  entrypoint: "pixi run -e rv32 sim-renode-ai"
+  entrypoint: "renode --console --disable-xwt scripts/simulation/ai_demo_rv32.resc"
   params:
     scenario: regression-a
     seed: "42"
@@ -53,11 +53,14 @@ conclusion:
   uncertainty_note: "Needs confirmation on hardware board run."
 
 replay:
-  command: "pixi run -e rv32 sim-renode-ai -- --scenario regression-a --seed 42"
+  command: "renode --console --disable-xwt scripts/simulation/ai_demo_rv32.resc --scenario regression-a --seed 42"
   expected_outputs:
     - "metrics.json generated"
     - "frame_time_ms_p95 present"
   pass_fail_rule: "p95 <= 25.5ms"
+
+notes:
+  - "Historical research case: this archived Renode entrypoint is not part of the maintained pixi task surface."
 
 provenance:
   source_commit: abc1234
