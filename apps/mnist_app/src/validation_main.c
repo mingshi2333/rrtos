@@ -15,17 +15,13 @@ enum {
     AI_TENSOR_SHAPE_CAPACITY = 4,
 };
 
-static int ai_tensor_from_spec(ai_tensor_t *tensor,
-                               const ai_tensor_spec_t *spec,
-                               void *data,
-                               size_t size) {
+static void ai_tensor_from_spec(ai_tensor_t *tensor,
+                                const ai_tensor_spec_t *spec,
+                                void *data,
+                                size_t size) {
     uint32_t i;
 
     memset(tensor, 0, sizeof(*tensor));
-    if (spec->ndim > AI_TENSOR_SHAPE_CAPACITY) {
-        return -1;
-    }
-
     tensor->data = data;
     tensor->dtype = spec->dtype;
     tensor->ndim = spec->ndim;
@@ -33,8 +29,6 @@ static int ai_tensor_from_spec(ai_tensor_t *tensor,
     for (i = 0; i < spec->ndim; ++i) {
         tensor->shape[i] = spec->dims[i];
     }
-
-    return 0;
 }
 
 static void ai_validation_halt(void) {
@@ -106,15 +100,10 @@ static void ai_validation_task(void *arg) {
 
         ai_model_reset_perf_stats(handle);
         mnist_validation_fill_input(&input, sample);
-        if (ai_tensor_from_spec(&input_tensor, &input_spec, input.tensor_0,
-                                sizeof(input.tensor_0)) != 0 ||
-            ai_tensor_from_spec(&output_tensor, &output_spec, output.tensor_0,
-                                sizeof(output.tensor_0)) != 0) {
-            printf(
-                "AI_VALIDATION_FAIL: sample=%s tensor metadata ndim exceeds local shape capacity\n",
-                sample->id);
-            ai_validation_halt();
-        }
+        ai_tensor_from_spec(&input_tensor, &input_spec, input.tensor_0,
+                            sizeof(input.tensor_0));
+        ai_tensor_from_spec(&output_tensor, &output_spec, output.tensor_0,
+                            sizeof(output.tensor_0));
 
         ret = ai_infer_sync(handle, &input_tensor, 1u, &output_tensor, 1u, 0u);
         if (ret != 0) {

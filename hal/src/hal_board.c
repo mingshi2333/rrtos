@@ -3,13 +3,16 @@
 
 #include "hal_board_smp.h"
 
+#if defined(CONFIG_BOARD_BE_U1000)
 #include "hal_canfd.h"
-#include "hal_clint.h"
 #include "hal_flash.h"
 #include "hal_gpio.h"
 #include "hal_i2c.h"
-#include "hal_irq.h"
 #include "hal_spi.h"
+#endif
+
+#include "hal_clint.h"
+#include "hal_irq.h"
 #include "hal_uart.h"
 #include "os_config.h"
 #include "os_kernel.h"
@@ -327,6 +330,7 @@ static void be_u1000_board_pinmux_init(void)
 }
 #endif
 
+#if defined(CONFIG_BOARD_BE_U1000)
 static const char *selftest_label(const char *label, const char *fallback)
 {
     return label ? label : fallback;
@@ -708,6 +712,7 @@ static void run_canfd_selftest(const hal_board_selftest_profile_t *profile)
         report_canfd_result(&g_canfd_profiles[index], index);
     }
 }
+#endif
 
 void hal_board_init(void) {
 #if defined(CONFIG_BOARD_BE_U1000)
@@ -1086,10 +1091,14 @@ int hal_board_run_selftest(void)
         return -1;
     }
 
+#if defined(CONFIG_BOARD_BE_U1000)
     report_pinmux_result(NULL, selftest_profile.console_pinmux_group);
     run_gpio_selftest(&selftest_profile);
     run_serial_bus_selftest(&selftest_profile);
     run_flash_selftest(&selftest_profile);
     run_canfd_selftest(&selftest_profile);
     return 0;
+#else
+    return -1;
+#endif
 }

@@ -99,7 +99,9 @@ static void balance_task_entry(void *arg) {
     while (1) {
         os_tcb_t *self = os_task_self();
         g_balance_seen_mask |= 1u << self->cpu_id;
-        if (os_smp_online_count() >= 2 && g_balance_seen_mask != g_balance_expected_mask) {
+        if (g_balance_expected_mask != 0u &&
+            os_smp_online_count() >= 2 &&
+            g_balance_seen_mask != g_balance_expected_mask) {
             os_cpu_t peer;
 
             if (hal_board_get_balance_peer(self->cpu_id, &peer) &&
