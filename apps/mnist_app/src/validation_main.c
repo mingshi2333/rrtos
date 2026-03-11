@@ -15,6 +15,16 @@ enum {
     AI_TENSOR_SHAPE_CAPACITY = 4,
 };
 
+_Static_assert(
+    AI_TENSOR_SHAPE_CAPACITY ==
+        (sizeof(((ai_tensor_t *)0)->shape) / sizeof(((ai_tensor_t *)0)->shape[0])),
+    "AI_TENSOR_SHAPE_CAPACITY must match ai_tensor_t.shape capacity");
+
+_Static_assert(
+    AI_TENSOR_SHAPE_CAPACITY ==
+        (sizeof(((ai_tensor_spec_t *)0)->dims) / sizeof(((ai_tensor_spec_t *)0)->dims[0])),
+    "AI_TENSOR_SHAPE_CAPACITY must match ai_tensor_spec_t.dims capacity");
+
 static void ai_tensor_from_spec(ai_tensor_t *tensor,
                                 const ai_tensor_spec_t *spec,
                                 void *data,
