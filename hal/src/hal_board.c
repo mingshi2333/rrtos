@@ -1,7 +1,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "hal_board.h"
+#include "hal_board_smp.h"
 
 #include "hal_canfd.h"
 #include "hal_clint.h"
@@ -13,10 +13,6 @@
 #include "hal_uart.h"
 #include "os_config.h"
 #include "os_kernel.h"
-
-#if OS_CFG_SMP_EN
-#include "os_smp.h"
-#endif
 
 typedef enum {
     HAL_BOARD_GPIO_USER_LED = 0,
@@ -112,6 +108,10 @@ typedef struct {
 #define SELFTEST_SPI_TIMEOUT  100000u
 #define SELFTEST_CANFD_TIMEOUT 100000u
 #define CANFD_IRQ_SEEN(index) (1u << (index))
+
+#if OS_CFG_SMP_EN
+#define HAL_BOARD_IPI_RESCHEDULE 0u
+#endif
 
 static volatile uint32_t g_canfd_irq_seen_mask;
 static volatile uint32_t g_canfd_irq_count[HAL_BOARD_SELFTEST_CANFD_CONTROLLER_COUNT];
@@ -973,11 +973,11 @@ bool hal_board_issue_reschedule_probe(void)
     hal_board_demo_topology_t topology;
 
     hal_board_fill_demo_topology(&topology);
-    if (!topology.available || !os_smp_cpu_online(topology.reschedule_probe_cpu)) {
+    if (!topology.available || topology.reschedule_probe_cpu >= os_cpu_count()) {
         return false;
     }
 
-    os_ipi_send(topology.reschedule_probe_cpu, OS_IPI_RESCHEDULE);
+    os_ipi_send(topology.reschedule_probe_cpu, HAL_BOARD_IPI_RESCHEDULE);
     return true;
 }
 

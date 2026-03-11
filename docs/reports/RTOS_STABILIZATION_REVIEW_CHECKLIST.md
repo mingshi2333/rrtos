@@ -41,7 +41,7 @@ Required evidence
 Reviewer notes
 
 - `README.md` already leads with a bare-metal RTOS identity and names two supported validation lanes.
-- `CMakeLists.txt` still describes the project as `"RISC-V AI-RTOS with Federated Learning Support"`, which overstates the current repo center of gravity.
+- Resolved/current: `CMakeLists.txt` now describes the project as `"Bare-metal RISC-V RTOS with supported RV32 and BE-U1000 firmware lanes"`, which matches the RTOS-first support story.
 - The architecture review still correctly warns that the repo behaves like multiple partially merged experiments.
 
 Disposition
@@ -154,8 +154,8 @@ Required evidence
 Reviewer notes
 
 - The support registry, doc index, and top-level README now name the supported lanes and explicitly downgrade historical material.
-- The remaining mismatch is that the top-level CMake description still markets federated-learning breadth, which weakens the honesty of the repo surface even though the build graph itself is narrower.
-- Reviewers should fail this pillar whenever a broad marketing claim is easier to see than the supported matrix.
+- Resolved/current: the top-level CMake description now matches the supported matrix instead of advertising older federated-learning breadth.
+- Reviewers should fail this pillar whenever any top-level marketing claim becomes easier to see than the supported matrix.
 
 Disposition
 

@@ -29,6 +29,9 @@ def main() -> None:
         encoding="utf-8"
     )
     hal_board_h = (REPO_ROOT / "hal/include/hal_board.h").read_text(encoding="utf-8")
+    hal_board_smp_h = (REPO_ROOT / "hal/include/hal_board_smp.h").read_text(
+        encoding="utf-8"
+    )
     hal_board_c = (REPO_ROOT / "hal/src/hal_board.c").read_text(encoding="utf-8")
 
     forbid(beu_demo, '"board_config.h"', "apps/be_u1000_demo/main.c")
@@ -43,26 +46,29 @@ def main() -> None:
         "const char *hal_board_task_map_description(bool smp_mode);",
         "hal/include/hal_board.h",
     )
+    forbid(hal_board_h, '"os_types.h"', "hal/include/hal_board.h")
     require(
-        hal_board_h,
+        hal_board_smp_h,
         "os_err_t hal_board_bind_demo_tasks(os_tcb_t *control_task, os_tcb_t *worker_task);",
-        "hal/include/hal_board.h",
+        "hal/include/hal_board_smp.h",
     )
     require(
-        hal_board_h,
+        hal_board_smp_h,
         "bool hal_board_issue_reschedule_probe(void);",
-        "hal/include/hal_board.h",
+        "hal/include/hal_board_smp.h",
     )
     require(
-        hal_board_h,
+        hal_board_smp_h,
         "bool hal_board_get_balance_peer(os_cpu_t current_cpu, os_cpu_t *peer_cpu);",
-        "hal/include/hal_board.h",
+        "hal/include/hal_board_smp.h",
     )
     require(
-        hal_board_h,
+        hal_board_smp_h,
         "uint32_t hal_board_balance_expected_mask(void);",
-        "hal/include/hal_board.h",
+        "hal/include/hal_board_smp.h",
     )
+    require(hal_board_smp_h, '#include "hal_board.h"', "hal/include/hal_board_smp.h")
+    require(hal_board_smp_h, '#include "os_types.h"', "hal/include/hal_board_smp.h")
     forbid(hal_board_h, "uint32_t control_cpu;", "hal/include/hal_board.h")
     forbid(hal_board_h, "uint32_t worker_cpu;", "hal/include/hal_board.h")
     forbid(hal_board_h, "uint32_t reschedule_probe_cpu;", "hal/include/hal_board.h")
@@ -224,6 +230,7 @@ def main() -> None:
         "hal/src/hal_board.c",
     )
     require(beu_demo, "hal_board_run_selftest()", "apps/be_u1000_demo/main.c")
+    require(beu_demo, '#include "hal_board_smp.h"', "apps/be_u1000_demo/main.c")
     require(
         beu_demo,
         "hal_board_bind_demo_tasks(&control_task_tcb, &worker_task_tcb)",

@@ -5,14 +5,14 @@
 #include "os_kernel.h"
 #include "os_config.h"
 #include "hal_board.h"
+#if OS_CFG_SMP_EN
+#include "hal_board_smp.h"
+#endif
 #include "hal_clint.h"
 #include "hal_uart.h"
 
 #if OS_CFG_SMP_EN
 #include "riscv_csr.h"
-#endif
-
-#if OS_CFG_SMP_EN
 #include "os_smp.h"
 #endif
 
@@ -150,13 +150,21 @@ void os_kernel_main(void) {
     g_balance_expected_mask = hal_board_balance_expected_mask();
     os_task_create(&balance_task_tcb, "balance", balance_task_entry, NULL,
                    12, balance_task_stack, sizeof(balance_task_stack));
-    if (g_execution_profile.available && hal_board_task_map_description(true)) {
-        os_print("[SMP] task-map: %s\n", hal_board_task_map_description(true));
+    if (g_execution_profile.available) {
+        const char *task_map_description = hal_board_task_map_description(true);
+
+        if (task_map_description != NULL) {
+            os_print("[SMP] task-map: %s\n", task_map_description);
+        }
     }
     os_smp_release_cpus();
 #else
-    if (g_execution_profile.available && hal_board_task_map_description(false)) {
-        os_print("[BOOT] task-map: %s\n", hal_board_task_map_description(false));
+    if (g_execution_profile.available) {
+        const char *task_map_description = hal_board_task_map_description(false);
+
+        if (task_map_description != NULL) {
+            os_print("[BOOT] task-map: %s\n", task_map_description);
+        }
     }
 #endif
 
