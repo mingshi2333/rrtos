@@ -116,10 +116,12 @@ typedef struct {
 #define SELFTEST_CANFD_TIMEOUT 100000u
 #define CANFD_IRQ_SEEN(index) (1u << (index))
 
+#if defined(CONFIG_BOARD_BE_U1000)
 static volatile uint32_t g_canfd_irq_seen_mask;
 static volatile uint32_t g_canfd_irq_count[HAL_BOARD_SELFTEST_CANFD_CONTROLLER_COUNT];
 static hal_board_canfd_profile_t g_canfd_profiles[HAL_BOARD_SELFTEST_CANFD_CONTROLLER_COUNT];
 static uint32_t g_canfd_profile_count;
+#endif
 
 #if OS_CFG_SMP_EN
 static void hal_board_fill_demo_topology(hal_board_demo_topology_t *topology)
@@ -136,7 +138,6 @@ static void hal_board_fill_demo_topology(hal_board_demo_topology_t *topology)
     topology->available = false;
 
 #if defined(CONFIG_BOARD_BE_U1000)
-    topology->control_cpu = 0u;
     topology->worker_cpu = 1u;
     topology->reschedule_probe_cpu = 1u;
     topology->balance_probe_cpu_a = 0u;

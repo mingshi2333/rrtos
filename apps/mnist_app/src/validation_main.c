@@ -29,14 +29,16 @@ static void ai_tensor_from_spec(ai_tensor_t *tensor,
                                 const ai_tensor_spec_t *spec,
                                 void *data,
                                 size_t size) {
+    uint32_t ndim;
     uint32_t i;
 
     memset(tensor, 0, sizeof(*tensor));
+    ndim = spec->ndim < AI_TENSOR_SHAPE_CAPACITY ? spec->ndim : AI_TENSOR_SHAPE_CAPACITY;
     tensor->data = data;
     tensor->dtype = spec->dtype;
-    tensor->ndim = spec->ndim;
+    tensor->ndim = ndim;
     tensor->size = size;
-    for (i = 0; i < spec->ndim; ++i) {
+    for (i = 0; i < ndim; ++i) {
         tensor->shape[i] = spec->dims[i];
     }
 }
