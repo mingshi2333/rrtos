@@ -2,8 +2,8 @@
  * @file os_config.h
  * @brief RTOS Configuration Header
  * 
- * This file contains all configurable parameters for the RTOS.
- * Modify these values to customize the system for your target platform.
+ * This file contains RTOS configuration defaults and validation.
+ * Supported board lanes override selected OS_CFG_* policy from the build layer.
  */
 
 #ifndef OS_CONFIG_H
@@ -26,7 +26,7 @@
 #define OS_CFG_ARCH_BITS            64
 #endif
 
-/** @brief CPU clock frequency in Hz (fallback default; build layer overrides for supported lanes) */
+/** @brief CPU clock frequency in Hz (fallback default; selected lane policy comes from the build layer) */
 #ifndef OS_CFG_CPU_FREQ_HZ
 #define OS_CFG_CPU_FREQ_HZ          100000000UL
 #endif
@@ -34,7 +34,7 @@
 /** @brief System tick frequency in Hz */
 #define OS_CFG_TICK_FREQ_HZ         1000
 
-/** @brief Timer clock frequency in Hz (fallback default; build layer overrides for supported lanes) */
+/** @brief Timer clock frequency in Hz (fallback default; selected lane policy comes from the build layer) */
 #ifndef OS_CFG_TIMER_FREQ_HZ
 #define OS_CFG_TIMER_FREQ_HZ        10000000UL
 #endif
@@ -172,9 +172,9 @@
 /* AI Runtime Configuration                                                   */
 /*===========================================================================*/
 
-/** @brief Enable AI runtime (fallback default; selected lane policy comes from build definitions) */
+/** @brief Enable AI runtime (fallback default is conservative; selected lane policy comes from build definitions) */
 #ifndef OS_CFG_AI_EN
-#define OS_CFG_AI_EN                1
+#define OS_CFG_AI_EN                0
 #endif
 
 /** @brief AI backend selection */
@@ -200,9 +200,9 @@
 /* Federated Learning Configuration                                           */
 /*===========================================================================*/
 
-/** @brief Enable federated learning (fallback default; selected lane policy comes from build definitions) */
+/** @brief Enable federated learning (fallback default is conservative; selected lane policy comes from build definitions) */
 #ifndef OS_CFG_FL_EN
-#define OS_CFG_FL_EN                1
+#define OS_CFG_FL_EN                0
 #endif
 
 /** @brief Local training batch size */
@@ -280,6 +280,14 @@
 
 #if defined(CONFIG_BOARD_BE_U1000)
 #include "board_config.h"
+
+#if OS_CFG_CPU_MAX > BE_U1000_NUM_CORES
+#error "OS_CFG_CPU_MAX must not exceed BE_U1000_NUM_CORES"
+#endif
+
+#if OS_CFG_CPU_COUNT > BE_U1000_NUM_MAIN_CORES
+#error "OS_CFG_CPU_COUNT must not exceed BE_U1000_NUM_MAIN_CORES"
+#endif
 
 #define OS_CFG_UART_BASE            BE_U1000_CONSOLE_UART_BASE
 #define OS_CFG_CLINT_BASE           BE_U1000_CLINT_BASE

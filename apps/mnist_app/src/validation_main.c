@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
 
 #include "ai_model_registry.h"
 #include "ai_models.h"
@@ -10,6 +11,22 @@
 static os_tcb_t validation_tcb;
 static uint64_t validation_stack[8192];
 
+static void ai_tensor_from_spec(ai_tensor_t *tensor,
+                                const ai_tensor_spec_t *spec,
+                                void *data,
+                                size_t size) {
+    uint32_t i;
+
+    memset(tensor, 0, sizeof(*tensor));
+    tensor->data = data;
+    tensor->dtype = spec->dtype;
+    tensor->ndim = spec->ndim;
+    tensor->size = size;
+    for (i = 0; i < spec->ndim && i < 4u; ++i) {
+        tensor->shape[i] = spec->dims[i];
+    }
+}
+
 static void ai_validation_halt(void) {
     while (1) {
         os_task_delay(1000);
@@ -19,6 +36,10 @@ static void ai_validation_halt(void) {
 static void ai_validation_task(void *arg) {
     ai_model_handle_t handle;
     ai_perf_stats_t stats;
+    ai_tensor_spec_t input_spec;
+    ai_tensor_spec_t output_spec;
+    ai_tensor_t input_tensor;
+    ai_tensor_t output_tensor;
     ai_st_mnist_28_input_t input;
     ai_st_mnist_28_output_t output;
     mnist_validation_observation_t observation;
@@ -54,13 +75,21 @@ static void ai_validation_task(void *arg) {
         ai_validation_halt();
     }
 
+    if (ai_model_get_input_info(handle, 0u, &input_spec) != 0 ||
+        ai_model_get_output_info(handle, 0u, &output_spec) != 0) {
+        printf("AI_VALIDATION_FAIL: model tensor metadata unavailable\n");
+        ai_validation_halt();
+    }
+
     for (sample_index = 0; sample_index < sample_count; ++sample_index) {
         const mnist_validation_sample_t *sample = &samples[sample_index];
 
         ai_model_reset_perf_stats(handle);
         mnist_validation_fill_input(&input, sample);
+        ai_tensor_from_spec(&input_tensor, &input_spec, input.tensor_0, sizeof(input.tensor_0));
+        ai_tensor_from_spec(&output_tensor, &output_spec, output.tensor_0, sizeof(output.tensor_0));
 
-        ret = ai_st_mnist_28_run(&input, &output);
+        ret = ai_infer_sync(handle, &input_tensor, 1u, &output_tensor, 1u, 0u);
         if (ret != 0) {
             printf("AI_VALIDATION_FAIL: sample=%s inference failed (%d)\n",
                    sample->id,

@@ -23,16 +23,41 @@ def forbid(text: str, needle: str, context: str) -> None:
 
 
 def main() -> None:
+    readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
     supported_matrix = (REPO_ROOT / "docs/SUPPORTED_MATRIX.md").read_text(
         encoding="utf-8"
     )
     be_u1000_matrix = (
         REPO_ROOT / "docs/BE_U1000_RUNTIME_VALIDATION_MATRIX.md"
     ).read_text(encoding="utf-8")
+    switching_guide = (REPO_ROOT / "docs/switching_guide.md").read_text(
+        encoding="utf-8"
+    )
     pixi = (REPO_ROOT / "pixi.toml").read_text(encoding="utf-8")
     workflow = (
         REPO_ROOT / ".github/workflows/firmware-supported-matrix.yml"
     ).read_text(encoding="utf-8")
+
+    require(
+        readme,
+        "`qemu_virt` + `apps/mnist_app` + `ai/include/ai_model_registry.h`",
+        "README.md",
+    )
+    require(
+        readme,
+        "`be_u1000` + `apps/be_u1000_demo` (current EVU-BA-2.3-shaped board path)",
+        "README.md",
+    )
+    require(
+        readme,
+        "Optional observation lanes do not promote a path to supported status.",
+        "README.md",
+    )
+    require(
+        readme,
+        "The default pixi environment targets the supported `rv32` lane.",
+        "README.md",
+    )
 
     require(
         supported_matrix,
@@ -51,7 +76,22 @@ def main() -> None:
     )
     require(
         supported_matrix,
-        "pixi run -e rv32 validate-mnist-runtime-dual",
+        "pixi run -e rv32 observe-mnist-runtime-renode",
+        "docs/SUPPORTED_MATRIX.md",
+    )
+    require(
+        supported_matrix,
+        "pixi run -e rv32 compare-mnist-runtime-platforms",
+        "docs/SUPPORTED_MATRIX.md",
+    )
+    require(
+        supported_matrix,
+        "current EVU-BA-2.3-shaped board path",
+        "docs/SUPPORTED_MATRIX.md",
+    )
+    require(
+        supported_matrix,
+        "Proof path: `apps/mnist_app/src/validation_main.c` uses the registry contract directly; generated wrappers remain convenience-only glue",
         "docs/SUPPORTED_MATRIX.md",
     )
     require(
@@ -72,7 +112,7 @@ def main() -> None:
     )
     require(
         be_u1000_matrix,
-        "`S1` | Experimental SMP build wiring closes successfully",
+        "`S1` | Historical SMP build wiring note",
         "docs/BE_U1000_RUNTIME_VALIDATION_MATRIX.md",
     )
     require(
@@ -85,10 +125,25 @@ def main() -> None:
         "Promotion of any later stage requires the support registry, command surface, and blocking CI to be updated in the same change.",
         "docs/BE_U1000_RUNTIME_VALIDATION_MATRIX.md",
     )
+    require(
+        be_u1000_matrix,
+        "maintained pixi task removed",
+        "docs/BE_U1000_RUNTIME_VALIDATION_MATRIX.md",
+    )
 
     require(
         pixi,
+        "# Canonical AI contract check; the full supported AI gate remains validate-supported-rv32.",
+        "pixi.toml",
+    )
+    require(
+        pixi,
         'validate-support-contract = "python scripts/validate_support_contract.py"',
+        "pixi.toml",
+    )
+    require(
+        pixi,
+        'default = ["rv32"]',
         "pixi.toml",
     )
     require(
@@ -101,17 +156,58 @@ def main() -> None:
         'validate-supported = { depends-on = ["validate-config-authority", "validate-bsp-seam", "validate-support-contract", "configure", "build", "report-footprint", "validate-irq-map", "validate-selftest-sim"] }',
         "pixi.toml",
     )
-    require(
+    forbid(pixi, 'build-picolibc = "pixi build"', "pixi.toml")
+    forbid(
+        pixi, 'rebuild = { depends-on = ["clean", "configure", "build"] }', "pixi.toml"
+    )
+    forbid(
         pixi,
         'validate-mnist-runtime-dual = { depends-on = ["validate-mnist-runtime", "observe-mnist-runtime-renode", "compare-mnist-runtime-platforms"] }',
         "pixi.toml",
     )
-    require(
-        pixi,
-        'validate-runtime-stages-experimental = { depends-on = ["probe-smp-build", "validate-selftest-sim", "validate-smp-affinity-experimental", "validate-smp-balance-experimental"] }',
-        "pixi.toml",
-    )
+    forbid(pixi, "validate-irq-map-sdk = ", "pixi.toml")
+    forbid(pixi, "validate-bootlog = ", "pixi.toml")
+    forbid(pixi, "[feature.rv64.dependencies]", "pixi.toml")
+    forbid(pixi, "[feature.rv64.tasks]", "pixi.toml")
+    forbid(pixi, 'rv64 = ["rv64"]', "pixi.toml")
+    forbid(pixi, "sim-ai = ", "pixi.toml")
+    forbid(pixi, "sim-renode-ai = ", "pixi.toml")
+    forbid(pixi, "probe-smp-build = ", "pixi.toml")
+    forbid(pixi, "run-smp-runtime = ", "pixi.toml")
+    forbid(pixi, "check-smp-bootlog = ", "pixi.toml")
+    forbid(pixi, "validate-smp-runtime = ", "pixi.toml")
+    forbid(pixi, "validate-smp-affinity-experimental = ", "pixi.toml")
+    forbid(pixi, "validate-smp-balance-experimental = ", "pixi.toml")
+    forbid(pixi, "validate-runtime-stages-experimental = ", "pixi.toml")
+    forbid(pixi, "sim-be_u1000 = ", "pixi.toml")
 
+    require(
+        switching_guide,
+        "pixi run -e rv32 validate-supported-rv32",
+        "docs/switching_guide.md",
+    )
+    require(
+        switching_guide,
+        "pixi run -e rv32 observe-mnist-runtime-renode",
+        "docs/switching_guide.md",
+    )
+    require(
+        switching_guide,
+        "pixi run -e rv32 compare-mnist-runtime-platforms",
+        "docs/switching_guide.md",
+    )
+    require(
+        switching_guide,
+        "Keep the maintained AI task surface small.",
+        "docs/switching_guide.md",
+    )
+    forbid(switching_guide, "validate-mnist-runtime-dual", "docs/switching_guide.md")
+
+    require(
+        workflow,
+        '      - "README.md"',
+        ".github/workflows/firmware-supported-matrix.yml",
+    )
     require(
         workflow,
         '      - "docs/BE_U1000_RUNTIME_VALIDATION_MATRIX.md"',

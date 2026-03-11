@@ -3,9 +3,9 @@ cmake_minimum_required(VERSION 3.16)
 # ============================================================================
 # Project Configuration
 # ============================================================================
-project(rrtos
+project(rv_aios
     VERSION 1.0.0
-    DESCRIPTION "RISC-V AI-RTOS with Federated Learning Support"
+    DESCRIPTION "Bare-metal RISC-V RTOS with supported RV32 and BE-U1000 firmware lanes"
     LANGUAGES C ASM
 )
 
@@ -40,7 +40,7 @@ add_link_options(-nostdlib -Wl,--gc-sections -Wl,--strip-all -L${PICOLIBC_ROOT}/
 
 option(OS_SMP_EN "Enable SMP support" OFF)
 option(OS_AI_EN "Enable AI runtime" ON)
-option(OS_FL_EN "Enable Federated Learning" ON)
+option(OS_FL_EN "Enable Federated Learning" OFF)
 option(OS_DEBUG "Enable debug build" ON)
 option(RRTOS_BUILD_EXPERIMENTAL_APPS "Build experimental apps and legacy AI demos" OFF)
 
@@ -48,10 +48,10 @@ option(RRTOS_BUILD_EXPERIMENTAL_APPS "Build experimental apps and legacy AI demo
 # Immutable board facts live under boards/<board>/board_config.h.
 # This top-level file owns selected build/runtime policy for the current lane.
 set(CONFIG_BOARD "qemu_virt" CACHE STRING "Target board (qemu_virt, be_u1000)")
+set_property(CACHE CONFIG_BOARD PROPERTY STRINGS qemu_virt be_u1000)
 if(CONFIG_BOARD STREQUAL "be_u1000")
     set(CONFIG_BOARD_BE_U1000 ON)
     add_definitions(-DCONFIG_BOARD_BE_U1000=1)
-    add_definitions(-DCONFIG_IRQ_MODEL_CLIC=1)
     include_directories(${CMAKE_SOURCE_DIR}/boards/be_u1000)
     add_subdirectory(boards/be_u1000)
     if(DEFINED BOARD_INCLUDES)
@@ -59,10 +59,12 @@ if(CONFIG_BOARD STREQUAL "be_u1000")
     endif()
 endif()
 
-# Effective runtime values for the selected lane.
-# - OS_CFG_CPU_MAX: compile-time execution ceiling derived from board selection
-# - OS_CFG_CPU_COUNT: active RTOS-schedulable core count for the selected lane
-# - OS_CFG_CPU_FREQ_HZ / OS_CFG_TIMER_FREQ_HZ: effective runtime frequencies
+# Effective runtime lane policy for the selected build.
+# - Board headers publish immutable hardware facts.
+# - This top-level file selects the lane policy exposed through OS_CFG_* defines.
+# - OS_CFG_CPU_MAX is the compile-time execution ceiling for the chosen lane.
+# - OS_CFG_CPU_COUNT is the active RTOS-schedulable core count for the chosen lane.
+# - OS_CFG_CPU_FREQ_HZ / OS_CFG_TIMER_FREQ_HZ are the effective runtime clocks.
 set(OS_CFG_CPU_FREQ_HZ_VALUE 100000000UL)
 set(OS_CFG_TIMER_FREQ_HZ_VALUE 10000000UL)
 set(OS_CFG_CPU_MAX_VALUE 1)
@@ -100,9 +102,9 @@ else()
     set(OS_CFG_FL_EN_VALUE 0)
 endif()
 
-# Export the selected build/runtime policy as compile definitions.
+# Export the selected build/runtime lane policy as compile definitions.
 # config/os_config.h provides fallback defaults only when these are absent.
-add_compile_definitions(
+set(OS_SELECTED_LANE_DEFINITIONS
     OS_CFG_SMP_EN=${OS_CFG_SMP_EN_VALUE}
     OS_CFG_AI_EN=${OS_CFG_AI_EN_VALUE}
     OS_CFG_FL_EN=${OS_CFG_FL_EN_VALUE}
@@ -111,6 +113,7 @@ add_compile_definitions(
     OS_CFG_CPU_MAX=${OS_CFG_CPU_MAX_VALUE}
     OS_CFG_CPU_COUNT=${OS_CFG_CPU_COUNT_VALUE}
 )
+add_compile_definitions(${OS_SELECTED_LANE_DEFINITIONS})
 
 # Architecture Selection
 set(ARCH_BITS "64" CACHE STRING "Target architecture bits (32 or 64)")

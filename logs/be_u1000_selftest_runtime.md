@@ -1,7 +1,7 @@
 # BE-U1000 SMP Runtime Probe
 
-- Started: 2026-03-08T22:16:36.844993+00:00
-- Finished: 2026-03-08T22:16:43.824571+00:00
+- Started: 2026-03-11T20:25:49.067143+00:00
+- Finished: 2026-03-11T20:25:56.494357+00:00
 - Status: `passed`
 - Kernel: `/home/mingshi/Project/PF/rrtos/build-be_u1000/rrtos_be_u1000.elf`
 - Binary: `/home/mingshi/Project/PF/rrtos/build-be_u1000/rrtos_be_u1000.bin`

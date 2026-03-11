@@ -19,7 +19,7 @@ environment:
     python: "3.11+"
 
 procedure:
-  entrypoint: "pixi run -e rv32 sim-renode-ai"
+  entrypoint: "renode --console --disable-xwt scripts/simulation/ai_demo_rv32.resc"
   params:
     scenario: jitter-b
     seed: "1337"
@@ -52,11 +52,14 @@ conclusion:
   uncertainty_note: "Correlation observed; hardware confirmation required for causality strength."
 
 replay:
-  command: "pixi run -e rv32 sim-renode-ai -- --scenario jitter-b --seed 1337"
+  command: "renode --console --disable-xwt scripts/simulation/ai_demo_rv32.resc --scenario jitter-b --seed 1337"
   expected_outputs:
     - "metrics.json generated"
     - "scheduler_jitter_us_p99 present"
   pass_fail_rule: "frame_pacing_ms_p99 <= 33.0ms"
+
+notes:
+  - "Historical research case: this archived Renode entrypoint is not part of the maintained pixi task surface."
 
 provenance:
   source_commit: def5678

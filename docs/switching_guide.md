@@ -23,6 +23,8 @@ Use Renode only for comparison or observation:
 - `pixi run -e rv32 observe-mnist-runtime-renode`
 - `pixi run -e rv32 compare-mnist-runtime-platforms`
 
+Keep the maintained AI task surface small. Prefer the four commands above and do not reintroduce composite aliases on the supported path.
+
 ### 2. Supported BE-U1000 lane
 
 Use this when you are validating the current supported board bring-up path.

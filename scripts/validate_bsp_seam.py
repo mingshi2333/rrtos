@@ -35,19 +35,46 @@ def main() -> None:
     forbid(mnist_main, '"board_config.h"', "apps/mnist_app/src/main.c")
     forbid(mnist_validation, '"board_config.h"', "apps/mnist_app/src/validation_main.c")
 
+    require(hal_board_h, "typedef enum {", "hal/include/hal_board.h")
+    require(hal_board_h, "HAL_BOARD_PINMUX_GROUP_QSPI1", "hal/include/hal_board.h")
+    require(hal_board_h, "const char *role_plan;", "hal/include/hal_board.h")
     require(
         hal_board_h,
-        "typedef struct {\n    hal_board_pinmux_group_t console_pinmux_group;",
+        "const char *hal_board_task_map_description(bool smp_mode);",
         "hal/include/hal_board.h",
     )
-    require(hal_board_h, "uint32_t canfd_count;", "hal/include/hal_board.h")
-    require(hal_board_h, "uint8_t spi_probe_tx;", "hal/include/hal_board.h")
-    require(hal_board_h, "uint32_t window_sample_offset;", "hal/include/hal_board.h")
-    require(hal_board_h, "uint32_t window_sample_words;", "hal/include/hal_board.h")
-    require(hal_board_h, "bool internal_loopback;", "hal/include/hal_board.h")
-    forbid(hal_board_h, "uintptr_t gpio_base;", "hal/include/hal_board.h")
-    forbid(hal_board_h, "uint32_t gpio_pin;", "hal/include/hal_board.h")
-    forbid(hal_board_h, "} hal_board_gpio_role_t;", "hal/include/hal_board.h")
+    require(
+        hal_board_h,
+        "os_err_t hal_board_bind_demo_tasks(os_tcb_t *control_task, os_tcb_t *worker_task);",
+        "hal/include/hal_board.h",
+    )
+    require(
+        hal_board_h,
+        "bool hal_board_issue_reschedule_probe(void);",
+        "hal/include/hal_board.h",
+    )
+    require(
+        hal_board_h,
+        "bool hal_board_get_balance_peer(os_cpu_t current_cpu, os_cpu_t *peer_cpu);",
+        "hal/include/hal_board.h",
+    )
+    require(
+        hal_board_h,
+        "uint32_t hal_board_balance_expected_mask(void);",
+        "hal/include/hal_board.h",
+    )
+    forbid(hal_board_h, "uint32_t control_cpu;", "hal/include/hal_board.h")
+    forbid(hal_board_h, "uint32_t worker_cpu;", "hal/include/hal_board.h")
+    forbid(hal_board_h, "uint32_t reschedule_probe_cpu;", "hal/include/hal_board.h")
+    forbid(hal_board_h, "uint32_t balance_probe_cpu_a;", "hal/include/hal_board.h")
+    forbid(hal_board_h, "uint32_t balance_probe_cpu_b;", "hal/include/hal_board.h")
+    forbid(hal_board_h, "uint32_t single_core_cpu;", "hal/include/hal_board.h")
+    forbid(hal_board_h, "hal_board_diag_config_t", "hal/include/hal_board.h")
+    forbid(hal_board_h, "hal_board_gpio_resource_t", "hal/include/hal_board.h")
+    forbid(hal_board_h, "hal_board_flash_profile_t", "hal/include/hal_board.h")
+    forbid(hal_board_h, "hal_board_canfd_profile_t", "hal/include/hal_board.h")
+    forbid(hal_board_h, "hal_board_selftest_profile_t", "hal/include/hal_board.h")
+    forbid(hal_board_h, "HAL_BOARD_CANFD_CONTROLLER_COUNT", "hal/include/hal_board.h")
     forbid(
         hal_board_h,
         "void hal_board_get_diag_config(hal_board_diag_config_t *config);",
@@ -68,14 +95,28 @@ def main() -> None:
         "void hal_board_get_canfd_profile(uint32_t index, hal_board_canfd_profile_t *profile);",
         "hal/include/hal_board.h",
     )
+    forbid(hal_board_h, "hal_board_get_selftest_profile", "hal/include/hal_board.h")
     require(
-        hal_board_h,
-        "void hal_board_get_selftest_profile(hal_board_selftest_profile_t *profile);",
-        "hal/include/hal_board.h",
+        hal_board_c,
+        "typedef struct {\n    uintptr_t spi_base;",
+        "hal/src/hal_board.c",
+    )
+    require(
+        hal_board_c, "typedef struct {\n    uintptr_t ctrl_base;", "hal/src/hal_board.c"
     )
     require(
         hal_board_c,
-        "void hal_board_get_selftest_profile(hal_board_selftest_profile_t *profile)",
+        "typedef struct {\n    hal_board_pinmux_group_t console_pinmux_group;",
+        "hal/src/hal_board.c",
+    )
+    require(
+        hal_board_c,
+        "typedef struct {\n    os_cpu_t control_cpu;",
+        "hal/src/hal_board.c",
+    )
+    require(
+        hal_board_c,
+        "#define HAL_BOARD_SELFTEST_CANFD_CONTROLLER_COUNT 2u",
         "hal/src/hal_board.c",
     )
     require(
@@ -98,55 +139,109 @@ def main() -> None:
         "static void hal_board_fill_canfd_profile(uint32_t index, hal_board_canfd_profile_t *profile)",
         "hal/src/hal_board.c",
     )
+    require(
+        hal_board_c,
+        "static void hal_board_fill_selftest_profile(hal_board_selftest_profile_t *profile)",
+        "hal/src/hal_board.c",
+    )
     forbid(hal_board_c, "config->gpio_base", "hal/src/hal_board.c")
     forbid(hal_board_c, "config->gpio_pin", "hal/src/hal_board.c")
     require(
-        beu_demo,
-        "hal_board_get_selftest_profile(&selftest_profile);",
-        "apps/be_u1000_demo/main.c",
-    )
-    require(beu_demo, "static void run_gpio_selftest(", "apps/be_u1000_demo/main.c")
-    require(
-        beu_demo, "static void run_serial_bus_selftest(", "apps/be_u1000_demo/main.c"
-    )
-    require(beu_demo, "static void run_flash_selftest(", "apps/be_u1000_demo/main.c")
-    require(beu_demo, "static void run_canfd_selftest(", "apps/be_u1000_demo/main.c")
-    require(
         hal_board_h,
-        "const char *window_capture_note;",
+        "int hal_board_run_selftest(void);",
         "hal/include/hal_board.h",
     )
     require(
-        hal_board_h,
-        "const char *identify_capture_note;",
-        "hal/include/hal_board.h",
+        hal_board_c,
+        "int hal_board_run_selftest(void)",
+        "hal/src/hal_board.c",
     )
-    require(hal_board_h, "uint8_t payload_seed;", "hal/include/hal_board.h")
-    require(hal_board_h, "const char *route;", "hal/include/hal_board.h")
+    require(hal_board_c, "static void run_gpio_selftest(", "hal/src/hal_board.c")
+    require(hal_board_c, "static void run_serial_bus_selftest(", "hal/src/hal_board.c")
+    require(hal_board_c, "static void run_flash_selftest(", "hal/src/hal_board.c")
+    require(hal_board_c, "static void run_canfd_selftest(", "hal/src/hal_board.c")
+    require(hal_board_c, "const char *window_capture_note;", "hal/src/hal_board.c")
+    require(hal_board_c, "const char *identify_capture_note;", "hal/src/hal_board.c")
+    require(hal_board_c, "uint8_t payload_seed;", "hal/src/hal_board.c")
+    require(hal_board_c, "const char *route;", "hal/src/hal_board.c")
     require(
-        beu_demo,
+        hal_board_c,
         'selftest_label(flash_profile->window_capture_note, "sample captured")',
-        "apps/be_u1000_demo/main.c",
+        "hal/src/hal_board.c",
     )
+    require(
+        hal_board_c,
+        'selftest_label(flash_profile->identify_capture_note, "sample captured")',
+        "hal/src/hal_board.c",
+    )
+    require(hal_board_c, "hal_gpio_init(button_gpio->base);", "hal/src/hal_board.c")
+    require(hal_board_c, "profile->payload_seed + i", "hal/src/hal_board.c")
+    require(hal_board_c, "[SELFTEST] %s route: %s", "hal/src/hal_board.c")
+    require(
+        hal_board_c, "HAL_BOARD_SELFTEST_CANFD_CONTROLLER_COUNT", "hal/src/hal_board.c"
+    )
+    require(hal_board_c, "CANFD_IRQ_SEEN(index)", "hal/src/hal_board.c")
+    require(hal_board_c, "profile->canfd_count", "hal/src/hal_board.c")
+    require(hal_board_c, "g_canfd_profile_count", "hal/src/hal_board.c")
+    require(hal_board_c, "diag_config->spi_probe_tx", "hal/src/hal_board.c")
+    require(hal_board_c, "flash_profile->window_sample_offset", "hal/src/hal_board.c")
+    require(hal_board_c, "flash_profile->window_sample_words", "hal/src/hal_board.c")
+    require(hal_board_c, "report_flash_sample(", "hal/src/hal_board.c")
+    require(hal_board_c, "profile->internal_loopback", "hal/src/hal_board.c")
+    require(
+        hal_board_c,
+        "static void hal_board_fill_demo_topology(hal_board_demo_topology_t *topology)",
+        "hal/src/hal_board.c",
+    )
+    require(hal_board_c, "topology->control_cpu = 0u;", "hal/src/hal_board.c")
+    require(hal_board_c, "topology->worker_cpu = 1u;", "hal/src/hal_board.c")
+    require(hal_board_c, "topology->reschedule_probe_cpu = 1u;", "hal/src/hal_board.c")
+    require(hal_board_c, "topology->balance_probe_cpu_a = 0u;", "hal/src/hal_board.c")
+    require(hal_board_c, "topology->balance_probe_cpu_b = 1u;", "hal/src/hal_board.c")
+    require(
+        hal_board_c,
+        "os_err_t hal_board_bind_demo_tasks(os_tcb_t *control_task, os_tcb_t *worker_task)",
+        "hal/src/hal_board.c",
+    )
+    require(
+        hal_board_c,
+        "bool hal_board_issue_reschedule_probe(void)",
+        "hal/src/hal_board.c",
+    )
+    require(
+        hal_board_c,
+        "bool hal_board_get_balance_peer(os_cpu_t current_cpu, os_cpu_t *peer_cpu)",
+        "hal/src/hal_board.c",
+    )
+    require(
+        hal_board_c,
+        "uint32_t hal_board_balance_expected_mask(void)",
+        "hal/src/hal_board.c",
+    )
+    require(
+        hal_board_c,
+        "const char *hal_board_task_map_description(bool smp_mode)",
+        "hal/src/hal_board.c",
+    )
+    require(beu_demo, "hal_board_run_selftest()", "apps/be_u1000_demo/main.c")
     require(
         beu_demo,
-        'selftest_label(flash_profile->identify_capture_note, "sample captured")',
+        "hal_board_bind_demo_tasks(&control_task_tcb, &worker_task_tcb)",
         "apps/be_u1000_demo/main.c",
     )
-    require(beu_demo, "hal_gpio_init(button_gpio->base);", "apps/be_u1000_demo/main.c")
-    require(beu_demo, "profile->payload_seed + i", "apps/be_u1000_demo/main.c")
-    require(beu_demo, "[SELFTEST] %s route: %s", "apps/be_u1000_demo/main.c")
-    require(beu_demo, "HAL_BOARD_CANFD_CONTROLLER_COUNT", "apps/be_u1000_demo/main.c")
-    require(beu_demo, "CANFD_IRQ_SEEN(index)", "apps/be_u1000_demo/main.c")
-    require(beu_demo, "profile->canfd_count", "apps/be_u1000_demo/main.c")
-    require(beu_demo, "g_canfd_profile_count", "apps/be_u1000_demo/main.c")
-    require(beu_demo, "diag_config->spi_probe_tx", "apps/be_u1000_demo/main.c")
+    require(beu_demo, "hal_board_issue_reschedule_probe()", "apps/be_u1000_demo/main.c")
     require(
-        beu_demo, "flash_profile->window_sample_offset", "apps/be_u1000_demo/main.c"
+        beu_demo,
+        "hal_board_get_balance_peer(self->cpu_id, &peer)",
+        "apps/be_u1000_demo/main.c",
     )
-    require(beu_demo, "flash_profile->window_sample_words", "apps/be_u1000_demo/main.c")
-    require(beu_demo, "report_flash_sample(", "apps/be_u1000_demo/main.c")
-    require(beu_demo, "profile->internal_loopback", "apps/be_u1000_demo/main.c")
+    require(beu_demo, "hal_board_balance_expected_mask()", "apps/be_u1000_demo/main.c")
+    require(
+        beu_demo, "hal_board_task_map_description(true)", "apps/be_u1000_demo/main.c"
+    )
+    require(
+        beu_demo, "hal_board_task_map_description(false)", "apps/be_u1000_demo/main.c"
+    )
     forbid(beu_demo, "CANFD0_IRQ_SEEN", "apps/be_u1000_demo/main.c")
     forbid(beu_demo, "CANFD1_IRQ_SEEN", "apps/be_u1000_demo/main.c")
     forbid(beu_demo, "g_canfd_profiles[0]", "apps/be_u1000_demo/main.c")
@@ -162,6 +257,45 @@ def main() -> None:
     forbid(beu_demo, "config.internal_loopback = true;", "apps/be_u1000_demo/main.c")
     forbid(beu_demo, "loopback=1)", "apps/be_u1000_demo/main.c")
     forbid(beu_demo, "lane_bias =", "apps/be_u1000_demo/main.c")
+    forbid(beu_demo, "cpu_id == 0 ? 1 : 0", "apps/be_u1000_demo/main.c")
+    forbid(beu_demo, "os_smp_cpu_online(1)", "apps/be_u1000_demo/main.c")
+    forbid(beu_demo, "os_ipi_send(1, OS_IPI_RESCHEDULE)", "apps/be_u1000_demo/main.c")
+    forbid(beu_demo, "g_execution_profile.control_cpu", "apps/be_u1000_demo/main.c")
+    forbid(beu_demo, "g_execution_profile.worker_cpu", "apps/be_u1000_demo/main.c")
+    forbid(
+        beu_demo,
+        "g_execution_profile.reschedule_probe_cpu",
+        "apps/be_u1000_demo/main.c",
+    )
+    forbid(
+        beu_demo, "g_execution_profile.balance_probe_cpu_a", "apps/be_u1000_demo/main.c"
+    )
+    forbid(
+        beu_demo, "g_execution_profile.balance_probe_cpu_b", "apps/be_u1000_demo/main.c"
+    )
+    forbid(beu_demo, "g_execution_profile.task_map_smp", "apps/be_u1000_demo/main.c")
+    forbid(beu_demo, "g_execution_profile.task_map_single", "apps/be_u1000_demo/main.c")
+    forbid(
+        beu_demo,
+        "os_task_set_affinity(&control_task_tcb, 0)",
+        "apps/be_u1000_demo/main.c",
+    )
+    forbid(
+        beu_demo,
+        "os_task_set_affinity(&worker_task_tcb, 1)",
+        "apps/be_u1000_demo/main.c",
+    )
+    forbid(
+        beu_demo,
+        "hal_board_get_selftest_profile(&selftest_profile);",
+        "apps/be_u1000_demo/main.c",
+    )
+    forbid(beu_demo, "static void run_gpio_selftest(", "apps/be_u1000_demo/main.c")
+    forbid(
+        beu_demo, "static void run_serial_bus_selftest(", "apps/be_u1000_demo/main.c"
+    )
+    forbid(beu_demo, "static void run_flash_selftest(", "apps/be_u1000_demo/main.c")
+    forbid(beu_demo, "static void run_canfd_selftest(", "apps/be_u1000_demo/main.c")
 
     print("BSP seam checks passed.")
 

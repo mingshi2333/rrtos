@@ -39,12 +39,18 @@ def main() -> None:
     require(root_cmake, "if(OS_SMP_EN)", "CMakeLists.txt")
     require(root_cmake, "set(OS_CFG_CPU_COUNT_VALUE 2)", "CMakeLists.txt")
     require(root_cmake, "set(OS_CFG_CPU_COUNT_VALUE 1)", "CMakeLists.txt")
+    require(root_cmake, "project(rv_aios", "CMakeLists.txt")
+    require(root_cmake, "set(OS_SELECTED_LANE_DEFINITIONS", "CMakeLists.txt")
+    require(
+        root_cmake, 'option(OS_FL_EN "Enable Federated Learning" OFF)', "CMakeLists.txt"
+    )
     require(
         root_cmake,
         "BOARD_LINKER_SCRIPT must be exported by boards/be_u1000/CMakeLists.txt",
         "CMakeLists.txt",
     )
     require(root_cmake, "OS_CFG_CPU_COUNT=${OS_CFG_CPU_COUNT_VALUE}", "CMakeLists.txt")
+    forbid(root_cmake, "CONFIG_IRQ_MODEL_CLIC", "CMakeLists.txt")
 
     require(
         board_cmake,
@@ -55,6 +61,16 @@ def main() -> None:
     forbid(board_cmake, "CONFIG_TIMER_FREQ", "boards/be_u1000/CMakeLists.txt")
     forbid(board_cmake, "BOARD_DEFINITIONS", "boards/be_u1000/CMakeLists.txt")
 
+    require(
+        os_config,
+        "#define OS_CFG_AI_EN                0",
+        "config/os_config.h",
+    )
+    require(
+        os_config,
+        "#define OS_CFG_FL_EN                0",
+        "config/os_config.h",
+    )
     require(
         os_config,
         '#error "OS_CFG_CPU_COUNT must be at least 1"',
@@ -69,6 +85,30 @@ def main() -> None:
         os_config,
         '#error "OS_CFG_CPU_COUNT must be 1 when OS_CFG_SMP_EN is disabled"',
         "config/os_config.h",
+    )
+    require(
+        os_config,
+        '#error "OS_CFG_CPU_MAX must not exceed BE_U1000_NUM_CORES"',
+        "config/os_config.h",
+    )
+    require(
+        os_config,
+        '#error "OS_CFG_CPU_COUNT must not exceed BE_U1000_NUM_MAIN_CORES"',
+        "config/os_config.h",
+    )
+
+    board_config = (REPO_ROOT / "boards/be_u1000/board_config.h").read_text(
+        encoding="utf-8"
+    )
+    require(
+        board_config,
+        "This header is the single source of truth for immutable board facts only.",
+        "boards/be_u1000/board_config.h",
+    )
+    require(
+        board_config,
+        "Build-selected lane policy such as OS_CFG_CPU_COUNT, OS_CFG_SMP_EN, and",
+        "boards/be_u1000/board_config.h",
     )
 
     require(
