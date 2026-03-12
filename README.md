@@ -1,5 +1,7 @@
 # rrtos
 
+[![DeepWiki](https://img.shields.io/badge/DeepWiki-Project%20Docs-00C7B7?logo=bookstack&logoColor=white)](https://deepwiki.com/mingshi2333/rrtos)
+
 `rrtos` is a bare-metal RISC-V RTOS repository with two explicit supported firmware lanes: a virtual RV32 validation lane on `qemu_virt` and a board bring-up lane on `be_u1000`.
 
 AI integration remains part of the supported story, but it is a subordinate extension on top of the RTOS-first validation lanes rather than the primary identity of the repository.
