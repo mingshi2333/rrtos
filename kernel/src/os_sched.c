@@ -1,4 +1,5 @@
 #include "os_kernel.h"
+#include "os_kernel_test.h"
 #include "riscv_csr.h"
 #include "riscv_atomic.h"
 #include "hal_clint.h"
@@ -64,6 +65,7 @@ static void os_list_remove(os_list_t *list, os_tcb_t *tcb) {
 }
 
 static void task_ready_add(os_tcb_t *tcb);
+void os_sched_wake_task(os_tcb_t *task, os_err_t result);
 
 #if OS_CFG_SMP_EN
 static bool task_affinity_matches_cpu(const os_tcb_t *tcb, os_cpu_t cpu) {
@@ -123,16 +125,25 @@ static void task_timeout_wake(os_tcb_t *task) {
             }
             break;
         }
+        case OS_PENDING_QUEUE_SEND: {
+            os_queue_t *q = (os_queue_t *)task->pending_ipc;
+            if (q) {
+                os_list_remove(&q->send_wait, task);
+            }
+            break;
+        }
+        case OS_PENDING_EVENT: {
+            os_event_t *event = (os_event_t *)task->pending_ipc;
+            if (event) {
+                os_list_remove(&event->wait_list, task);
+            }
+            break;
+        }
         default:
             break;
     }
 
-    task->pending_result = OS_ETIMEOUT;
-    task->pending_obj = NULL;
-    task->pending_ipc = NULL;
-    task->pending_type = OS_PENDING_NONE;
-    task->pending_deadline = 0;
-    task_ready_add(task);
+    os_sched_wake_task(task, OS_ETIMEOUT);
 }
 
 static void bitmap_set(uint8_t *bitmap, uint32_t bit) {
@@ -162,6 +173,41 @@ static void task_ready_add(os_tcb_t *tcb) {
     bitmap_set(g_ready_bitmap, tcb->priority);
     tcb->state = OS_TASK_READY;
 }
+
+void os_sched_wake_task(os_tcb_t *task, os_err_t result) {
+    if (!task) {
+        return;
+    }
+
+    task->pending_result = result;
+    task->pending_obj = NULL;
+    task->pending_ipc = NULL;
+    task->pending_type = OS_PENDING_NONE;
+    task->pending_flags = 0;
+    task->pending_options = 0;
+    task->pending_deadline = 0;
+    task_ready_add(task);
+}
+
+#ifdef OS_TEST_HARNESS
+static bool task_in_ready_queue(const os_tcb_t *tcb) {
+    if (!tcb) {
+        return false;
+    }
+
+    for (uint32_t prio = 0; prio < OS_CFG_PRIO_MAX; prio++) {
+        os_tcb_t *iter = g_ready_list[prio].head;
+        while (iter) {
+            if (iter == tcb) {
+                return true;
+            }
+            iter = iter->next;
+        }
+    }
+
+    return false;
+}
+#endif
 
 static void task_ready_remove(os_tcb_t *tcb) {
     os_list_remove(&g_ready_list[tcb->priority], tcb);
@@ -234,6 +280,11 @@ static void idle_task_entry(void *arg) {
 
 void os_kernel_init(void) {
     os_irq_disable();
+
+    g_kernel_running = false;
+    for (os_cpu_t i = 0; i < OS_SCHED_CPU_SLOTS; i++) {
+        g_current_task[i] = NULL;
+    }
     
     os_heap_init(); /* Initialize heap allocator */
 
@@ -250,6 +301,8 @@ void os_kernel_init(void) {
     for (uint32_t i = 0; i < OS_CFG_TASK_MAX; i++) {
         g_task_table[i] = NULL;
     }
+
+    os_timer_subsys_init();
     
 #if OS_CFG_SMP_EN
     for (os_cpu_t i = 0; i < OS_CFG_CPU_MAX; i++) {
@@ -345,9 +398,11 @@ void os_tick_handler(void) {
         }
     }
 #endif
-    
+
     os_spinlock_irq_restore(&g_sched_lock, flags);
-    
+
+    os_timer_tick();
+
     os_sched();
 }
 
@@ -376,6 +431,8 @@ os_err_t os_task_create(os_tcb_t *tcb, const char *name, os_task_entry_t entry,
     tcb->pending_obj = NULL;
     tcb->pending_ipc = NULL;
     tcb->pending_type = OS_PENDING_NONE;
+    tcb->pending_flags = 0;
+    tcb->pending_options = 0;
     tcb->pending_deadline = 0;
     
     if (g_task_count < OS_CFG_TASK_MAX) {
@@ -510,6 +567,45 @@ os_err_t os_task_delay(os_tick_t ticks) {
     return OS_EOK;
 }
 
+os_err_t os_task_set_prio(os_tcb_t *tcb, os_prio_t prio) {
+    bool need_resched = false;
+    os_prio_t old_prio;
+
+    if (!tcb || (uint32_t)prio >= OS_CFG_PRIO_MAX) {
+        return OS_EINVAL;
+    }
+
+    os_reg_t flags = os_spinlock_irq_save(&g_sched_lock);
+
+    old_prio = tcb->priority;
+    if (old_prio == prio && tcb->base_prio == prio) {
+        os_spinlock_irq_restore(&g_sched_lock, flags);
+        return OS_EOK;
+    }
+
+    if (tcb->state == OS_TASK_READY) {
+        task_ready_remove(tcb);
+    }
+
+    if (tcb->priority == tcb->base_prio || prio < tcb->priority) {
+        tcb->priority = prio;
+    }
+    tcb->base_prio = prio;
+
+    if (tcb->state == OS_TASK_READY) {
+        task_ready_add(tcb);
+    }
+
+    need_resched = g_kernel_running;
+    os_spinlock_irq_restore(&g_sched_lock, flags);
+
+    if (need_resched) {
+        os_sched();
+    }
+
+    return OS_EOK;
+}
+
 os_tcb_t *os_task_self(void) {
     return g_current_task[os_cpu_id()];
 }
@@ -583,6 +679,34 @@ void os_sched(void) {
     
     os_irq_restore(flags);
 }
+
+#ifdef OS_TEST_HARNESS
+void os_test_bind_current_task(os_tcb_t *task) {
+    os_cpu_t cpu = os_cpu_id();
+
+    g_current_task[cpu] = task;
+    if (!task) {
+        return;
+    }
+
+    if (task->state == OS_TASK_READY && task_in_ready_queue(task)) {
+        task_ready_remove(task);
+    }
+    task->state = OS_TASK_RUNNING;
+}
+
+bool os_test_task_in_ready_queue(const os_tcb_t *task) {
+    return task_in_ready_queue(task);
+}
+
+uint32_t os_test_ready_count(os_prio_t prio) {
+    if ((uint32_t)prio >= OS_CFG_PRIO_MAX) {
+        return 0;
+    }
+
+    return g_ready_list[prio].count;
+}
+#endif
 
 #if OS_CFG_SMP_EN
 os_cpu_t os_cpu_count(void) {

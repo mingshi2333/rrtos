@@ -73,6 +73,8 @@ typedef enum {
     OS_PENDING_SEM,
     OS_PENDING_MUTEX,
     OS_PENDING_QUEUE_RECV,
+    OS_PENDING_QUEUE_SEND,
+    OS_PENDING_EVENT,
 } os_pending_type_t;
 
 /*===========================================================================*/
@@ -131,6 +133,8 @@ typedef struct os_tcb {
     void            *pending_obj;   /**< Object task is blocked on */
     void            *pending_ipc;   /**< IPC object for timeout handling */
     os_pending_type_t pending_type;/**< Pending object type */
+    uint32_t        pending_flags;  /**< Pending event flags */
+    uint32_t        pending_options;/**< Pending wait options */
     os_tick_t       pending_deadline; /**< Timeout deadline tick */
     os_err_t        pending_result; /**< Result of pending operation */
     

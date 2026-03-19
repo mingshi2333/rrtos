@@ -50,6 +50,8 @@ os_err_t os_timer_init(os_timer_t *timer, const char *name, os_timer_cb_t cb,
                        void *arg, os_tick_t period, uint8_t periodic);
 os_err_t os_timer_start(os_timer_t *timer);
 os_err_t os_timer_stop(os_timer_t *timer);
+void os_timer_subsys_init(void);
+void os_timer_tick(void);
 
 #if OS_CFG_SMP_EN
 os_cpu_t os_cpu_count(void);

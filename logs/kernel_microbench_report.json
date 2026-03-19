@@ -1,0 +1,60 @@
+{
+  "microbench_metrics": [
+    {
+      "name": "queue_send_to_blocked_recv_handoff",
+      "samples": 64,
+      "scenario": "queue-send-to-blocked-recv-handoff",
+      "source": "host-monotonic-raw-ns-proxy",
+      "stats": {
+        "max": 2375,
+        "median": 1187,
+        "min": 1187,
+        "p95": 2375,
+        "stddev": 318
+      },
+      "units": "host-monotonic-ns"
+    },
+    {
+      "name": "mutex_unlock_to_waiter_handoff",
+      "samples": 64,
+      "scenario": "mutex-unlock-to-waiter-handoff",
+      "source": "host-monotonic-raw-ns-proxy",
+      "stats": {
+        "max": 2375,
+        "median": 1187,
+        "min": 0,
+        "p95": 2374,
+        "stddev": 425
+      },
+      "units": "host-monotonic-ns"
+    },
+    {
+      "name": "sem_give_to_blocked_waiter_handoff",
+      "samples": 64,
+      "scenario": "sem-give-to-blocked-waiter-handoff",
+      "source": "host-monotonic-raw-ns-proxy",
+      "stats": {
+        "max": 2375,
+        "median": 1187,
+        "min": 1187,
+        "p95": 2374,
+        "stddev": 318
+      },
+      "units": "host-monotonic-ns"
+    }
+  ],
+  "notes": {
+    "gating": "report-only lane",
+    "microbench_basis": "host monotonic proxy via os_cycle_get() under OS_TEST_HARNESS"
+  },
+  "runner_hardening": {
+    "best_effort": [],
+    "enforced": [
+      "locale pinned to C",
+      "timezone pinned to UTC",
+      "Python hash seed pinned to 0",
+      "common host math thread pools capped at 1",
+      "CPU affinity pinned to logical CPU 0 for microbench collection"
+    ]
+  }
+}

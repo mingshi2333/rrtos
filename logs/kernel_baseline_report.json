@@ -1,0 +1,229 @@
+{
+  "footprint_thresholds": [
+    {
+      "artifact": "build/apps/mnist_app/mnist_validation_footprint.md",
+      "image": "mnist_validation",
+      "metric": "kernel_archive_bytes",
+      "status": "pass",
+      "threshold_max": 14705,
+      "value": 14705
+    },
+    {
+      "artifact": "build-be_u1000/rrtos_be_u1000_footprint.md",
+      "image": "rrtos_be_u1000",
+      "metric": "kernel_archive_bytes",
+      "status": "pass",
+      "threshold_max": 14169,
+      "value": 14169
+    },
+    {
+      "artifact": "build-be_u1000/rrtos_be_u1000_footprint.md",
+      "image": "rrtos_be_u1000",
+      "metric": "total_bytes",
+      "status": "pass",
+      "threshold_max": 122401,
+      "value": 122401
+    }
+  ],
+  "footprints": [
+    {
+      "artifact": "build/apps/mnist_app/mnist_validation_footprint.md",
+      "image": "mnist_validation",
+      "kernel_archive_bytes": 14705,
+      "total_bytes": 657575
+    },
+    {
+      "artifact": "build-be_u1000/rrtos_be_u1000_footprint.md",
+      "image": "rrtos_be_u1000",
+      "kernel_archive_bytes": 14169,
+      "total_bytes": 122401
+    }
+  ],
+  "microbench_metrics": [
+    {
+      "name": "queue_send_to_blocked_recv_handoff",
+      "samples": 64,
+      "scenario": "queue-send-to-blocked-recv-handoff",
+      "source": "host-monotonic-raw-ns-proxy",
+      "stats": {
+        "max": 1188,
+        "median": 1187,
+        "min": 0,
+        "p95": 1188,
+        "stddev": 147
+      },
+      "units": "host-monotonic-ns"
+    },
+    {
+      "name": "mutex_unlock_to_waiter_handoff",
+      "samples": 64,
+      "scenario": "mutex-unlock-to-waiter-handoff",
+      "source": "host-monotonic-raw-ns-proxy",
+      "stats": {
+        "max": 2375,
+        "median": 1187,
+        "min": 0,
+        "p95": 2374,
+        "stddev": 419
+      },
+      "units": "host-monotonic-ns"
+    },
+    {
+      "name": "sem_give_to_blocked_waiter_handoff",
+      "samples": 64,
+      "scenario": "sem-give-to-blocked-waiter-handoff",
+      "source": "host-monotonic-raw-ns-proxy",
+      "stats": {
+        "max": 2374,
+        "median": 1187,
+        "min": 0,
+        "p95": 1188,
+        "stddev": 209
+      },
+      "units": "host-monotonic-ns"
+    }
+  ],
+  "notes": {
+    "footprint_basis": "kernel archive hard ceilings with one conservative total image ceiling and observation-only remaining total image snapshots",
+    "latency_basis": "deterministic semantic-harness ticks",
+    "microbench_basis": "host monotonic proxy via os_cycle_get() under OS_TEST_HARNESS",
+    "runtime_basis": "supported-lane QEMU logs",
+    "smp_scope": "experimental and excluded"
+  },
+  "runner_hardening": {
+    "best_effort": [],
+    "enforced": [
+      "locale pinned to C",
+      "timezone pinned to UTC",
+      "Python hash seed pinned to 0",
+      "common host math thread pools capped at 1",
+      "CPU affinity pinned to logical CPU 0 for microbench collection"
+    ]
+  },
+  "runtime_evidence": [
+    {
+      "artifact": "logs/mnist_validation_qemu.log",
+      "callback_count": 1,
+      "name": "timer_runtime_callback_tick",
+      "scenario": "mnist-validation-runtime",
+      "source": "supported-rv32-log",
+      "units": "ticks",
+      "value": 20
+    },
+    {
+      "artifact": "logs/mnist_preemption_probe_qemu.log",
+      "counter": 798027,
+      "name": "preemption_resume_tick",
+      "scenario": "mnist-preemption-probe",
+      "source": "supported-rv32-log",
+      "units": "ticks",
+      "value": 3
+    }
+  ],
+  "semantic_metrics": [
+    {
+      "name": "scheduler_wake_latency",
+      "scenario": "task-delay-timeout",
+      "source": "semantic-harness",
+      "units": "ticks",
+      "value": 2
+    },
+    {
+      "name": "ipc_handoff_latency",
+      "scenario": "queue-send-to-blocked-recv",
+      "source": "semantic-harness",
+      "units": "ticks",
+      "value": 0
+    },
+    {
+      "name": "timer_latency",
+      "scenario": "one-shot-expiry",
+      "source": "semantic-harness",
+      "units": "ticks",
+      "value": 3
+    },
+    {
+      "name": "timer_jitter",
+      "scenario": "one-shot-expiry",
+      "source": "semantic-harness",
+      "units": "ticks",
+      "value": 0
+    },
+    {
+      "name": "timer_periodic_jitter",
+      "scenario": "periodic-rearm-stability",
+      "source": "semantic-harness",
+      "units": "ticks",
+      "value": 0
+    },
+    {
+      "name": "timer_long_delay_boundary",
+      "scenario": "timer-wheel-wrap-boundary",
+      "source": "semantic-harness",
+      "units": "ticks",
+      "value": 260
+    }
+  ],
+  "semantic_thresholds": [
+    {
+      "name": "scheduler_wake_latency",
+      "scenario": "task-delay-timeout",
+      "source": "semantic-harness",
+      "status": "pass",
+      "threshold_max": 2,
+      "threshold_min": 2,
+      "units": "ticks",
+      "value": 2
+    },
+    {
+      "name": "ipc_handoff_latency",
+      "scenario": "queue-send-to-blocked-recv",
+      "source": "semantic-harness",
+      "status": "pass",
+      "threshold_max": 0,
+      "threshold_min": 0,
+      "units": "ticks",
+      "value": 0
+    },
+    {
+      "name": "timer_latency",
+      "scenario": "one-shot-expiry",
+      "source": "semantic-harness",
+      "status": "pass",
+      "threshold_max": 3,
+      "threshold_min": 3,
+      "units": "ticks",
+      "value": 3
+    },
+    {
+      "name": "timer_jitter",
+      "scenario": "one-shot-expiry",
+      "source": "semantic-harness",
+      "status": "pass",
+      "threshold_max": 0,
+      "threshold_min": 0,
+      "units": "ticks",
+      "value": 0
+    },
+    {
+      "name": "timer_periodic_jitter",
+      "scenario": "periodic-rearm-stability",
+      "source": "semantic-harness",
+      "status": "pass",
+      "threshold_max": 0,
+      "threshold_min": 0,
+      "units": "ticks",
+      "value": 0
+    },
+    {
+      "name": "timer_long_delay_boundary",
+      "scenario": "timer-wheel-wrap-boundary",
+      "source": "semantic-harness",
+      "status": "pass",
+      "threshold_max": 260,
+      "threshold_min": 260,
+      "units": "ticks",
+      "value": 260
+    }
+  ]
+}

@@ -29,6 +29,7 @@ openspec/
 AGENTS.md
 .cursorrules
 .opencode/
+.atl/
 
 # Generated Model Artifacts (Optional - keep if you want to ship models)
 # zoo/iree_static/*.o

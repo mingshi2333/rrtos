@@ -10,6 +10,9 @@
 
 static os_tcb_t validation_tcb;
 static uint64_t validation_stack[8192];
+static os_timer_t validation_timer;
+static volatile uint32_t validation_timer_callbacks;
+static volatile os_tick_t validation_timer_last_tick;
 
 enum {
     AI_TENSOR_SHAPE_CAPACITY = 4,
@@ -49,6 +52,26 @@ static void ai_validation_halt(void) {
     }
 }
 
+static void validation_timer_cb(void *arg) {
+    uint32_t *counter = (uint32_t *)arg;
+
+    (*counter)++;
+    validation_timer_last_tick = os_tick_get();
+}
+
+static int wait_for_validation_timer(os_tick_t timeout_ticks) {
+    os_tick_t waited = 0;
+
+    while (validation_timer_callbacks == 0 && waited < timeout_ticks) {
+        if (os_task_delay(1) != OS_EOK) {
+            return -1;
+        }
+        waited++;
+    }
+
+    return validation_timer_callbacks > 0 ? 0 : -1;
+}
+
 static void ai_validation_task(void *arg) {
     ai_model_handle_t handle;
     ai_perf_stats_t stats;
@@ -82,6 +105,20 @@ static void ai_validation_task(void *arg) {
     ret = ai_runtime_init();
     if (ret != 0) {
         printf("AI_VALIDATION_FAIL: runtime init failed (%d)\n", ret);
+        ai_validation_halt();
+    }
+
+    validation_timer_callbacks = 0;
+    validation_timer_last_tick = 0;
+    ret = os_timer_init(&validation_timer, "validation_timer", validation_timer_cb,
+                        (void *)&validation_timer_callbacks, 4, 0);
+    if (ret != OS_EOK) {
+        printf("AI_VALIDATION_FAIL: timer init failed (%d)\n", ret);
+        ai_validation_halt();
+    }
+    ret = os_timer_start(&validation_timer);
+    if (ret != OS_EOK) {
+        printf("AI_VALIDATION_FAIL: timer start failed (%d)\n", ret);
         ai_validation_halt();
     }
 
@@ -155,7 +192,17 @@ static void ai_validation_task(void *arg) {
         printf("AI_VALIDATION_PASS count=%u\n", (unsigned)sample_count);
     } else {
         printf("AI_VALIDATION_FAIL: total_failures=%u\n", failure_count);
+        ai_validation_halt();
     }
+
+    if (wait_for_validation_timer(32) != 0) {
+        printf("AI_VALIDATION_FAIL: timer callback missing\n");
+        ai_validation_halt();
+    }
+
+    printf("OS_TIMER_CALLBACK_PASS count=%u tick=%u\n",
+           (unsigned)validation_timer_callbacks,
+           (unsigned)validation_timer_last_tick);
 
     ai_validation_halt();
 }

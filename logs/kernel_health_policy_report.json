@@ -1,0 +1,173 @@
+{
+  "artifact_contract": {
+    "artifacts": {
+      "baseline_report": "logs/kernel_baseline_report.md",
+      "pixi_file": "pixi.toml",
+      "smp_runtime_report": "logs/be_u1000_selftest_runtime.md"
+    },
+    "checks": [
+      {
+        "artifact": "logs/kernel_baseline_report.md",
+        "detail": "Kernel baseline report must fence SMP out of the supported health conclusion.",
+        "name": "baseline-report-keeps-smp-experimental",
+        "passed": true
+      },
+      {
+        "artifact": "logs/be_u1000_selftest_runtime.md",
+        "detail": "SMP runtime evidence must stay observational and non-promotional.",
+        "name": "smp-runtime-report-disclaims-supported-status",
+        "passed": true
+      },
+      {
+        "artifact": "pixi.toml",
+        "detail": "Supported RV32 gate must continue building with SMP disabled.",
+        "name": "supported-rv32-lane-forces-single-core",
+        "passed": true
+      },
+      {
+        "artifact": "pixi.toml",
+        "detail": "Supported BE-U1000 gate must continue building with SMP disabled.",
+        "name": "supported-be-u1000-lane-forces-single-core",
+        "passed": true
+      }
+    ]
+  },
+  "cases": [
+    {
+      "actual_ready": true,
+      "actual_reasons": [],
+      "expected_ready": true,
+      "expected_reasons": [],
+      "missing_expected_reasons": [],
+      "name": "explicit-proof-acceptance",
+      "proof_summary": {
+        "baseline_report": true,
+        "explicit_acceptance_artifact": true,
+        "integration_gate": true,
+        "semantic_gate": true,
+        "smp_experimental_label": true,
+        "smp_supported_claim": false
+      },
+      "status": "pass"
+    },
+    {
+      "actual_ready": false,
+      "actual_reasons": [
+        "known blocker remains: ipc wakeup reinsertion blocker",
+        "performance evidence cannot waive correctness gaps"
+      ],
+      "expected_ready": false,
+      "expected_reasons": [
+        "known blocker remains: ipc wakeup reinsertion blocker",
+        "performance evidence cannot waive correctness gaps"
+      ],
+      "missing_expected_reasons": [],
+      "name": "blocker-rejection",
+      "proof_summary": {
+        "baseline_report": true,
+        "explicit_acceptance_artifact": true,
+        "integration_gate": true,
+        "semantic_gate": true,
+        "smp_experimental_label": true,
+        "smp_supported_claim": false
+      },
+      "status": "pass"
+    },
+    {
+      "actual_ready": false,
+      "actual_reasons": [
+        "missing semantic coverage: event wait deterministic semantic coverage"
+      ],
+      "expected_ready": false,
+      "expected_reasons": [
+        "missing semantic coverage: event wait deterministic semantic coverage"
+      ],
+      "missing_expected_reasons": [],
+      "name": "missing-semantic-gap-rejection",
+      "proof_summary": {
+        "baseline_report": false,
+        "explicit_acceptance_artifact": true,
+        "integration_gate": true,
+        "semantic_gate": true,
+        "smp_experimental_label": true,
+        "smp_supported_claim": false
+      },
+      "status": "pass"
+    },
+    {
+      "actual_ready": false,
+      "actual_reasons": [
+        "missing pure-kernel semantic proof",
+        "simulator-only evidence is insufficient"
+      ],
+      "expected_ready": false,
+      "expected_reasons": [
+        "missing pure-kernel semantic proof",
+        "simulator-only evidence is insufficient"
+      ],
+      "missing_expected_reasons": [],
+      "name": "simulator-only-rejection",
+      "proof_summary": {
+        "baseline_report": false,
+        "explicit_acceptance_artifact": true,
+        "integration_gate": true,
+        "semantic_gate": false,
+        "smp_experimental_label": true,
+        "smp_supported_claim": false
+      },
+      "status": "pass"
+    },
+    {
+      "actual_ready": false,
+      "actual_reasons": [
+        "missing semantic coverage: queue timeout semantic coverage",
+        "performance evidence cannot waive correctness gaps"
+      ],
+      "expected_ready": false,
+      "expected_reasons": [
+        "missing semantic coverage: queue timeout semantic coverage",
+        "performance evidence cannot waive correctness gaps"
+      ],
+      "missing_expected_reasons": [],
+      "name": "performance-does-not-waive-correctness",
+      "proof_summary": {
+        "baseline_report": true,
+        "explicit_acceptance_artifact": true,
+        "integration_gate": true,
+        "semantic_gate": true,
+        "smp_experimental_label": true,
+        "smp_supported_claim": false
+      },
+      "status": "pass"
+    },
+    {
+      "actual_ready": false,
+      "actual_reasons": [
+        "SMP evidence is not labeled experimental",
+        "SMP scope expanded beyond the supported single-core target"
+      ],
+      "expected_ready": false,
+      "expected_reasons": [
+        "SMP evidence is not labeled experimental",
+        "SMP scope expanded beyond the supported single-core target"
+      ],
+      "missing_expected_reasons": [],
+      "name": "smp-scope-expansion-rejection",
+      "proof_summary": {
+        "baseline_report": true,
+        "explicit_acceptance_artifact": true,
+        "integration_gate": true,
+        "semantic_gate": true,
+        "smp_experimental_label": false,
+        "smp_supported_claim": true
+      },
+      "status": "pass"
+    }
+  ],
+  "change": "\u505a\u4e00\u4e2a\u5168\u9762\u8bc4\u4f30,\u5173\u4e8e\u6211\u76ee\u524d\u7684kernel\u8bbe\u8ba1,\u5173\u4e8e\u5176\u8026\u5408\u8bdd\u4ee5\u53ca\u5176\u4ed6\u5404\u79cd\u65b9\u9762\u7684\u8bbe\u8ba1,\u4ee5\u53ca\u5185\u6838\u662f\u5426\u5065\u5168,\u6027\u80fd\u662f\u5426\u8db3\u591f\u597d,\u5e76\u4e14\u4ee5\u6d4b\u8bd5\u4e3a\u5bfc\u5411,\u4e25\u683c\u7f16\u6392",
+  "summary": {
+    "failed_cases": 0,
+    "passed_cases": 6,
+    "total_cases": 6
+  }
+}
