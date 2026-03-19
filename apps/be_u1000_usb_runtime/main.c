@@ -10,14 +10,6 @@
 static os_tcb_t g_usb_task_tcb;
 static uint8_t g_usb_task_stack[768];
 
-static void busy_wait_cycles(uint32_t iterations)
-{
-    volatile uint32_t i;
-
-    for (i = 0; i < iterations; ++i) {
-    }
-}
-
 static const char *usb_role_name(hal_usb_endpoint_role_t role)
 {
     switch (role) {
@@ -57,13 +49,37 @@ static const char *usb_count_name(hal_usb_endpoint_count_kind_t kind)
 static void usb_runtime_task(void *arg)
 {
     hal_usb_runtime_state_t state = {0};
+    os_err_t delay_rc;
+    int rc;
     uint32_t tick = 0;
 
     (void)arg;
 
     while (1) {
-        (void)hal_usb_set_index((uint8_t)(tick & 0x3u));
-        (void)hal_usb_get_runtime_state(&state);
+        rc = hal_usb_set_index((uint8_t)(tick & 0x3u));
+        if (rc != 0) {
+            os_print("[USB_APP] set index failed rc=%d idx=%u\n", rc, tick & 0x3u);
+            delay_rc = os_task_delay(100);
+            if (delay_rc != OS_EOK) {
+                os_print("[USB_APP] task delay failed rc=%d\n", (int)delay_rc);
+                while (1) {
+                }
+            }
+            continue;
+        }
+
+        rc = hal_usb_get_runtime_state(&state);
+        if (rc != 0) {
+            os_print("[USB_APP] runtime state failed rc=%d idx=%u\n", rc, tick & 0x3u);
+            delay_rc = os_task_delay(100);
+            if (delay_rc != OS_EOK) {
+                os_print("[USB_APP] task delay failed rc=%d\n", (int)delay_rc);
+                while (1) {
+                }
+            }
+            continue;
+        }
+
         os_print("[USB_APP] tick %u intr=0x%x intrtx=0x%x idx=%u cfg=0x%x power=0x%x txmaxp=0x%x rxmaxp=0x%x csr0=0x%x count0=%u txcsr=0x%x rxcsr=0x%x rxcount=%u frame=%u view=%s role=%s maxp=0x%x csrsel=%s csr=0x%x csr-valid=%u countsel=%s count=%u count-valid=%u ready=%u\n",
                  tick++,
                  (uint32_t)state.controller.intrusb,
@@ -89,7 +105,12 @@ static void usb_runtime_task(void *arg)
                  (uint32_t)state.endpoint.count_value,
                  state.endpoint.count_valid ? 1u : 0u,
                  state.endpoint.ready ? 1u : 0u);
-        busy_wait_cycles(250000u);
+        delay_rc = os_task_delay(100);
+        if (delay_rc != OS_EOK) {
+            os_print("[USB_APP] task delay failed rc=%d\n", (int)delay_rc);
+            while (1) {
+            }
+        }
     }
 }
 
@@ -97,6 +118,7 @@ void os_kernel_main(void)
 {
     hal_usb_config_t cfg;
     uint8_t configdata = 0;
+    int init_rc;
     int rc;
 
     hal_board_init();
@@ -108,19 +130,29 @@ void os_kernel_main(void)
     cfg.soft_connect = true;
     cfg.high_speed_enable = true;
     cfg.intrusb_enable = 0x1Fu;
-    rc = hal_usb_init(BE_U1000_USB_BASE, &cfg);
-    if (rc != 0) {
-        os_print("[USB_APP] init failed rc=%d\n", rc);
+    init_rc = hal_usb_init(BE_U1000_USB_BASE, &cfg);
+    if (init_rc != 0) {
+        os_print("[USB_APP] init failed rc=%d\n", init_rc);
         return;
     }
 
-    (void)hal_usb_set_index(1u);
-    (void)hal_usb_get_configdata(&configdata);
+    rc = hal_usb_set_index(1u);
+    if (rc != 0) {
+        os_print("[USB_APP] set index failed rc=%d idx=1\n", rc);
+        return;
+    }
+
+    rc = hal_usb_get_configdata(&configdata);
+    if (rc != 0) {
+        os_print("[USB_APP] get configdata failed rc=%d\n", rc);
+        return;
+    }
+
     os_print("[USB_APP] usb_runtime ready base=0x%x faddr=%u cfg=0x%x init-rc=%d\n",
              (uint32_t)BE_U1000_USB_BASE,
              (uint32_t)cfg.function_address,
              (uint32_t)configdata,
-             rc);
+             init_rc);
     os_print("[USB_APP] Initializing kernel...\n");
 
     os_kernel_init();

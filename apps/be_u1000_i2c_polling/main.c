@@ -8,7 +8,7 @@
 #include "../../kernel/include/os_kernel.h"
 
 static os_tcb_t g_i2c_task_tcb;
-static uint8_t g_i2c_task_stack[768];
+static uint8_t g_i2c_task_stack[768] OS_ALIGNED(16);
 
 static void busy_wait_cycles(uint32_t iterations)
 {
@@ -63,7 +63,8 @@ void os_kernel_main(void)
                         sizeof(g_i2c_task_stack));
     if (rc != OS_EOK) {
         os_print("[I2C_APP] task create failed rc=%d\n", rc);
-        return;
+        while (1) {
+        }
     }
 
     os_print("[I2C_APP] Starting scheduler...\n");
