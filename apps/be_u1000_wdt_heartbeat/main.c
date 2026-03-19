@@ -54,6 +54,11 @@ void os_kernel_main(void)
     cfg.timeout = HAL_WDT_TIMEOUT_9;
 
     rc = hal_wdt_init(BE_U1000_WDT0_BASE, &cfg);
+    if (rc != 0) {
+        os_print("[WDT_APP] init failed rc=%d\n", rc);
+        return;
+    }
+
     os_print("[WDT_APP] wdt_heartbeat ready base=0x%x mode=%u timeout=%u init-rc=%d\n",
              (uint32_t)BE_U1000_WDT0_BASE,
              (uint32_t)cfg.mode,
@@ -62,13 +67,17 @@ void os_kernel_main(void)
     os_print("[WDT_APP] Initializing kernel...\n");
 
     os_kernel_init();
-    os_task_create(&g_wdt_task_tcb,
-                   "wdt_heartbeat",
-                   wdt_heartbeat_task,
-                   0,
-                   10,
-                   g_wdt_task_stack,
-                   sizeof(g_wdt_task_stack));
+    rc = os_task_create(&g_wdt_task_tcb,
+                        "wdt_heartbeat",
+                        wdt_heartbeat_task,
+                        0,
+                        10,
+                        g_wdt_task_stack,
+                        sizeof(g_wdt_task_stack));
+    if (rc != OS_EOK) {
+        os_print("[WDT_APP] task create failed rc=%d\n", rc);
+        return;
+    }
 
     os_print("[WDT_APP] Starting scheduler...\n");
     os_kernel_start();

@@ -115,6 +115,7 @@ static int measure_timer_latency_and_jitter(void) {
 
     OS_TEST_ASSERT(callback_count == 1);
     OS_TEST_ASSERT(g_timer_callbacks == 1);
+    OS_TEST_ASSERT(ticks >= configured_period);
     print_metric("timer_latency", ticks, "ticks", "semantic-harness",
                  "one-shot-expiry");
     print_metric("timer_jitter", ticks - configured_period, "ticks",
@@ -145,6 +146,8 @@ static int measure_timer_periodic_jitter(void) {
 
     OS_TEST_ASSERT(callback_count == 3);
     OS_TEST_ASSERT(g_timer_callbacks == 3);
+    OS_TEST_ASSERT(fire_ticks[0] >= configured_period);
+    max_jitter = fire_ticks[0] - configured_period;
 
     for (uint32_t i = 1; i < 3; i++) {
         uint32_t interval = fire_ticks[i] - fire_ticks[i - 1];
@@ -182,6 +185,7 @@ static int measure_timer_long_delay_boundary(void) {
 
     OS_TEST_ASSERT(callback_count == 1);
     OS_TEST_ASSERT(g_timer_callbacks == 1);
+    OS_TEST_ASSERT(ticks >= configured_period);
     print_metric("timer_long_delay_boundary", ticks, "ticks", "semantic-harness",
                  "timer-wheel-wrap-boundary");
     return 0;

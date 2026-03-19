@@ -41,6 +41,8 @@ static void gpio_inputpolling_task(void *arg)
 
 void os_kernel_main(void)
 {
+    os_err_t rc;
+
     hal_board_init();
     hal_board_print_banner();
 
@@ -68,13 +70,17 @@ void os_kernel_main(void)
     os_print("[GPIO_POLL] Initializing kernel...\n");
     os_kernel_init();
 
-    os_task_create(&g_poll_task_tcb,
-                   "gpio_inputpoll",
-                   gpio_inputpolling_task,
-                   0,
-                   10,
-                   g_poll_task_stack,
-                   sizeof(g_poll_task_stack));
+    rc = os_task_create(&g_poll_task_tcb,
+                        "gpio_inputpoll",
+                        gpio_inputpolling_task,
+                        0,
+                        10,
+                        g_poll_task_stack,
+                        sizeof(g_poll_task_stack));
+    if (rc != OS_EOK) {
+        os_print("[GPIO_POLL] task create failed rc=%d\n", (int)rc);
+        return;
+    }
 
     os_print("[GPIO_POLL] Starting scheduler...\n");
     os_kernel_start();

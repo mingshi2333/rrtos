@@ -51,4 +51,4 @@ target_compile_options(kernel_semantics_tests PRIVATE
 )
 
 add_test(NAME kernel-harness-canary COMMAND kernel_semantics_tests --suite canary)
-add_test(NAME kernel-semantic-red COMMAND kernel_semantics_tests --suite red)
+add_test(NAME kernel-semantic-red COMMAND kernel_semantics_tests --suite core)

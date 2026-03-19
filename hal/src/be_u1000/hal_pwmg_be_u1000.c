@@ -55,7 +55,7 @@ int hal_pwmg_init(uintptr_t base, const hal_pwmg_config_t *config)
 
     g_pwmg->CR1 = cr1;
     g_pwmg->DIER = 0u;
-    g_pwmg->SR = 0u;
+    g_pwmg->SR = PWMG_SR_CC0IF;
     g_pwmg->PSC = config->prescaler;
     g_pwmg->ARR = config->autoreload;
     g_pwmg->CCR0 = config->compare;

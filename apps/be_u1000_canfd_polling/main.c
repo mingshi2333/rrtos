@@ -30,6 +30,8 @@ static void canfd_polling_task(void *arg)
 
 void os_kernel_main(void)
 {
+    os_err_t rc;
+
     hal_board_init();
     hal_board_print_banner();
 
@@ -45,13 +47,17 @@ void os_kernel_main(void)
     os_print("[CANFD_APP] Initializing kernel...\n");
 
     os_kernel_init();
-    os_task_create(&g_canfd_task_tcb,
-                   "canfd_polling",
-                   canfd_polling_task,
-                   0,
-                   10,
-                   g_canfd_task_stack,
-                   sizeof(g_canfd_task_stack));
+    rc = os_task_create(&g_canfd_task_tcb,
+                        "canfd_polling",
+                        canfd_polling_task,
+                        0,
+                        10,
+                        g_canfd_task_stack,
+                        sizeof(g_canfd_task_stack));
+    if (rc != OS_EOK) {
+        os_print("[CANFD_APP] task create failed rc=%d\n", (int)rc);
+        return;
+    }
 
     os_print("[CANFD_APP] Starting scheduler...\n");
     os_kernel_start();

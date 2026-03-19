@@ -13,7 +13,10 @@ def main() -> int:
     args = parser.parse_args()
 
     log_path = Path(args.log)
-    if not log_path.exists():
+    if args.min_lines < 1:
+        print(f"I2C_POLL_CHECK_ERROR: --min-lines must be >= 1: {args.min_lines}")
+        return 2
+    if not log_path.exists() or not log_path.is_file():
         print(f"I2C_POLL_CHECK_ERROR: log not found: {log_path}")
         return 2
 

@@ -109,6 +109,11 @@ void os_kernel_main(void)
     cfg.high_speed_enable = true;
     cfg.intrusb_enable = 0x1Fu;
     rc = hal_usb_init(BE_U1000_USB_BASE, &cfg);
+    if (rc != 0) {
+        os_print("[USB_APP] init failed rc=%d\n", rc);
+        return;
+    }
+
     (void)hal_usb_set_index(1u);
     (void)hal_usb_get_configdata(&configdata);
     os_print("[USB_APP] usb_runtime ready base=0x%x faddr=%u cfg=0x%x init-rc=%d\n",
@@ -119,13 +124,17 @@ void os_kernel_main(void)
     os_print("[USB_APP] Initializing kernel...\n");
 
     os_kernel_init();
-    os_task_create(&g_usb_task_tcb,
-                   "usb_runtime",
-                   usb_runtime_task,
-                   0,
-                   10,
-                   g_usb_task_stack,
-                   sizeof(g_usb_task_stack));
+    rc = os_task_create(&g_usb_task_tcb,
+                        "usb_runtime",
+                        usb_runtime_task,
+                        0,
+                        10,
+                        g_usb_task_stack,
+                        sizeof(g_usb_task_stack));
+    if (rc != OS_EOK) {
+        os_print("[USB_APP] task create failed rc=%d\n", rc);
+        return;
+    }
 
     os_print("[USB_APP] Starting scheduler...\n");
     os_kernel_start();

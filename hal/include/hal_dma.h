@@ -18,7 +18,7 @@ typedef enum {
 typedef struct {
     uintptr_t src;
     uintptr_t dst;
-    uint16_t block_size;
+    uint8_t block_size;
     hal_dma_channel_t channel;
 } hal_dma_mem2mem_config_t;
 

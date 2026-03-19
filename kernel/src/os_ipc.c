@@ -369,6 +369,9 @@ os_err_t os_queue_recv(os_queue_t *q, void *msg, os_tick_t timeout) {
             os_tcb_t *waiter = os_ipc_wait_list_pop_head(&q->send_wait);
             os_queue_push_buffered(q, waiter->pending_obj);
             os_sched_wake_task(waiter, OS_EOK);
+            os_spinlock_irq_restore(&q->lock, flags);
+            os_sched();
+            return OS_EOK;
         }
 
         os_spinlock_irq_restore(&q->lock, flags);

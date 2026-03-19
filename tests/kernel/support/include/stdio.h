@@ -1,7 +1,7 @@
 #ifndef KERNEL_TEST_STDIO_H
 #define KERNEL_TEST_STDIO_H
 
-typedef struct _IO_FILE FILE;
+typedef struct kernel_test_file FILE;
 
 extern FILE *stderr;
 

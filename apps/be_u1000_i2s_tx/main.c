@@ -26,23 +26,14 @@ static void i2s_tx_task(void *arg)
     hal_i2s_tx_state_t pre_state;
     hal_i2s_tx_state_t post_state;
     int rc;
+    int tx_rc;
     const char *action;
 
     (void)arg;
 
     while (1) {
         word = sample + tick;
-        action = "steady";
         rc = hal_i2s_get_tx_state(&pre_state);
-        (void)hal_i2s_transmit_word(word);
-        if ((tick & 0x7u) == 0x7u) {
-            (void)hal_i2s_flush_tx_fifo();
-            action = "flush";
-        }
-        if (pre_state.overrun) {
-            (void)hal_i2s_clear_tx_overrun();
-            action = "clear-overrun";
-        }
         if (rc != 0) {
             os_print("[I2S_APP] tick %u state-error rc=%d sample=0x%x\n",
                      tick++,
@@ -52,7 +43,52 @@ static void i2s_tx_task(void *arg)
             continue;
         }
 
-        (void)hal_i2s_get_tx_state(&post_state);
+        action = "steady";
+        tx_rc = hal_i2s_transmit_word(word);
+        if (tx_rc != 0) {
+            os_print("[I2S_APP] tick %u tx-error rc=%d sample=0x%x\n",
+                     tick++,
+                     tx_rc,
+                     word);
+            busy_wait_cycles(250000u);
+            continue;
+        }
+
+        if ((tick & 0x7u) == 0x7u) {
+            rc = hal_i2s_flush_tx_fifo();
+            if (rc != 0) {
+                os_print("[I2S_APP] tick %u flush-error rc=%d sample=0x%x\n",
+                         tick++,
+                         rc,
+                         word);
+                busy_wait_cycles(250000u);
+                continue;
+            }
+            action = "flush";
+        }
+        if (pre_state.overrun) {
+            rc = hal_i2s_clear_tx_overrun();
+            if (rc != 0) {
+                os_print("[I2S_APP] tick %u clear-overrun-error rc=%d sample=0x%x\n",
+                         tick++,
+                         rc,
+                         word);
+                busy_wait_cycles(250000u);
+                continue;
+            }
+            action = "clear-overrun";
+        }
+
+        rc = hal_i2s_get_tx_state(&post_state);
+        if (rc != 0) {
+            os_print("[I2S_APP] tick %u post-state-error rc=%d action=%s sample=0x%x\n",
+                     tick++,
+                     rc,
+                     action,
+                     word);
+            busy_wait_cycles(250000u);
+            continue;
+        }
 
         os_print("[I2S_APP] tick %u en=%u dma=%u ready=%u overrun=%u level=%u threshold=%u action=%s post=%u sample=0x%x\n",
                  tick++,
@@ -85,6 +121,11 @@ void os_kernel_main(void)
     cfg.dma_transfer = false;
 
     rc = hal_i2s_init(BE_U1000_I2S1_BASE, &cfg);
+    if (rc != 0) {
+        os_print("[I2S_APP] init failed rc=%d\n", rc);
+        return;
+    }
+
     os_print("[I2S_APP] i2s_tx ready base=0x%x mode=%u res=%u dma=%u init-rc=%d\n",
              (uint32_t)BE_U1000_I2S1_BASE,
              (uint32_t)cfg.mode,
@@ -93,16 +134,24 @@ void os_kernel_main(void)
              rc);
     rc = hal_i2s_enable_tx();
     os_print("[I2S_APP] tx-enable rc=%d\n", rc);
+    if (rc != 0) {
+        os_print("[I2S_APP] tx-enable failed rc=%d\n", rc);
+        return;
+    }
     os_print("[I2S_APP] Initializing kernel...\n");
 
     os_kernel_init();
-    os_task_create(&g_i2s_task_tcb,
-                   "i2s_tx",
-                   i2s_tx_task,
-                   0,
-                   10,
-                   g_i2s_task_stack,
-                   sizeof(g_i2s_task_stack));
+    rc = os_task_create(&g_i2s_task_tcb,
+                        "i2s_tx",
+                        i2s_tx_task,
+                        0,
+                        10,
+                        g_i2s_task_stack,
+                        sizeof(g_i2s_task_stack));
+    if (rc != OS_EOK) {
+        os_print("[I2S_APP] task create failed rc=%d\n", rc);
+        return;
+    }
 
     os_print("[I2S_APP] Starting scheduler...\n");
     os_kernel_start();

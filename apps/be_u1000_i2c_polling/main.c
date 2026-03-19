@@ -42,6 +42,11 @@ void os_kernel_main(void)
     os_print("[I2C_APP] RUN_MARKER: 0x%x\n", (uint32_t)hal_clint_mtime_get());
 
     rc = hal_i2c_init(BE_U1000_HEADER_I2C_BASE, BE_U1000_DIAG_I2C_BUS_HZ);
+    if (rc != 0) {
+        os_print("[I2C_APP] init failed rc=%d\n", rc);
+        return;
+    }
+
     os_print("[I2C_APP] i2c_polling ready base=0x%x hz=%u init-rc=%d\n",
              (uint32_t)BE_U1000_HEADER_I2C_BASE,
              (uint32_t)BE_U1000_DIAG_I2C_BUS_HZ,
@@ -49,13 +54,17 @@ void os_kernel_main(void)
     os_print("[I2C_APP] Initializing kernel...\n");
 
     os_kernel_init();
-    os_task_create(&g_i2c_task_tcb,
-                   "i2c_polling",
-                   i2c_polling_task,
-                   0,
-                   10,
-                   g_i2c_task_stack,
-                   sizeof(g_i2c_task_stack));
+    rc = os_task_create(&g_i2c_task_tcb,
+                        "i2c_polling",
+                        i2c_polling_task,
+                        0,
+                        10,
+                        g_i2c_task_stack,
+                        sizeof(g_i2c_task_stack));
+    if (rc != OS_EOK) {
+        os_print("[I2C_APP] task create failed rc=%d\n", rc);
+        return;
+    }
 
     os_print("[I2C_APP] Starting scheduler...\n");
     os_kernel_start();

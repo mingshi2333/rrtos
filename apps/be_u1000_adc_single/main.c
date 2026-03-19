@@ -50,6 +50,11 @@ void os_kernel_main(void)
     adc_cfg.differential_input = false;
 
     rc = hal_adc_init(BE_U1000_ADC0_BASE, &adc_cfg);
+    if (rc != 0) {
+        os_print("[ADC_APP] adc init failed rc=%d\n", rc);
+        return;
+    }
+
     os_print("[ADC_APP] adc_single ready base=0x%x ch=%u sample=%u div=%u init-rc=%d\n",
              (uint32_t)BE_U1000_ADC0_BASE,
              (uint32_t)adc_cfg.channel,
@@ -59,13 +64,17 @@ void os_kernel_main(void)
     os_print("[ADC_APP] Initializing kernel...\n");
 
     os_kernel_init();
-    os_task_create(&g_adc_task_tcb,
-                   "adc_single",
-                   adc_single_task,
-                   0,
-                   10,
-                   g_adc_task_stack,
-                   sizeof(g_adc_task_stack));
+    rc = os_task_create(&g_adc_task_tcb,
+                        "adc_single",
+                        adc_single_task,
+                        0,
+                        10,
+                        g_adc_task_stack,
+                        sizeof(g_adc_task_stack));
+    if (rc != OS_EOK) {
+        os_print("[ADC_APP] task create failed rc=%d\n", rc);
+        return;
+    }
 
     os_print("[ADC_APP] Starting scheduler...\n");
     os_kernel_start();

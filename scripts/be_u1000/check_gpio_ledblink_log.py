@@ -13,7 +13,12 @@ def main() -> int:
     args = parser.parse_args()
 
     log_path = Path(args.log)
-    if not log_path.exists():
+    if args.min_blinks < 1:
+        print(
+            f"GPIO_LEDBLINK_CHECK_ERROR: --min-blinks must be >= 1: {args.min_blinks}"
+        )
+        return 2
+    if not log_path.exists() or not log_path.is_file():
         print(f"GPIO_LEDBLINK_CHECK_ERROR: log not found: {log_path}")
         return 2
 

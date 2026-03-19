@@ -51,14 +51,14 @@ def main() -> int:
     if lines and not any("ready=1" in line for line in lines):
         failures.append("i2s lane never reported a ready TX FIFO condition")
 
-        if lines and not any(
-            "level=1" in line
-            or "level=2" in line
-            or "post=1" in line
-            or "post=2" in line
-            for line in lines
-        ):
-            failures.append("i2s fifo level never advanced beyond reset")
+    if lines and not any(
+        "level=1" in line
+        or "level=2" in line
+        or "post=1" in line
+        or "post=2" in line
+        for line in lines
+    ):
+        failures.append("i2s fifo level never advanced beyond reset")
 
     parsed = [LINE_RE.search(line) for line in lines]
     if lines and any(match is None for match in parsed):
