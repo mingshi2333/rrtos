@@ -11,6 +11,19 @@ import tempfile
 import textwrap
 
 
+def display_path(path: Path, repo_root: Path) -> str:
+    try:
+        return str(path.relative_to(repo_root))
+    except ValueError:
+        return str(path)
+
+
+def summarize_status(status: str, bootlog_check_status: str) -> tuple[str, str]:
+    if status == "passed" and bootlog_check_status == "not-run":
+        return "incomplete", "boot log check not run"
+    return status, "none"
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -84,6 +97,9 @@ def main() -> int:
     log_path = (repo_root / args.log).resolve()
     summary_path = (repo_root / args.summary).resolve()
     repl_path = (repo_root / "scripts/simulation/be_u1000.repl").resolve()
+    kernel_display = display_path(kernel, repo_root)
+    binary_display = display_path(binary, repo_root)
+    log_display = display_path(log_path, repo_root)
 
     if not kernel.exists():
         print(f"BE-U1000 SMP runtime error: kernel not found: {kernel}")
@@ -168,9 +184,9 @@ def main() -> int:
             f"- Started: {started}",
             f"- Finished: {datetime.now(timezone.utc).isoformat()}",
             f"- Status: `{status}`",
-            f"- Kernel: `{kernel}`",
-            f"- Binary: `{binary}`",
-            f"- UART log: `{log_path}`",
+            f"- Kernel: `{kernel_display}`",
+            f"- Binary: `{binary_display}`",
+            f"- UART log: `{log_display}`",
             f"- Boot log check: `{bootlog_check_status}`",
             f"- First error: `{first_error}`",
             "",
@@ -188,9 +204,9 @@ def main() -> int:
             f"- Started: {started}",
             f"- Finished: {datetime.now(timezone.utc).isoformat()}",
             f"- Status: `{status}`",
-            f"- Kernel: `{kernel}`",
-            f"- Binary: `{binary}`",
-            f"- UART log: `{log_path}`",
+            f"- Kernel: `{kernel_display}`",
+            f"- Binary: `{binary_display}`",
+            f"- UART log: `{log_display}`",
             f"- Boot log check: `{bootlog_check_status}`",
             f"- First error: `{first_error}`",
             "",
@@ -241,6 +257,9 @@ def main() -> int:
             status = f"bootlog-check-{check_proc.returncode}"
             first_error = "boot log validation failed"
 
+    if first_error == "none":
+        status, first_error = summarize_status(status, bootlog_check_status)
+
     sys.stdout.write(log_path.read_text(encoding="utf-8", errors="ignore"))
     summary = [
         "# BE-U1000 SMP Runtime Probe",
@@ -248,9 +267,9 @@ def main() -> int:
         f"- Started: {started}",
         f"- Finished: {datetime.now(timezone.utc).isoformat()}",
         f"- Status: `{status}`",
-        f"- Kernel: `{kernel}`",
-        f"- Binary: `{binary}`",
-        f"- UART log: `{log_path}`",
+        f"- Kernel: `{kernel_display}`",
+        f"- Binary: `{binary_display}`",
+        f"- UART log: `{log_display}`",
         f"- Boot log check: `{bootlog_check_status}`",
         f"- First error: `{first_error}`",
         "",

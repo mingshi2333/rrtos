@@ -78,6 +78,10 @@ def main() -> int:
         print("AI runtime validation error: missing AI_VALIDATION_METRICS token")
         return 1
 
+    if "OS_TIMER_CALLBACK_PASS" not in output:
+        print("AI runtime validation error: missing OS_TIMER_CALLBACK_PASS token")
+        return 1
+
     return 0
 
 

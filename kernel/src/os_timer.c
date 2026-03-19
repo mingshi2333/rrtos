@@ -131,6 +131,13 @@ static void timer_process_slot(os_tick_t current_tick) {
     }
 }
 
+static void timer_process_until(os_tick_t current_tick) {
+    while (g_timer_wheel_pos != current_tick) {
+        g_timer_wheel_pos++;
+        timer_process_slot(g_timer_wheel_pos);
+    }
+}
+
 /**
  * @brief Timer task entry
  * 
@@ -148,12 +155,8 @@ static void timer_task_entry(void *arg) {
         
         /* Get current tick */
         os_tick_t current_tick = os_tick_get();
-        
-        /* Process all slots from last position to current */
-        while (g_timer_wheel_pos != current_tick) {
-            g_timer_wheel_pos++;
-            timer_process_slot(g_timer_wheel_pos);
-        }
+
+        timer_process_until(current_tick);
         
         os_spinlock_unlock(&g_timer_lock);
     }
@@ -195,7 +198,13 @@ void os_timer_subsys_init(void) {
  */
 void os_timer_tick(void) {
     if (g_timer_count > 0) {
+#ifdef OS_TEST_HARNESS
+        os_reg_t flags = os_spinlock_irq_save(&g_timer_lock);
+        timer_process_until(os_tick_get());
+        os_spinlock_irq_restore(&g_timer_lock, flags);
+#else
         os_sem_give(&g_timer_sem);
+#endif
     }
 }
 

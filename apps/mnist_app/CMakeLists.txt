@@ -66,3 +66,6 @@ configure_mnist_target(mnist_app)
 
 add_executable(mnist_validation src/validation_main.c src/validation.c)
 configure_mnist_target(mnist_validation)
+
+add_executable(mnist_preemption_probe src/preemption_probe_main.c)
+configure_mnist_target(mnist_preemption_probe)

@@ -71,6 +71,684 @@ cru: Memory.MappedMemory @ sysbus 0x14000000
 gpio2: Memory.MappedMemory @ sysbus 0x14008000
     size: 0x1000
 
+// ADC0 — lightweight Python stub so minimal SDK-derived ADC polling can run
+// without non-existing-peripheral noise. This is a semantic stub, not a
+// silicon-faithful converter model.
+adc0: Python.PythonPeripheral @ sysbus 0x14001000
+    size: 0x1000
+    initable: true
+    script: '''
+def req_get(*names):
+    for name in names:
+        if hasattr(request, name):
+            return getattr(request, name)
+    raise AttributeError("missing request attributes: %s" % (", ".join(names),))
+
+def req_set_value(value):
+    if hasattr(request, "Value"):
+        request.Value = value
+    else:
+        request.value = value
+
+ADC_CR1_SWSTART = 1 << 15
+ADC_ASTR_EOC = 1 << 0
+ADC_ASTR_STRT = 1 << 1
+
+if req_get("isInit", "IsInit"):
+    cr1 = 0
+    aser = 0
+    astr = 0
+    asmpr = 0
+    asqr = 0
+    adr = 0x123
+elif req_get("isWrite", "IsWrite"):
+    offset = req_get("offset", "Offset")
+    value = req_get("value", "Value") & 0xFFFFFFFF
+    if offset == 0x00:
+        cr1 = value
+        if value & ADC_CR1_SWSTART:
+            adr = (adr + 0x11) & 0xFFF
+            astr = ADC_ASTR_EOC | ADC_ASTR_STRT
+    elif offset == 0x04:
+        aser = value
+    elif offset == 0x08:
+        astr &= ~value
+    elif offset == 0x0C:
+        asmpr = value
+    elif offset == 0x10:
+        asqr = value
+elif req_get("isRead", "IsRead"):
+    offset = req_get("offset", "Offset")
+    if offset == 0x00:
+        req_set_value(cr1)
+    elif offset == 0x04:
+        req_set_value(aser)
+    elif offset == 0x08:
+        req_set_value(astr)
+    elif offset == 0x0C:
+        req_set_value(asmpr)
+    elif offset == 0x10:
+        req_set_value(asqr)
+    elif offset == 0x14:
+        req_set_value(adr)
+        astr &= ~ADC_ASTR_EOC
+    else:
+        req_set_value(0x0)
+'''
+
+// WDT0 — lightweight semantic stub for config/reload/counter observation.
+wdt0: Python.PythonPeripheral @ sysbus 0x11008000
+    size: 0x1000
+    initable: true
+    script: '''
+def req_get(*names):
+    for name in names:
+        if hasattr(request, name):
+            return getattr(request, name)
+    raise AttributeError("missing request attributes: %s" % (", ".join(names),))
+
+def req_set_value(value):
+    if hasattr(request, "Value"):
+        request.Value = value
+    else:
+        request.value = value
+
+if req_get("isInit", "IsInit"):
+    cr = 0
+    torr = 0
+    ccvr = 0x400
+    stat = 0
+elif req_get("isWrite", "IsWrite"):
+    offset = req_get("offset", "Offset")
+    value = req_get("value", "Value") & 0xFFFFFFFF
+    if offset == 0x00:
+        cr = value
+    elif offset == 0x04:
+        torr = value
+        ccvr = 0x100 << (value & 0xF)
+    elif offset == 0x0C:
+        ccvr = 0x100 << (torr & 0xF)
+        stat = 0
+elif req_get("isRead", "IsRead"):
+    offset = req_get("offset", "Offset")
+    if offset == 0x00:
+        req_set_value(cr)
+    elif offset == 0x04:
+        req_set_value(torr)
+    elif offset == 0x08:
+        if ccvr > 0:
+            ccvr = max(0, ccvr - 4)
+        req_set_value(ccvr)
+    elif offset == 0x10:
+        req_set_value(stat)
+    elif offset == 0x14:
+        stat = 0
+        req_set_value(0x0)
+    else:
+        req_set_value(0x0)
+'''
+
+// PWMG0 — lightweight counter/config stub.
+pwmg0: Python.PythonPeripheral @ sysbus 0x1100A000
+    size: 0x1000
+    initable: true
+    script: '''
+def req_get(*names):
+    for name in names:
+        if hasattr(request, name):
+            return getattr(request, name)
+    raise AttributeError("missing request attributes: %s" % (", ".join(names),))
+
+def req_set_value(value):
+    if hasattr(request, "Value"):
+        request.Value = value
+    else:
+        request.value = value
+
+PWMG_CR1_CEN = 1 << 0
+PWMG_SR_CC0IF = 1 << 1
+
+def pwmg_step():
+    global cnt
+    global sr
+
+    if not (cr1 & PWMG_CR1_CEN):
+        return
+
+    cnt = (cnt + 1) & 0xFFFF
+    if arr != 0 and cnt > arr:
+        cnt = 0
+
+    if cnt == ccr0:
+        sr |= PWMG_SR_CC0IF
+
+if req_get("isInit", "IsInit"):
+    cr1 = 0
+    dier = 0
+    sr = 0
+    ccmr1 = 0
+    ccer = 0
+    cnt = 0
+    psc = 0
+    arr = 0
+    ccr0 = 0
+elif req_get("isWrite", "IsWrite"):
+    offset = req_get("offset", "Offset")
+    value = req_get("value", "Value") & 0xFFFFFFFF
+    if offset == 0x00:
+        cr1 = value
+    elif offset == 0x0C:
+        dier = value
+    elif offset == 0x10:
+        sr &= ~value
+    elif offset == 0x18:
+        ccmr1 = value
+    elif offset == 0x20:
+        ccer = value
+    elif offset == 0x24:
+        cnt = value & 0xFFFF
+    elif offset == 0x28:
+        psc = value & 0xFFFF
+    elif offset == 0x2C:
+        arr = value & 0xFFFF
+    elif offset == 0x34:
+        ccr0 = value & 0xFFFF
+elif req_get("isRead", "IsRead"):
+    offset = req_get("offset", "Offset")
+    if offset == 0x24:
+        pwmg_step()
+    if offset == 0x00:
+        req_set_value(cr1)
+    elif offset == 0x0C:
+        req_set_value(dier)
+    elif offset == 0x10:
+        req_set_value(sr)
+    elif offset == 0x18:
+        req_set_value(ccmr1)
+    elif offset == 0x20:
+        req_set_value(ccer)
+    elif offset == 0x24:
+        req_set_value(cnt)
+    elif offset == 0x28:
+        req_set_value(psc)
+    elif offset == 0x2C:
+        req_set_value(arr)
+    elif offset == 0x34:
+        req_set_value(ccr0)
+    else:
+        req_set_value(0x0)
+'''
+
+// DMA0 — lightweight mem2mem completion stub. It does not yet model bus-accurate
+// transfers, but it can acknowledge channel programming and completion.
+dma0: Python.PythonPeripheral @ sysbus 0x15100000
+    size: 0x2000
+    initable: true
+    script: '''
+def req_get(*names):
+    for name in names:
+        if hasattr(request, name):
+            return getattr(request, name)
+    raise AttributeError("missing request attributes: %s" % (", ".join(names),))
+
+def req_set_value(value):
+    if hasattr(request, "Value"):
+        request.Value = value
+    else:
+        request.value = value
+
+CH0_SAR = 0x00
+CH0_DAR = 0x08
+CH0_CTL0 = 0x18
+CH0_CTL1 = 0x1C
+CH0_CFG0 = 0x40
+CH0_CFG1 = 0x44
+INT_STAT_TFR = 0x2E8
+INT_CLR_TFR = 0x338
+MSC_CFG = 0x398
+MSC_CH_EN = 0x3A0
+
+if req_get("isInit", "IsInit"):
+    sar = 0
+    dar = 0
+    ctl0 = 0
+    ctl1 = 0
+    cfg0 = 0
+    cfg1 = 0
+    stat_tfr = 0
+    msc_cfg = 0
+    ch_en = 0
+elif req_get("isWrite", "IsWrite"):
+    offset = req_get("offset", "Offset")
+    value = req_get("value", "Value") & 0xFFFFFFFF
+    if offset == CH0_SAR:
+        sar = value
+    elif offset == CH0_DAR:
+        dar = value
+    elif offset == CH0_CTL0:
+        ctl0 = value
+    elif offset == CH0_CTL1:
+        ctl1 = value
+    elif offset == CH0_CFG0:
+        cfg0 = value
+    elif offset == CH0_CFG1:
+        cfg1 = value
+    elif offset == INT_CLR_TFR:
+        stat_tfr &= ~value
+    elif offset == MSC_CFG:
+        msc_cfg = value
+    elif offset == MSC_CH_EN:
+        ch_en = value
+        if (value & 0x101) == 0x101:
+            bus = self.GetMachine().GetSystemBus(self)
+            length = ctl1 & 0xFF
+            if length > 0 and sar != 0 and dar != 0:
+                try:
+                    data = bus.ReadBytes(sar, length)
+                    bus.WriteBytes(data, dar)
+                except Exception:
+                    pass
+            stat_tfr |= 0x1
+    
+elif req_get("isRead", "IsRead"):
+    offset = req_get("offset", "Offset")
+    if offset == CH0_SAR:
+        req_set_value(sar)
+    elif offset == CH0_DAR:
+        req_set_value(dar)
+    elif offset == CH0_CTL0:
+        req_set_value(ctl0)
+    elif offset == CH0_CTL1:
+        req_set_value(ctl1)
+    elif offset == CH0_CFG0:
+        req_set_value(cfg0)
+    elif offset == CH0_CFG1:
+        req_set_value(cfg1)
+    elif offset == INT_STAT_TFR:
+        req_set_value(stat_tfr)
+    elif offset == MSC_CFG:
+        req_set_value(msc_cfg)
+    elif offset == MSC_CH_EN:
+        req_set_value(ch_en)
+    else:
+        req_set_value(0x0)
+'''
+
+// I2S1 — lightweight TX-oriented semantic stub with bounded FIFO lifecycle.
+i2s1: Python.PythonPeripheral @ sysbus 0x13006000
+    size: 0x1000
+    initable: true
+    script: '''
+def req_get(*names):
+    for name in names:
+        if hasattr(request, name):
+            return getattr(request, name)
+    raise AttributeError("missing request attributes: %s" % (", ".join(names),))
+
+def req_set_value(value):
+    if hasattr(request, "Value"):
+        request.Value = value
+    else:
+        request.value = value
+
+FIFO_DEPTH = 16
+TX_READY_MASK = 0x10
+TX_OVERRUN_MASK = 0x01
+TX_FIFO_LEVEL_MASK = 0x1F
+
+def fifo_threshold_words():
+    return (tfcr0 & 0xF) + 1
+
+def tx_enabled():
+    return (ier & 0x1) != 0 and (iter_reg & 0x1) != 0 and (ter0 & 0x1) != 0
+
+def refresh_status():
+    global isr0
+    if tx_enabled() and tff0 <= fifo_threshold_words():
+        isr0 = TX_READY_MASK
+    else:
+        isr0 = 0
+
+if req_get("isInit", "IsInit"):
+    ier = 0
+    iter_reg = 0
+    ter0 = 0
+    tcr0 = 0
+    isr0 = TX_READY_MASK
+    imr0 = 0
+    tor0 = 0
+    tfcr0 = 0
+    tff0 = 0
+    txdma = 0
+    drain_phase = 0
+elif req_get("isWrite", "IsWrite"):
+    offset = req_get("offset", "Offset")
+    value = req_get("value", "Value") & 0xFFFFFFFF
+    if offset == 0x00:
+        ier = value
+    elif offset == 0x08:
+        iter_reg = value
+    elif offset == 0x2C:
+        ter0 = value
+    elif offset == 0x34:
+        tcr0 = value
+    elif offset == 0x3C:
+        imr0 = value
+    elif offset == 0x44:
+        tor0 &= ~(value & TX_OVERRUN_MASK)
+    elif offset == 0x4C:
+        tfcr0 = value & 0xF
+    elif offset == 0x54:
+        tff0 = 0
+        tor0 = 0
+        drain_phase = 0
+    elif offset == 0x1C8:
+        txdma = value
+        if tx_enabled():
+            if tff0 < FIFO_DEPTH:
+                tff0 += 1
+            else:
+                tor0 |= TX_OVERRUN_MASK
+    refresh_status()
+elif req_get("isRead", "IsRead"):
+    offset = req_get("offset", "Offset")
+    if tx_enabled():
+        drain_phase = (drain_phase + 1) % 3
+        if tff0 > 0 and drain_phase == 0:
+            tff0 -= 1
+    refresh_status()
+    if offset == 0x00:
+        req_set_value(ier)
+    elif offset == 0x08:
+        req_set_value(iter_reg)
+    elif offset == 0x2C:
+        req_set_value(ter0)
+    elif offset == 0x34:
+        req_set_value(tcr0)
+    elif offset == 0x38:
+        req_set_value(isr0)
+    elif offset == 0x3C:
+        req_set_value(imr0)
+    elif offset == 0x44:
+        req_set_value(tor0)
+    elif offset == 0x4C:
+        req_set_value(tfcr0)
+    elif offset == 0x54:
+        req_set_value(tff0 & TX_FIFO_LEVEL_MASK)
+    elif offset == 0x1C8:
+        req_set_value(txdma)
+    else:
+        req_set_value(0x0)
+'''
+
+// PWMA and USB semantic stubs.
+pwma2: Python.PythonPeripheral @ sysbus 0x14006000
+    size: 0x1000
+    initable: true
+    script: '''
+def req_get(*names):
+    for name in names:
+        if hasattr(request, name):
+            return getattr(request, name)
+    raise AttributeError("missing request attributes: %s" % (", ".join(names),))
+
+def req_set_value(value):
+    if hasattr(request, "Value"):
+        request.Value = value
+    else:
+        request.value = value
+
+PWMA_CR1_CEN = 1 << 0
+PWMA_SR_UIF = 1 << 0
+
+def pwma_step():
+    global cnt
+    global sr
+    global rep
+
+    if not (cr1 & PWMA_CR1_CEN):
+        return
+
+    if arr == 0:
+        cnt = (cnt + 1) & 0xFFFF
+        return
+
+    if cnt >= arr:
+        cnt = 0
+        if rep >= rcr:
+            rep = 0
+            sr |= PWMA_SR_UIF
+        else:
+            rep += 1
+        return
+
+    cnt += 1
+
+if req_get("isInit", "IsInit"):
+    cr1 = 0
+    dier = 0
+    psc = 0
+    arr = 0
+    rcr = 0
+    cnt = 0
+    sr = 0
+    rep = 0
+elif req_get("isWrite", "IsWrite"):
+    offset = req_get("offset", "Offset")
+    value = req_get("value", "Value") & 0xFFFFFFFF
+    if offset == 0x00:
+        cr1 = value
+    elif offset == 0x0C:
+        dier = value
+    elif offset == 0x14:
+        cnt = 0
+        sr = 0
+        rep = 0
+    elif offset == 0x24:
+        cnt = value & 0xFFFF
+    elif offset == 0x28:
+        psc = value & 0xFFFF
+    elif offset == 0x2C:
+        arr = value & 0xFFFF
+    elif offset == 0x30:
+        rcr = value & 0xFF
+    elif offset == 0x10:
+        sr &= ~value
+elif req_get("isRead", "IsRead"):
+    offset = req_get("offset", "Offset")
+    if offset == 0x24:
+        pwma_step()
+    if offset == 0x00:
+        req_set_value(cr1)
+    elif offset == 0x0C:
+        req_set_value(dier)
+    elif offset == 0x10:
+        req_set_value(sr)
+    elif offset == 0x24:
+        req_set_value(cnt)
+    elif offset == 0x28:
+        req_set_value(psc)
+    elif offset == 0x2C:
+        req_set_value(arr)
+    elif offset == 0x30:
+        req_set_value(rcr)
+    else:
+        req_set_value(0x0)
+'''
+
+usb0: Python.PythonPeripheral @ sysbus 0x15000000
+    size: 0x100000
+    initable: true
+    script: '''
+def req_get(*names):
+    for name in names:
+        if hasattr(request, name):
+            return getattr(request, name)
+    raise AttributeError("missing request attributes: %s" % (", ".join(names),))
+
+def req_set_value(value):
+    if hasattr(request, "Value"):
+        request.Value = value
+    else:
+        request.value = value
+
+USB_POWER_SOFTCONN = 1 << 6
+USB_INTRUSB_CONNIF = 1 << 4
+USB_INTRUSB_SOF = 1 << 3
+
+USB_CSR0_RXPKTRDY = 1 << 0
+USB_CSR0_DATAEND = 1 << 3
+USB_CSR0_SETUPEND = 1 << 4
+
+USB_TXCSR_TXPKTRDY = 1 << 0
+USB_TXCSR_FIFONOTEMPTY = 1 << 1
+
+USB_RXCSR_RXPKTRDY = 1 << 0
+USB_RXCSR_FIFOFULL = 1 << 1
+
+def refresh_indexed_state():
+    global intrtx, ep_csr0
+    if not (power & USB_POWER_SOFTCONN):
+        intrtx = 0
+        ep_csr0 = 0
+        for ep in range(4):
+            ep_txcsr[ep] = 0
+            ep_rxcsr[ep] = 0
+            ep_rxcount[ep] = 0
+        return
+
+    intrtx = 0
+    for ep in range(1, 4):
+        phase = (usb_phase + ep) % 8
+        if phase in (0, 4):
+            ep_txcsr[ep] = USB_TXCSR_TXPKTRDY | USB_TXCSR_FIFONOTEMPTY
+            ep_rxcsr[ep] = 0
+            ep_rxcount[ep] = 0
+        elif phase in (1, 5):
+            ep_txcsr[ep] = USB_TXCSR_FIFONOTEMPTY
+            ep_rxcsr[ep] = USB_RXCSR_RXPKTRDY
+            ep_rxcount[ep] = (ep * 8) + 4
+        elif phase == 2:
+            ep_txcsr[ep] = 0
+            ep_rxcsr[ep] = USB_RXCSR_RXPKTRDY | USB_RXCSR_FIFOFULL
+            ep_rxcount[ep] = (ep * 8) + 8
+        else:
+            ep_txcsr[ep] = 0
+            ep_rxcsr[ep] = 0
+            ep_rxcount[ep] = 0
+
+        if ep_txcsr[ep] != 0:
+            intrtx |= (1 << ep)
+
+    if usb_phase == 1:
+        ep_csr0 = USB_CSR0_RXPKTRDY
+        ep_rxcount[0] = 8
+    elif usb_phase == 2:
+        ep_csr0 = USB_CSR0_RXPKTRDY | USB_CSR0_DATAEND
+        ep_rxcount[0] = 8
+    elif usb_phase == 3:
+        ep_csr0 = USB_CSR0_DATAEND
+        ep_rxcount[0] = 0
+    elif usb_phase == 4:
+        ep_csr0 = USB_CSR0_SETUPEND
+        ep_rxcount[0] = 0
+    else:
+        ep_csr0 = 0
+        ep_rxcount[0] = 0
+
+if req_get("isInit", "IsInit"):
+    faddr = 0
+    power = 0
+    intrtx = 0
+    intrrx = 0
+    intrtxe = 0
+    intrrxe = 0
+    intrusb = 0
+    intrusbe = 0
+    frame = 0
+    index = 0
+    testmode = 0
+    configdata = 0x9E
+    usb_phase = 0
+    ep_txmaxp = [8, 64, 32, 16]
+    ep_csr0 = 0
+    ep_txcsr = [0, 0, 0, 0]
+    ep_rxcsr = [0, 0, 0, 0]
+    ep_rxcount = [0, 0, 0, 0]
+elif req_get("isWrite", "IsWrite"):
+    offset = req_get("offset", "Offset")
+    value = req_get("value", "Value") & 0xFFFFFFFF
+    if offset == 0x00:
+        faddr = value & 0x7F
+    elif offset == 0x01:
+        power = value & 0xFF
+        if power & USB_POWER_SOFTCONN:
+            intrusb |= USB_INTRUSB_CONNIF
+            refresh_indexed_state()
+        else:
+            refresh_indexed_state()
+    elif offset == 0x06:
+        intrtxe = value & 0xFFFF
+    elif offset == 0x08:
+        intrrxe = value & 0xFFFF
+    elif offset == 0x0B:
+        intrusbe = value & 0xFF
+    elif offset == 0x0E:
+        index = value & 0xFF
+        usb_phase = (usb_phase + 1) % 8
+        refresh_indexed_state()
+    elif offset == 0x0F:
+        testmode = value & 0xFF
+elif req_get("isRead", "IsRead"):
+    offset = req_get("offset", "Offset")
+    length = req_get("length", "Length")
+    frame = (frame + 1) & 0x7FF
+    if power & USB_POWER_SOFTCONN:
+        intrusb |= USB_INTRUSB_SOF
+    if offset == 0x00:
+        req_set_value(faddr)
+    elif offset == 0x01:
+        req_set_value(power)
+    elif offset == 0x02:
+        req_set_value(intrtx)
+    elif offset == 0x04:
+        req_set_value(intrrx)
+    elif offset == 0x06:
+        req_set_value(intrtxe)
+    elif offset == 0x08:
+        req_set_value(intrrxe)
+    elif offset == 0x0A:
+        req_set_value(intrusb)
+    elif offset == 0x0B:
+        req_set_value(intrusbe)
+    elif offset == 0x0C:
+        req_set_value(frame)
+    elif offset == 0x0E:
+        req_set_value(index)
+    elif offset == 0x0F:
+        req_set_value(testmode)
+    elif offset == 0x10:
+        req_set_value(ep_txmaxp[index & 0x3])
+    elif offset == 0x12:
+        if (index & 0x3) == 0:
+            req_set_value(ep_csr0)
+        else:
+            req_set_value(ep_txcsr[index & 0x3])
+    elif offset == 0x16:
+        if (index & 0x3) == 0:
+            req_set_value(0x0)
+        else:
+            req_set_value(ep_rxcsr[index & 0x3])
+    elif offset == 0x18:
+        req_set_value(ep_rxcount[index & 0x3])
+    elif offset == 0x1F and length == 1:
+        req_set_value(configdata)
+    elif offset == 0x1C and length == 4:
+        req_set_value((configdata & 0xFF) << 24)
+    else:
+        req_set_value(0x0)
+'''
+
 // I2C0 — simple register storage is enough for current init-only self-test.
 i2c0: Memory.MappedMemory @ sysbus 0x11004000
     size: 0x1000
