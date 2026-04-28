@@ -63,9 +63,10 @@ set(CMAKE_ASM_FLAGS_INIT "${RISCV_FLAGS} -ffreestanding -nostdlib -nostartfiles 
 set(CMAKE_CXX_FLAGS_INIT "${RISCV_FLAGS} -ffreestanding -nostdlib -nostartfiles -fno-pic -fno-plt -ffunction-sections -fdata-sections -U_POSIX_C_SOURCE -D_POSIX_C_SOURCE=0")
 
 # Linker flags.
-# Probe a GCC toolchain that can supply RV32 libgcc. The riscv64-linux-gnu
-# driver may return its root rv64 libgcc for unsupported ABI combinations, so
-# only accept multilib paths under lib32.
+# Probe a GCC toolchain that can supply RV32 libgcc. Different distributions
+# use different multilib layouts: linux-gnu commonly uses lib32/<abi>, while
+# unknown-elf commonly uses ISA/ABI directory names. Accept only probes whose
+# selected multilib clearly names an RV32/ILP32 variant.
 set(LIBGCC_PATH "")
 set(LIBGCC_PROBE "")
 foreach(LIBGCC_CANDIDATE riscv64-unknown-elf-gcc riscv64-linux-gnu-gcc)
@@ -76,7 +77,14 @@ foreach(LIBGCC_CANDIDATE riscv64-unknown-elf-gcc riscv64-linux-gnu-gcc)
     ERROR_QUIET
     RESULT_VARIABLE LIBGCC_CANDIDATE_RC
   )
-  if(LIBGCC_CANDIDATE_RC EQUAL 0 AND LIBGCC_CANDIDATE_PATH AND EXISTS "${LIBGCC_CANDIDATE_PATH}" AND LIBGCC_CANDIDATE_PATH MATCHES "/lib32/")
+  execute_process(
+    COMMAND ${LIBGCC_CANDIDATE} -march=${RISCV_MARCH} -mabi=${RISCV_MABI} -print-multi-directory
+    OUTPUT_VARIABLE LIBGCC_CANDIDATE_MULTILIB
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_QUIET
+  )
+  if(LIBGCC_CANDIDATE_RC EQUAL 0 AND LIBGCC_CANDIDATE_PATH AND EXISTS "${LIBGCC_CANDIDATE_PATH}" AND
+      (LIBGCC_CANDIDATE_PATH MATCHES "/lib32/" OR LIBGCC_CANDIDATE_MULTILIB MATCHES "(rv32|ilp32)"))
     set(LIBGCC_PATH "${LIBGCC_CANDIDATE_PATH}")
     set(LIBGCC_PROBE "${LIBGCC_CANDIDATE}")
     break()
@@ -92,7 +100,14 @@ if(NOT LIBGCC_PATH AND RISCV_MABI STREQUAL "ilp32f")
       ERROR_QUIET
       RESULT_VARIABLE LIBGCC_CANDIDATE_RC
     )
-    if(LIBGCC_CANDIDATE_RC EQUAL 0 AND LIBGCC_CANDIDATE_PATH AND EXISTS "${LIBGCC_CANDIDATE_PATH}" AND LIBGCC_CANDIDATE_PATH MATCHES "/lib32/")
+    execute_process(
+      COMMAND ${LIBGCC_CANDIDATE} -march=rv32imac -mabi=ilp32 -print-multi-directory
+      OUTPUT_VARIABLE LIBGCC_CANDIDATE_MULTILIB
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+      ERROR_QUIET
+    )
+    if(LIBGCC_CANDIDATE_RC EQUAL 0 AND LIBGCC_CANDIDATE_PATH AND EXISTS "${LIBGCC_CANDIDATE_PATH}" AND
+        (LIBGCC_CANDIDATE_PATH MATCHES "/lib32/" OR LIBGCC_CANDIDATE_MULTILIB MATCHES "(rv32|ilp32)"))
       set(LIBGCC_PATH "${LIBGCC_CANDIDATE_PATH}")
       set(LIBGCC_PROBE "${LIBGCC_CANDIDATE} ilp32 multilib fallback")
       break()
@@ -103,8 +118,7 @@ endif()
 if(LIBGCC_PATH)
   get_filename_component(LIBGCC_DIR ${LIBGCC_PATH} DIRECTORY)
   message(STATUS "Found RV32 libgcc via ${LIBGCC_PROBE}: ${LIBGCC_PATH}")
-  # Add -L${LIBGCC_DIR} -lgcc to explicitly link
-  set(CMAKE_EXE_LINKER_FLAGS_INIT "${RISCV_FLAGS} -nostdlib -nostartfiles -static -fuse-ld=lld -Wl,--gc-sections -Wl,--no-relax -L${LIBGCC_DIR} -lgcc")
+  set(CMAKE_EXE_LINKER_FLAGS_INIT "${RISCV_FLAGS} -nostdlib -nostartfiles -static -fuse-ld=lld -Wl,--gc-sections -Wl,--no-relax -L${LIBGCC_DIR} ${LIBGCC_PATH}")
 else()
   message(WARNING "Could not find RV32 hard-float libgcc. Link errors may occur.")
   set(CMAKE_EXE_LINKER_FLAGS_INIT "${RISCV_FLAGS} -nostdlib -nostartfiles -static -fuse-ld=lld -Wl,--gc-sections -Wl,--no-relax")
