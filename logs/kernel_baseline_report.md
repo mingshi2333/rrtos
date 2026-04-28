@@ -35,30 +35,30 @@ They are useful for relative regression tracking only and must not be read as re
 | Metric | Units | Source | Samples | Min | Median | p95 | Max | Stddev |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | queue_send_to_blocked_recv_handoff | host-monotonic-ns | host-monotonic-raw-ns-proxy | 64 | 0 | 1187 | 1188 | 1188 | 147 |
-| mutex_unlock_to_waiter_handoff | host-monotonic-ns | host-monotonic-raw-ns-proxy | 64 | 0 | 1187 | 2374 | 2375 | 419 |
-| sem_give_to_blocked_waiter_handoff | host-monotonic-ns | host-monotonic-raw-ns-proxy | 64 | 0 | 1187 | 1188 | 2374 | 209 |
+| mutex_unlock_to_waiter_handoff | host-monotonic-ns | host-monotonic-raw-ns-proxy | 64 | 0 | 1187 | 1188 | 2374 | 256 |
+| sem_give_to_blocked_waiter_handoff | host-monotonic-ns | host-monotonic-raw-ns-proxy | 64 | 0 | 1187 | 2375 | 2375 | 469 |
 
 ## Runtime Evidence
 
 | Metric | Value | Units | Source | Scenario | Artifact |
 | --- | ---: | --- | --- | --- | --- |
-| timer_runtime_callback_tick | 20 | ticks | supported-rv32-log | mnist-validation-runtime | `logs/mnist_validation_qemu.log` |
+| timer_runtime_callback_tick | 22 | ticks | supported-rv32-log | mnist-validation-runtime | `logs/mnist_validation_qemu.log` |
 | preemption_resume_tick | 3 | ticks | supported-rv32-log | mnist-preemption-probe | `logs/mnist_preemption_probe_qemu.log` |
 
 ## Footprint Thresholds
 
 | Image | Metric | Value | Threshold | Artifact | Gate |
 | --- | --- | ---: | --- | --- | --- |
-| mnist_validation | kernel_archive_bytes | 14705 | <= 14705 | `build/apps/mnist_app/mnist_validation_footprint.md` | pass |
-| rrtos_be_u1000 | kernel_archive_bytes | 14169 | <= 14169 | `build-be_u1000/rrtos_be_u1000_footprint.md` | pass |
+| mnist_validation | kernel_archive_bytes | 14741 | <= 14741 | `build/apps/mnist_app/mnist_validation_footprint.md` | pass |
+| rrtos_be_u1000 | kernel_archive_bytes | 14205 | <= 14205 | `build-be_u1000/rrtos_be_u1000_footprint.md` | pass |
 | rrtos_be_u1000 | total_bytes | 122401 | <= 122401 | `build-be_u1000/rrtos_be_u1000_footprint.md` | pass |
 
 ## Footprint Snapshots
 
 | Image | Total Bytes | Kernel Archive Bytes | Total Gate | Archive Gate | Artifact |
 | --- | ---: | ---: | --- | --- | --- |
-| mnist_validation | 657575 | 14705 | report-only | pass | `build/apps/mnist_app/mnist_validation_footprint.md` |
-| rrtos_be_u1000 | 122401 | 14169 | pass | pass | `build-be_u1000/rrtos_be_u1000_footprint.md` |
+| mnist_validation | 657575 | 14741 | report-only | pass | `build/apps/mnist_app/mnist_validation_footprint.md` |
+| rrtos_be_u1000 | 122401 | 14205 | pass | pass | `build-be_u1000/rrtos_be_u1000_footprint.md` |
 
 ## Notes
 

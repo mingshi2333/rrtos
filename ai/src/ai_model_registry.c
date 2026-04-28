@@ -37,6 +37,54 @@ typedef struct {
 
 static ai_model_registry_t g_registry;
 
+static void ai_log_status(const char *operation, iree_status_t status) {
+    char status_buffer[256];
+    iree_host_size_t status_length = 0;
+
+    if (iree_status_format(status, sizeof(status_buffer), status_buffer,
+                           &status_length)) {
+        printf("[AI] ERROR: %s failed: %s\n", operation, status_buffer);
+        return;
+    }
+
+    printf("[AI] ERROR: %s failed: %s\n",
+           operation,
+           iree_status_code_string(iree_status_code(status)));
+}
+
+static void ai_registry_release_resources(void) {
+    if (g_registry.vm_context) {
+        iree_vm_context_release(g_registry.vm_context);
+        g_registry.vm_context = NULL;
+    }
+
+    for (int i = 0; i < AI_MAX_MODELS; i++) {
+        ai_model_entry_t *entry = &g_registry.models[i];
+        if (entry->vm_module) {
+            iree_vm_module_release(entry->vm_module);
+            entry->vm_module = NULL;
+        }
+    }
+
+    if (g_registry.hal_device) {
+        iree_hal_device_release(g_registry.hal_device);
+        g_registry.hal_device = NULL;
+    }
+
+    if (g_registry.loader) {
+        iree_hal_executable_loader_release(g_registry.loader);
+        g_registry.loader = NULL;
+    }
+
+    if (g_registry.vm_instance) {
+        iree_vm_instance_release(g_registry.vm_instance);
+        g_registry.vm_instance = NULL;
+    }
+
+    g_registry.count = 0;
+    memset(&g_registry.buffer_view_type, 0, sizeof(g_registry.buffer_view_type));
+}
+
 uint64_t ai_get_time_us(void) {
     uint64_t ticks = hal_clint_mtime_get();
     return (ticks * 1000000ULL) / OS_CFG_TIMER_FREQ_HZ;
@@ -52,13 +100,15 @@ int ai_runtime_init(void) {
         &g_registry.vm_instance
     );
     if (!iree_status_is_ok(status)) {
+        ai_log_status("vm_instance_create", status);
         return -1;
     }
     
     // Register HAL types
     status = iree_hal_module_register_all_types(g_registry.vm_instance);
     if (!iree_status_is_ok(status)) {
-        iree_vm_instance_release(g_registry.vm_instance);
+        ai_log_status("hal_module_register_all_types", status);
+        ai_registry_release_resources();
         return -1;
     }
     
@@ -81,7 +131,8 @@ int ai_runtime_init(void) {
         g_registry.allocator, &g_registry.loader
     );
     if (!iree_status_is_ok(status)) {
-        iree_vm_instance_release(g_registry.vm_instance);
+        ai_log_status("hal_static_library_loader_create", status);
+        ai_registry_release_resources();
         return -1;
     }
     
@@ -106,13 +157,15 @@ int ai_runtime_init(void) {
     }
     
     if (!iree_status_is_ok(status)) {
-        iree_vm_instance_release(g_registry.vm_instance);
+        ai_log_status("hal_sync_device_create", status);
+        ai_registry_release_resources();
         return -1;
     }
     
     iree_vm_module_t *hal_module;
     status = iree_hal_module_create(
         g_registry.vm_instance,
+        iree_hal_module_device_policy_default(),
         /*device_count=*/1, &g_registry.hal_device,
         IREE_HAL_MODULE_FLAG_SYNCHRONOUS,
         iree_hal_module_debug_sink_null(),
@@ -120,7 +173,8 @@ int ai_runtime_init(void) {
         &hal_module
     );
     if (!iree_status_is_ok(status)) {
-        iree_vm_instance_release(g_registry.vm_instance);
+        ai_log_status("hal_module_create", status);
+        ai_registry_release_resources();
         return -1;
     }
     
@@ -144,6 +198,7 @@ int ai_runtime_init(void) {
             &entry->vm_module
         );
         if (!iree_status_is_ok(status)) {
+            ai_log_status("model module create", status);
             printf("[AI] ERROR: Failed to create module for %s\n", desc->name);
             continue;
         }
@@ -157,10 +212,12 @@ int ai_runtime_init(void) {
             &entry->main_func
         );
         if (!iree_status_is_ok(status)) {
+            ai_log_status("model function lookup", status);
             printf("[AI] ERROR: Failed to resolve '%s' function for %s\n",
                    entry_function,
                    desc->name);
             iree_vm_module_release(entry->vm_module);
+            entry->vm_module = NULL;
             continue;
         }
         
@@ -186,13 +243,9 @@ int ai_runtime_init(void) {
     iree_vm_module_release(hal_module);
     
     if (!iree_status_is_ok(status)) {
+        ai_log_status("vm_context_create_with_modules", status);
         printf("[AI] ERROR: Failed to create global VM context\n");
-        for (int i = 0; i < g_registry.count; i++) {
-            if (g_registry.models[i].vm_module) {
-                iree_vm_module_release(g_registry.models[i].vm_module);
-            }
-        }
-        iree_vm_instance_release(g_registry.vm_instance);
+        ai_registry_release_resources();
         return -1;
     }
     
@@ -201,25 +254,7 @@ int ai_runtime_init(void) {
 }
 
 void ai_runtime_deinit(void) {
-    if (g_registry.vm_context) {
-        iree_vm_context_release(g_registry.vm_context);
-        g_registry.vm_context = NULL;
-    }
-
-    for (int i = 0; i < g_registry.count; i++) {
-        ai_model_entry_t *entry = &g_registry.models[i];
-        if (entry->vm_module) {
-            iree_vm_module_release(entry->vm_module);
-        }
-    }
-    
-    if (g_registry.hal_device) {
-        iree_hal_device_release(g_registry.hal_device);
-    }
-    if (g_registry.vm_instance) {
-        iree_vm_instance_release(g_registry.vm_instance);
-    }
-    
+    ai_registry_release_resources();
     memset(&g_registry, 0, sizeof(g_registry));
 }
 
@@ -313,21 +348,28 @@ int ai_infer_sync(ai_model_handle_t handle,
     if (!g_registry.vm_context) return -1;
     
     uint64_t start_us = ai_get_time_us();
+    int ret = -1;
     
     iree_hal_buffer_params_t params = {
-        .usage = IREE_HAL_BUFFER_USAGE_DISPATCH_STORAGE | IREE_HAL_BUFFER_USAGE_TRANSFER,
+        .usage = IREE_HAL_BUFFER_USAGE_TRANSFER |
+                 IREE_HAL_BUFFER_USAGE_DISPATCH |
+                 IREE_HAL_BUFFER_USAGE_MAPPING,
         .access = IREE_HAL_MEMORY_ACCESS_ALL,
         .type = IREE_HAL_MEMORY_TYPE_DEVICE_LOCAL | IREE_HAL_MEMORY_TYPE_HOST_VISIBLE
     };
     
     // 1. Prepare Inputs
-    iree_vm_list_t *input_list;
+    iree_vm_list_t *input_list = NULL;
+    iree_vm_list_t *output_list = NULL;
     iree_status_t status = iree_vm_list_create(
         g_registry.buffer_view_type, num_inputs, g_registry.allocator, &input_list);
-    if (!iree_status_is_ok(status)) return -1;
+    if (!iree_status_is_ok(status)) {
+        ai_log_status("input list create", status);
+        return -1;
+    }
 
     for (uint32_t i = 0; i < num_inputs; i++) {
-        iree_hal_buffer_view_t *view;
+        iree_hal_buffer_view_t *view = NULL;
         status = iree_hal_buffer_view_allocate_buffer_copy(
             g_registry.hal_device,
             iree_hal_device_allocator(g_registry.hal_device),
@@ -339,20 +381,24 @@ int ai_infer_sync(ai_model_handle_t handle,
             &view
         );
         if (!iree_status_is_ok(status)) {
-            iree_vm_list_release(input_list);
-            return -1;
+            ai_log_status("input buffer view allocate", status);
+            goto cleanup;
         }
         iree_vm_ref_t ref = iree_hal_buffer_view_move_ref(view);
-        iree_vm_list_push_ref_move(input_list, &ref);
+        status = iree_vm_list_push_ref_move(input_list, &ref);
+        if (!iree_status_is_ok(status)) {
+            ai_log_status("input list push", status);
+            iree_vm_ref_release(&ref);
+            goto cleanup;
+        }
     }
     
     // 2. Prepare Outputs
-    iree_vm_list_t *output_list;
     status = iree_vm_list_create(
         g_registry.buffer_view_type, num_outputs, g_registry.allocator, &output_list);
     if (!iree_status_is_ok(status)) {
-        iree_vm_list_release(input_list);
-        return -1;
+        ai_log_status("output list create", status);
+        goto cleanup;
     }
     
     // 3. Invoke
@@ -363,41 +409,57 @@ int ai_infer_sync(ai_model_handle_t handle,
     uint64_t elapsed_us = ai_get_time_us() - start_us;
     
     if (!iree_status_is_ok(status)) {
-        iree_vm_list_release(input_list);
-        iree_vm_list_release(output_list);
-        return -1;
+        ai_log_status("vm_invoke", status);
+        goto cleanup;
     }
     
     // 4. Copy results back
     for (uint32_t i = 0; i < num_outputs; i++) {
         iree_vm_ref_t ref = iree_vm_ref_null();
         status = iree_vm_list_get_ref_retain(output_list, i, &ref);
-        iree_hal_buffer_view_t *view = iree_hal_buffer_view_deref(ref);
-        if (view) {
-            iree_hal_buffer_t *buffer = iree_hal_buffer_view_buffer(view);
-            iree_hal_buffer_mapping_t mapping;
-            status = iree_hal_buffer_map_range(
-                buffer, IREE_HAL_MAPPING_MODE_SCOPED, IREE_HAL_MEMORY_ACCESS_READ,
-                0, IREE_WHOLE_BUFFER, &mapping);
-            if (iree_status_is_ok(status)) {
-                size_t copy_size = mapping.contents.data_length < outputs[i].size ?
-                                   mapping.contents.data_length : outputs[i].size;
-                memcpy(outputs[i].data, mapping.contents.data, copy_size);
-                iree_hal_buffer_unmap_range(&mapping);
-            }
+        if (!iree_status_is_ok(status)) {
+            ai_log_status("output list get", status);
+            goto cleanup;
         }
+        iree_hal_buffer_view_t *view = iree_hal_buffer_view_deref(ref);
+        if (!view) {
+            printf("[AI] ERROR: output buffer view dereference failed\n");
+            iree_vm_ref_release(&ref);
+            goto cleanup;
+        }
+
+        iree_hal_buffer_t *buffer = iree_hal_buffer_view_buffer(view);
+        iree_hal_buffer_mapping_t mapping;
+        status = iree_hal_buffer_map_range(
+            buffer, IREE_HAL_MAPPING_MODE_SCOPED, IREE_HAL_MEMORY_ACCESS_READ,
+            0, IREE_HAL_WHOLE_BUFFER, &mapping);
+        if (!iree_status_is_ok(status)) {
+            ai_log_status("output buffer map", status);
+            iree_vm_ref_release(&ref);
+            goto cleanup;
+        }
+
+        size_t copy_size = mapping.contents.data_length < outputs[i].size ?
+                           mapping.contents.data_length : outputs[i].size;
+        memcpy(outputs[i].data, mapping.contents.data, copy_size);
+        iree_hal_buffer_unmap_range(&mapping);
         iree_vm_ref_release(&ref);
     }
-    
-    iree_vm_list_release(input_list);
-    iree_vm_list_release(output_list);
     
     entry->perf_stats.total_inferences++;
     entry->perf_stats.latency_last_us = elapsed_us;
     if (elapsed_us < entry->perf_stats.latency_min_us) entry->perf_stats.latency_min_us = elapsed_us;
     if (elapsed_us > entry->perf_stats.latency_max_us) entry->perf_stats.latency_max_us = elapsed_us;
-    
-    return 0;
+    ret = 0;
+
+cleanup:
+    if (input_list) {
+        iree_vm_list_release(input_list);
+    }
+    if (output_list) {
+        iree_vm_list_release(output_list);
+    }
+    return ret;
 }
 
 int ai_infer_async(ai_model_handle_t handle,

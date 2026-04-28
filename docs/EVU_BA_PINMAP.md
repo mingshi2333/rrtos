@@ -1,17 +1,18 @@
 # EVU-BA-2.3 Pin Map
 
-This note captures the board-level connector mapping that could be recovered from the tail schematic pages of the EVU-BA-2.3 technical description shared in this session.
+This note captures the board-level connector mapping for the BE-EVB-U1000 / EVU-BA-2.3 board family used by the current `be_u1000` lane.
 
 ## Sources
 
-- EVU-BA-2.3 technical description tail schematic pages
+- BE-EVB-U1000 / EVU-BA-2.3 instruction, v2.3.1, dated 2025-12-30
+- EVU-BA connector, power-source, boot-mode, and DFU tables from the official PDF
 - `pdftotext -layout` extraction from the PDF
-- OCR cross-check on the same pages
-- BE-U1000 SDK examples for optional CANFD muxing
+- OCR cross-check on noisy connector regions
+- BE-U1000 SDK examples for CANFD behavior cross-checks
 
 ## Confidence
 
-- `high`: vector-text extraction and OCR agree, or the schematic text is clean enough to read directly
+- `high`: the official document table is explicit, or vector-text extraction and OCR agree
 - `medium`: connector role is clear, but some pin order or pairing is noisy
 - `low`: only the exposed net set is reliable, not the exact connector pin order
 
@@ -67,7 +68,7 @@ Related nets visible nearby on the companion connector region: `VIN<6>`, `VIN<7>
 
 ### XS5 - Arduino Digital Header, PA-Side
 
-This is the cleanest PA-side expansion block in the tail pages.
+This is the cleanest PA-side expansion block in the official connector tables.
 
 | XS5 pin | Net |
 | --- | --- |
@@ -140,7 +141,7 @@ Visible nets near the block include:
 - `VIN`
 - nearby PA-side signals from the same connector cluster
 
-The block is clearly part of the Arduino/power-control area, but its exact ordered table is not reliable enough from the tail-page text alone.
+The block is clearly part of the Arduino/power-control area, but its exact ordered table is not reliable enough from the extracted text alone.
 
 ### XP9 - PA/PC Breakout Companion
 
@@ -176,13 +177,13 @@ The repo board support now encodes these high-confidence EVU-BA groups directly:
 - `QSPI1`: `PB0`..`PB5`
 - user LED / button: `PC0` / `PC13`
 
-Optional CANFD mux groups are also encoded from SDK examples, not from the tail-page connectors themselves:
+CANFD mux groups are encoded from the official connector tables and cross-checked against SDK examples:
 
 - `CANFD0`: `PA14` / `PA15`, AF3
 - `CANFD1`: `PB6` / `PB7`, AF2
 
 ## Important Limits
 
-- The tail schematic pages do not show a clearly labeled standalone CAN connector.
+- CAN is exposed through multiplexed header pins; the docs do not show a separate dedicated CAN connector in the board-support path used here.
 - The PB-side connector region exposes signals that can also be used by `UART3`, `I2C2`, `QSPI1`, and `CANFD1`, so not every possible mux should be forced on by default.
-- If we later need a strict production-ready connector table for `XP8`, `XS3`, or `XP9`, the next step should be a visual/manual pass on the original schematic pages rather than relying only on text extraction.
+- If we later need a strict production-ready connector table for `XP8`, `XS3`, or `XP9`, the next step should be a visual/manual pass on the original PDF pages rather than relying only on text extraction.

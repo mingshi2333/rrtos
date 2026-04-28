@@ -1,11 +1,11 @@
 # BE-U1000 SMP Runtime Probe
 
-- Started: 2026-03-19T11:36:32.592326+00:00
-- Finished: 2026-03-19T11:36:39.700406+00:00
+- Started: 2026-04-28T15:17:24.519239+00:00
+- Finished: 2026-04-28T15:17:31.917172+00:00
 - Status: `passed`
-- Kernel: `/home/mingshi/Project/PF/rrtos/build-be_u1000/rrtos_be_u1000.elf`
-- Binary: `/home/mingshi/Project/PF/rrtos/build-be_u1000/rrtos_be_u1000.bin`
-- UART log: `/home/mingshi/Project/PF/rrtos/logs/be_u1000_boot_sim.log`
+- Kernel: `build-be_u1000/rrtos_be_u1000.elf`
+- Binary: `build-be_u1000/rrtos_be_u1000.bin`
+- UART log: `logs/be_u1000_boot_sim.log`
 - Boot log check: `passed`
 - First error: `none`
 

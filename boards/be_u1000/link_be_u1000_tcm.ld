@@ -24,8 +24,10 @@ MEMORY
     SRAM   (rwx) : ORIGIN = 0x70000000, LENGTH = 32K
 }
 
-/* Stack size */
-__stack_size = 4K;
+/* Per-hart startup stack bank for Core0/Core1. */
+__hart_stack_size = 4K;
+__hart_stack_count = 2;
+__stack_size = __hart_stack_size * __hart_stack_count;
 
 SECTIONS
 {
@@ -118,15 +120,24 @@ SECTIONS
     } > TCMB
 
     /* ---------------------------------------------------------------
-     * Stack — at top of TCMB (grows downward)
+     * Stack bank — at top of TCMB, one explicit 4 KB stack per main hart.
+     * Hart0 owns the upper stack; experimental SMP hart1 owns the lower stack.
      * --------------------------------------------------------------- */
     .stack (NOLOAD) :
     {
         . = ALIGN(16);
         _stack_bottom = .;
-        . += __stack_size;
+        __be_u1000_stack_bottom = .;
+        __hart1_stack_bottom = .;
+        . += __hart_stack_size;
+        . = ALIGN(16);
+        __hart1_stack_top = .;
+        __hart0_stack_bottom = .;
+        . += __hart_stack_size;
         . = ALIGN(16);
         _stack_top = .;
+        __hart0_stack_top = .;
+        __be_u1000_stack_top = .;
     } > TCMB
 
     /* ---------------------------------------------------------------

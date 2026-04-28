@@ -37,7 +37,7 @@ if [ "$OUTPUT_SUBDIR" != "." ]; then
 fi
 
 if [ "$ARCH" = "rv64" ]; then
-    echo "Configuring for RV64..."
+    echo "Configuring for RV64 (experimental/historical; not a supported rrtos validation lane)..."
     TARGET_TRIPLE="riscv64-unknown-elf"
     TARGET_ABI="lp64d"
     CPU_FEATURES="+m,+a,+f,+d,+zicsr"
@@ -87,7 +87,8 @@ sed -i "s/^module /module @${OUTPUT_NAME} /" "$TEMP_DIR/${OUTPUT_NAME}_opt.mlir"
 
 echo "[3/3] Compiling to EmitC + Object ($ARCH) [Optimized]..."
 run_iree_tool iree-compile \
-    --iree-hal-target-backends=llvm-cpu \
+    --iree-hal-target-device=local \
+    --iree-hal-local-target-device-backends=llvm-cpu \
     --iree-llvmcpu-target-triple="$TARGET_TRIPLE" \
     --iree-llvmcpu-target-cpu-features="$CPU_FEATURES" \
     --iree-llvmcpu-target-abi="$TARGET_ABI" \
@@ -98,6 +99,7 @@ run_iree_tool iree-compile \
     --iree-llvmcpu-static-library-output-path="$OUTPUT_DIR/$OUTPUT_OBJ_NAME" \
     --iree-llvmcpu-loop-unrolling=false \
     --iree-llvmcpu-enable-ukernels=all \
+    --iree-opt-data-tiling \
     --iree-stream-partitioning-favor=min-peak-memory \
     --iree-stream-resource-alias-mutable-bindings \
     --iree-stream-resource-index-bits=32 \
@@ -110,16 +112,19 @@ run_iree_tool iree-compile \
 
 echo "[4/4] Compiling to VM Bytecode + Static Library..."
 run_iree_tool iree-compile \
-    --iree-hal-target-backends=llvm-cpu \
+    --iree-hal-target-device=local \
+    --iree-hal-local-target-device-backends=llvm-cpu \
     --iree-llvmcpu-target-triple="$TARGET_TRIPLE" \
     --iree-llvmcpu-target-cpu-features="$CPU_FEATURES" \
     --iree-llvmcpu-target-abi="$TARGET_ABI" \
     --output-format=vm-bytecode \
     --iree-vm-target-index-bits=$VM_INDEX_BITS \
     --iree-llvmcpu-link-embedded=false \
+    --iree-llvmcpu-link-static \
     --iree-llvmcpu-static-library-output-path="$OUTPUT_DIR/$BYTECODE_OBJ_NAME" \
     --iree-llvmcpu-loop-unrolling=false \
     --iree-llvmcpu-enable-ukernels=all \
+    --iree-opt-data-tiling \
     --iree-stream-partitioning-favor=min-peak-memory \
     --iree-stream-resource-alias-mutable-bindings \
     --iree-stream-resource-index-bits=32 \

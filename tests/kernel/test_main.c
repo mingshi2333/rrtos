@@ -4,6 +4,7 @@ int os_test_suite_canary(void);
 int os_test_suite_sched_semantics(void);
 int os_test_suite_ipc_semantics(void);
 int os_test_suite_timer_semantics(void);
+int os_test_suite_mem_semantics(void);
 int os_test_suite_baseline_metrics(void);
 int os_test_suite_microbench_metrics(void);
 
@@ -49,6 +50,7 @@ int main(int argc, char **argv) {
         failures += run_suite("sched-timeout-oracle", os_test_suite_sched_semantics);
         failures += run_suite("ipc-semantics", os_test_suite_ipc_semantics);
         failures += run_suite("timer-semantics", os_test_suite_timer_semantics);
+        failures += run_suite("mem-semantics", os_test_suite_mem_semantics);
         matched = 1;
     }
 

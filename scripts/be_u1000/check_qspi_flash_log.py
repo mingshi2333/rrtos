@@ -25,6 +25,8 @@ def main() -> int:
         "RV-AIOS v1.0.0 on BE-U1000",
         "[QSPI_APP] RUN_MARKER:",
         "[QSPI_APP] qspi_flash ready",
+        "[QSPI_APP] range guard: OK",
+        "[QSPI_APP] page boundary: OK",
         "[QSPI_APP] Initializing kernel...",
         "[QSPI_APP] Starting scheduler...",
         "31505351",

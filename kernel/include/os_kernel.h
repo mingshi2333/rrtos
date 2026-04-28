@@ -21,6 +21,8 @@ os_tcb_t *os_task_self(void);
 void os_sched_lock(void);
 void os_sched_unlock(void);
 void os_sched(void);
+void os_irq_enter(void);
+void os_irq_exit(void);
 
 os_err_t os_sem_init(os_sem_t *sem, const char *name, int32_t init, int32_t max);
 os_err_t os_sem_take(os_sem_t *sem, os_tick_t timeout);

@@ -25,6 +25,8 @@ Use Renode only for comparison or observation:
 
 Keep the maintained AI task surface small. Prefer the four commands above and do not reintroduce composite aliases on the supported path.
 
+The supported model in this lane is `st_mnist_28` from `ai_models.yaml`. Historical direct, ST-specific, or zoo-only conversion targets are not part of the supported AI gate unless they are explicitly added to `docs/SUPPORTED_MATRIX.md`.
+
 ### 2. Supported BE-U1000 lane
 
 Use this when you are validating the current supported board bring-up path.

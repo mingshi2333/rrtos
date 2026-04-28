@@ -101,7 +101,6 @@ static void timer_process_slot(os_tick_t current_tick) {
         
         if (diff < 0x80000000UL) {
             /* Timer expired - execute callback */
-            timer->active = 0;
             timer->next = NULL;
             
             /* Execute callback outside of lock */
@@ -113,12 +112,15 @@ static void timer_process_slot(os_tick_t current_tick) {
             
             os_spinlock_lock(&g_timer_lock);
             
-            /* Re-arm periodic timers */
-            if (timer->periodic) {
-                timer->active = 1;
+            if (!timer->active) {
+                /* Callback stopped the timer. */
+            } else if (timer->remaining != current_tick) {
+                /* Callback restarted/reset the timer; keep its chosen schedule. */
+            } else if (timer->periodic) {
                 os_tick_t next_expire = current_tick + timer->period;
                 timer_wheel_insert(timer, next_expire);
             } else {
+                timer->active = 0;
                 g_timer_count--;
             }
         } else {

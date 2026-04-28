@@ -9,6 +9,7 @@ Historical research or simulation entrypoints may still appear elsewhere in arch
 This workflow is for the supported RV32 registry-backed AI path used by `apps/mnist_app`.
 
 It is not a promise that every historical RV64 or model-specific experiment under `zoo/` is still part of the supported matrix.
+Optional zoo conversion output becomes supported only after it is declared in `ai_models.yaml`, generated into `apps/mnist_app/generated/`, covered by deterministic runtime validation, and listed in `docs/SUPPORTED_MATRIX.md`.
 
 ## Inputs
 
@@ -58,6 +59,7 @@ pixi run -e rv32 compare-mnist-runtime-platforms
 ## Current supported example
 
 - Model name: `st_mnist_28`
+- Source: `third_party/iree/samples/models/mnist.mlir`
 - App: `apps/mnist_app`
 - Runtime gate: `build/apps/mnist_app/mnist_validation`
 - Validation fixture: `apps/mnist_app/src/mnist_validation_samples.h`

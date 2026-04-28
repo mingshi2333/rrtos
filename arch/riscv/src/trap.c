@@ -24,6 +24,8 @@ void os_trap_handler(void *sp) {
     
     if (mcause & ((os_ubase_t)1 << (OS_CFG_ARCH_BITS - 1))) {
         uint32_t irq = mcause & 0x3FF;
+
+        os_irq_enter();
         
         switch (irq) {
             case 7:
@@ -58,6 +60,8 @@ void os_trap_handler(void *sp) {
 #endif
                 break;
         }
+
+        os_irq_exit();
     } else {
         os_reg_t mepc = csr_read(mepc);
         os_reg_t mtval = csr_read(mtval);

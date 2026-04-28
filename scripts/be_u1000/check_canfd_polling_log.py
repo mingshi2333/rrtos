@@ -29,6 +29,10 @@ def main() -> int:
         "[CANFD_APP] Starting scheduler...",
         "[CHK] CANFD0 loopback: OK",
         "[CHK] CANFD1 loopback: OK",
+        "[CHK] CANFD0 guard invalid-dlc: OK",
+        "[CHK] CANFD1 guard invalid-dlc: OK",
+        "[CHK] CANFD0 guard loopback-required: OK",
+        "[CHK] CANFD1 guard loopback-required: OK",
     ]
 
     failures: list[str] = []

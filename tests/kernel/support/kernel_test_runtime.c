@@ -14,6 +14,9 @@ static os_test_trace_t g_trace;
 static uint64_t g_fake_mtime;
 static uint64_t g_fake_mtimecmp;
 static uint64_t g_cycle_fallback;
+uint8_t os_test_heap[64 * 1024];
+uint8_t *_heap_start = os_test_heap;
+uint8_t *_heap_end = os_test_heap + sizeof(os_test_heap);
 
 void os_context_switch(void **from_sp, void **to_sp) {
     (void)from_sp;
@@ -22,9 +25,6 @@ void os_context_switch(void **from_sp, void **to_sp) {
 
 void os_context_switch_first(void **to_sp) {
     (void)to_sp;
-}
-
-void os_heap_init(void) {
 }
 
 void hal_clint_init(os_ubase_t base) {
@@ -80,6 +80,7 @@ const os_test_trace_t *os_test_trace_snapshot(void) {
 }
 
 uint64_t os_test_cycle_get(void) {
+#if defined(CLOCK_MONOTONIC_RAW) || defined(CLOCK_MONOTONIC)
     struct timespec ts;
 #ifdef CLOCK_MONOTONIC_RAW
     const clockid_t clock_id = CLOCK_MONOTONIC_RAW;
@@ -90,6 +91,7 @@ uint64_t os_test_cycle_get(void) {
     if (clock_gettime(clock_id, &ts) == 0) {
         return ((uint64_t)ts.tv_sec * 1000000000ULL) + (uint64_t)ts.tv_nsec;
     }
+#endif
 
     g_cycle_fallback++;
     return g_cycle_fallback;

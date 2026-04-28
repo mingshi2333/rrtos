@@ -12,19 +12,19 @@
     #define REGBYTES 4
 #endif
 
-/* Stack frame size: 16 registers (ra, s0-s11, mstatus, 2 padding? or just enough)
-   Saved: ra, s0-s11 (13 regs), mstatus (1 reg). Total 14.
+/* Stack frame size: 16 registers (ra, s0-s11, mstatus, initial a0, padding).
+   Saved/restored: ra, s0-s11 (13 regs), mstatus (1 reg), a0 (1 reg).
    Original had 128 bytes. 128/8 = 16 words.
    Offset 104 is 13*8. 
-   So we save 14 items. 14*REGBYTES.
+   So we save 15 items. 15*REGBYTES.
    Stack alignment 16 bytes.
-   Size = (14 * REGBYTES + 15) & ~15
+   Size = (15 * REGBYTES + 15) & ~15
 */
 
 #if __riscv_xlen == 64
     #define STACK_SIZE 128
 #else
-    #define STACK_SIZE 64  /* 14*4 = 56. Aligned to 16 -> 64 */
+    #define STACK_SIZE 64  /* 15*4 = 60. Aligned to 16 -> 64 */
 #endif
 
 os_context_switch:
@@ -46,6 +46,7 @@ os_context_switch:
 
     csrr    t0, mstatus
     STORE   t0, 13*REGBYTES(sp)
+    STORE   a0, 14*REGBYTES(sp)
 
     STORE   sp, 0(a0)
 
@@ -53,6 +54,7 @@ os_context_switch:
 
     LOAD    t0, 13*REGBYTES(sp)
     csrw    mstatus, t0
+    LOAD    a0, 14*REGBYTES(sp)
 
     LOAD    ra, 0*REGBYTES(sp)
     LOAD    s0, 1*REGBYTES(sp)
@@ -77,6 +79,7 @@ os_context_switch_first:
 
     LOAD    t0, 13*REGBYTES(sp)
     csrw    mstatus, t0
+    LOAD    a0, 14*REGBYTES(sp)
 
     LOAD    ra, 0*REGBYTES(sp)
     LOAD    s0, 1*REGBYTES(sp)

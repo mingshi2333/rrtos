@@ -3,7 +3,11 @@
 
 #include "hal_board_smp.h"
 
-#if defined(CONFIG_BOARD_BE_U1000)
+#ifndef RRTOS_HAL_HAS_BOARD_SELFTEST
+#define RRTOS_HAL_HAS_BOARD_SELFTEST 0
+#endif
+
+#if defined(CONFIG_BOARD_BE_U1000) && RRTOS_HAL_HAS_BOARD_SELFTEST
 #include "hal_canfd.h"
 #include "hal_flash.h"
 #include "hal_gpio.h"
@@ -21,6 +25,7 @@
 #include "os_smp.h"
 #endif
 
+#if RRTOS_HAL_HAS_BOARD_SELFTEST
 typedef enum {
     HAL_BOARD_GPIO_USER_LED = 0,
     HAL_BOARD_GPIO_USER_BUTTON,
@@ -103,15 +108,6 @@ typedef struct {
     bool available;
 } hal_board_selftest_profile_t;
 
-typedef struct {
-    os_cpu_t control_cpu;
-    os_cpu_t worker_cpu;
-    os_cpu_t reschedule_probe_cpu;
-    os_cpu_t balance_probe_cpu_a;
-    os_cpu_t balance_probe_cpu_b;
-    bool available;
-} hal_board_demo_topology_t;
-
 #define SELFTEST_SPI_TIMEOUT  100000u
 #define SELFTEST_CANFD_TIMEOUT 100000u
 #define CANFD_IRQ_SEEN(index) (1u << (index))
@@ -122,6 +118,16 @@ static volatile uint32_t g_canfd_irq_count[HAL_BOARD_SELFTEST_CANFD_CONTROLLER_C
 static hal_board_canfd_profile_t g_canfd_profiles[HAL_BOARD_SELFTEST_CANFD_CONTROLLER_COUNT];
 static uint32_t g_canfd_profile_count;
 #endif
+#endif
+
+typedef struct {
+    os_cpu_t control_cpu;
+    os_cpu_t worker_cpu;
+    os_cpu_t reschedule_probe_cpu;
+    os_cpu_t balance_probe_cpu_a;
+    os_cpu_t balance_probe_cpu_b;
+    bool available;
+} hal_board_demo_topology_t;
 
 #if OS_CFG_SMP_EN
 static void hal_board_fill_demo_topology(hal_board_demo_topology_t *topology)
@@ -336,7 +342,7 @@ static void be_u1000_board_pinmux_init(void)
 }
 #endif
 
-#if defined(CONFIG_BOARD_BE_U1000)
+#if defined(CONFIG_BOARD_BE_U1000) && RRTOS_HAL_HAS_BOARD_SELFTEST
 static const char *selftest_label(const char *label, const char *fallback)
 {
     return label ? label : fallback;
@@ -503,6 +509,7 @@ static void run_flash_selftest(const hal_board_selftest_profile_t *profile)
 {
     const hal_board_flash_profile_t *flash_profile = &profile->flash;
     uint32_t qspi_sig[4] = {0};
+    uint8_t page_boundary_sample[8] = {0};
     uint32_t sample_offset = flash_profile->window_sample_offset;
     uint32_t sample_words = flash_profile->window_sample_words;
     uint32_t i;
@@ -549,6 +556,25 @@ static void run_flash_selftest(const hal_board_selftest_profile_t *profile)
                      flash_info.page_size,
                      flash_info.sector_size,
                      flash_info.capacity_bytes);
+            if (flash_info.page_size >= 4u &&
+                hal_flash_read(flash_info.page_size - 4u,
+                               page_boundary_sample,
+                               sizeof(page_boundary_sample)) == 0) {
+                os_print("[CHK] FLASH page-boundary: OK (offset=0x%x len=%u)\n",
+                         flash_info.page_size - 4u,
+                         (uint32_t)sizeof(page_boundary_sample));
+            } else {
+                os_print("[CHK] FLASH page-boundary: FAIL\n");
+            }
+            if (hal_flash_read(flash_profile->window_size - 3u,
+                               page_boundary_sample,
+                               sizeof(page_boundary_sample)) != 0) {
+                os_print("[CHK] FLASH range-guard: OK (offset=0x%x len=%u)\n",
+                         flash_profile->window_size - 3u,
+                         (uint32_t)sizeof(page_boundary_sample));
+            } else {
+                os_print("[CHK] FLASH range-guard: FAIL\n");
+            }
         } else {
             os_print("[CHK] FLASH identify: FAIL\n");
         }
@@ -697,6 +723,22 @@ static void report_canfd_result(const hal_board_canfd_profile_t *profile, uint32
         } else {
             os_print("[CHK] %s loopback: FAIL\n", name);
         }
+
+        tx_frame.len = HAL_CANFD_MAX_DATA_LEN + 1u;
+        if (hal_canfd_tx_enqueue(&tx_frame, SELFTEST_CANFD_TIMEOUT) != 0) {
+            os_print("[CHK] %s guard invalid-dlc: OK\n", name);
+        } else {
+            os_print("[CHK] %s guard invalid-dlc: FAIL\n", name);
+        }
+
+        config.internal_loopback = false;
+        tx_frame.len = (uint8_t)profile->frame_len;
+        if (hal_canfd_init(profile->base, &config) == 0 &&
+            hal_canfd_tx_enqueue(&tx_frame, SELFTEST_CANFD_TIMEOUT) != 0) {
+            os_print("[CHK] %s guard loopback-required: OK\n", name);
+        } else {
+            os_print("[CHK] %s guard loopback-required: FAIL\n", name);
+        }
     } else {
         os_print("[CHK] %s init: FAIL\n", name);
     }
@@ -754,6 +796,7 @@ void hal_board_print_banner(void) {
 #endif
 }
 
+#if RRTOS_HAL_HAS_BOARD_SELFTEST
 static void hal_board_fill_diag_config(hal_board_diag_config_t *config) {
     if (!config) {
         return;
@@ -1055,6 +1098,7 @@ static void hal_board_fill_selftest_profile(hal_board_selftest_profile_t *profil
     profile->available = false;
 #endif
 }
+#endif
 
 const char *hal_board_pinmux_group_name(hal_board_pinmux_group_t group)
 {
@@ -1092,6 +1136,7 @@ int hal_board_apply_pinmux_group(hal_board_pinmux_group_t group)
 
 int hal_board_run_selftest(void)
 {
+#if RRTOS_HAL_HAS_BOARD_SELFTEST
     hal_board_selftest_profile_t selftest_profile;
 
     hal_board_fill_selftest_profile(&selftest_profile);
@@ -1106,6 +1151,9 @@ int hal_board_run_selftest(void)
     run_flash_selftest(&selftest_profile);
     run_canfd_selftest(&selftest_profile);
     return 0;
+#else
+    return -1;
+#endif
 #else
     return -1;
 #endif
