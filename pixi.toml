@@ -22,8 +22,10 @@ pyyaml = ">=6.0.3,<7"
 
 [tasks]
 # === Dependency Management Tasks ===
-# Initialize IREE submodule
-init-iree = "test -d third_party/iree/.git || git submodule update --init --recursive third_party/iree"
+# Initialize the IREE runtime subset used by the supported rv32 lane.
+# Do not recurse into all IREE compiler/GPU submodules: some historical
+# nested refs are unavailable from public remotes and they are not needed here.
+init-iree = "git submodule update --init --depth=1 third_party/iree && git -C third_party/iree submodule update --init --depth=1 third_party/benchmark third_party/cpuinfo third_party/flatcc third_party/googletest"
 
 clean = "rm -rf build"
 
