@@ -47,9 +47,9 @@ SEMANTIC_THRESHOLDS = {
 }
 
 FOOTPRINT_THRESHOLDS = {
-    "mnist_validation": {"kernel_archive_bytes_max": 14705},
+    "mnist_validation": {"kernel_archive_bytes_max": 14741},
     "rrtos_be_u1000": {
-        "kernel_archive_bytes_max": 14169,
+        "kernel_archive_bytes_max": 14205,
         "total_bytes_max": 122401,
     },
 }

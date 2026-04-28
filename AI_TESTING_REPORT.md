@@ -1,5 +1,8 @@
 # AI Registry Testing & Model Compilation Report
 
+> Archival report. This file describes an older AI integration experiment and is not the current supported AI path.
+> Use `docs/AI_CANONICAL_PATH.md`, `docs/SUPPORTED_MATRIX.md`, and `apps/mnist_app/README.md` for current code requirements.
+
 **Date:** 2026-01-22  
 **Status:** Partial Success - Models Compiled, Runtime Integration Debugging
 

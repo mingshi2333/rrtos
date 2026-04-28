@@ -70,6 +70,7 @@ static ai_err_t iree_backend_load(ai_model_t **model, const void *model_data, ui
 
     status = iree_hal_module_create(
         g_iree_ctx.instance,
+        iree_hal_module_device_policy_default(),
         1, &device,
         IREE_HAL_MODULE_FLAG_NONE,
         iree_hal_module_debug_sink_null(),

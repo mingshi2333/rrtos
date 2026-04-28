@@ -39,7 +39,11 @@ _start:
      * --------------------------------------------------------------- */
     csrr    t0, mhartid
     andi    t0, t0, 0x3FF       /* Mask hart ID (BE-U1000 convention) */
+#if !OS_CFG_SMP_EN
+    bnez    t0, _halt
+#else
     bnez    t0, _secondary_wait
+#endif
 
     /* ---------------------------------------------------------------
      * Core0: Primary boot
@@ -49,8 +53,8 @@ _primary_boot:
     csrw    mie, zero
     csrw    mstatus, zero
 
-    /* Set up stack pointer (top of TCMB) */
-    la      sp, _stack_top
+    /* Set up stack pointer (hart0 top of the BE-U1000 stack bank) */
+    la      sp, __hart0_stack_top
 
     /* Set up global pointer */
     .option push
@@ -119,6 +123,7 @@ _primary_boot:
 /* ===================================================================
  * Secondary hart (Core1) wait loop
  * =================================================================== */
+#if OS_CFG_SMP_EN
 _secondary_wait:
     csrr    t0, mhartid
     andi    t0, t0, 0x3FF
@@ -136,11 +141,8 @@ _secondary_wait:
     beqz    t2, 5b              /* Spin until non-zero */
     fence
 
-    /* Set up stack for secondary hart (offset by 4KB per hart) */
-    la      sp, _stack_top
-    li      t2, 4096
-    mul     t2, t0, t2
-    sub     sp, sp, t2
+    /* Set up stack for the supported experimental secondary hart. */
+    la      sp, __hart1_stack_top
 
     /* Set up GP */
     .option push
@@ -159,14 +161,11 @@ _secondary_wait:
     li      t1, MSTATUS_MPP | MSTATUS_MPIE | MSTATUS_FS
     csrw    mstatus, t1
 
-    /* Enter the secondary CPU path when SMP is enabled. */
-#if OS_CFG_SMP_EN
+    /* Enter the secondary CPU path. */
     la      t1, os_smp_secondary_start
-#else
-    la      t1, os_kernel_main
-#endif
     csrw    mepc, t1
     mret
+#endif
 
 _halt:
     wfi

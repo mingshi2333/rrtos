@@ -143,17 +143,52 @@ def main() -> None:
     )
     require(
         pixi,
+        'validate-smp-config-matrix = "sh scripts/validate_smp_config_matrix.sh"',
+        "pixi.toml",
+    )
+    require(
+        pixi,
+        'validate-be-u1000-abi-cache = "sh scripts/validate_be_u1000_abi_cache.sh"',
+        "pixi.toml",
+    )
+    require(
+        pixi,
         'default = ["rv32"]',
         "pixi.toml",
     )
     require(
         pixi,
-        'validate-supported-rv32 = { depends-on = ["validate-config-authority", "validate-bsp-seam", "validate-support-contract", "validate-supported-ai", "configure", "build", "report-footprint", "validate-mnist-runtime"] }',
+        'validate-supported-rv32 = { depends-on = ["validate-config-authority", "validate-smp-config-matrix", "validate-bsp-seam", "validate-support-contract", "validate-supported-ai", "configure", "build", "report-footprint", "report-ai-footprint", "validate-mnist-runtime"] }',
         "pixi.toml",
     )
     require(
         pixi,
-        'validate-supported = { depends-on = ["validate-config-authority", "validate-bsp-seam", "validate-support-contract", "configure", "build", "report-footprint", "validate-irq-map", "validate-selftest-sim"] }',
+        'validate-supported = { depends-on = ["validate-config-authority", "validate-smp-config-matrix", "validate-bsp-seam", "validate-support-contract", "configure", "validate-be-u1000-abi-cache", "build", "report-footprint", "validate-irq-map", "validate-selftest-sim"] }',
+        "pixi.toml",
+    )
+    require(
+        pixi,
+        'validate-hal-apps = "python scripts/be_u1000/run_hal_app_matrix.py"',
+        "pixi.toml",
+    )
+    require(
+        pixi,
+        '-DCONFIG_BOARD=be_u1000 -DRISCV_MARCH=rv32imafc_zifencei -DRISCV_MABI=ilp32f -DRISCV_ABI=ilp32d -DCMAKE_BUILD_TYPE=MinSizeRel -DOS_SMP_EN=OFF -DOS_AI_EN=OFF',
+        "pixi.toml",
+    )
+    require(
+        supported_matrix,
+        "The supported BE-U1000 lane validates `RISCV_MARCH=rv32imafc_zifencei`, generated compile flags containing `-march=rv32imafc_zifencei_zicsr`, and `RISCV_MABI=ilp32f`",
+        "docs/SUPPORTED_MATRIX.md",
+    )
+    require(
+        be_u1000_matrix,
+        "The supported BE-U1000 gate now includes an ABI/cache check: `RISCV_MARCH=rv32imafc_zifencei`, generated compile flags containing `-march=rv32imafc_zifencei_zicsr`, and `RISCV_MABI=ilp32f`.",
+        "docs/BE_U1000_RUNTIME_VALIDATION_MATRIX.md",
+    )
+    require(
+        pixi,
+        '-DOS_SMP_EN=OFF -DOS_AI_EN=ON',
         "pixi.toml",
     )
     forbid(pixi, 'build-picolibc = "pixi build"', "pixi.toml")
@@ -220,6 +255,56 @@ def main() -> None:
     )
     require(
         workflow,
+        '      - "ai_models.yaml"',
+        ".github/workflows/firmware-supported-matrix.yml",
+    )
+    require(
+        workflow,
+        '      - "iree-version.lock"',
+        ".github/workflows/firmware-supported-matrix.yml",
+    )
+    require(
+        workflow,
+        '      - "scripts/report_ai_footprint_attribution.sh"',
+        ".github/workflows/firmware-supported-matrix.yml",
+    )
+    require(
+        workflow,
+        '      - "tests/test_report_ai_footprint_attribution.py"',
+        ".github/workflows/firmware-supported-matrix.yml",
+    )
+    require(
+        workflow,
+        '      - "zoo/scripts/tflite_to_iree_c.sh"',
+        ".github/workflows/firmware-supported-matrix.yml",
+    )
+    require(
+        workflow,
+        '      - "multicore/**"',
+        ".github/workflows/firmware-supported-matrix.yml",
+    )
+    require(
+        workflow,
+        '      - "arch/riscv/**"',
+        ".github/workflows/firmware-supported-matrix.yml",
+    )
+    require(
+        workflow,
+        '      - "tests/kernel/**"',
+        ".github/workflows/firmware-supported-matrix.yml",
+    )
+    require(
+        workflow,
+        '      - "scripts/validate_kernel_semantics.py"',
+        ".github/workflows/firmware-supported-matrix.yml",
+    )
+    require(
+        workflow,
+        '      - "scripts/validate_smp_config_matrix.sh"',
+        ".github/workflows/firmware-supported-matrix.yml",
+    )
+    require(
+        workflow,
         '      - "scripts/validate_bsp_seam.py"',
         ".github/workflows/firmware-supported-matrix.yml",
     )
@@ -236,6 +321,11 @@ def main() -> None:
     require(
         workflow,
         "run: pixi run -e be-u1000 validate-supported",
+        ".github/workflows/firmware-supported-matrix.yml",
+    )
+    require(
+        workflow,
+        "run: pixi run validate-kernel-semantics",
         ".github/workflows/firmware-supported-matrix.yml",
     )
     forbid(

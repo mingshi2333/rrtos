@@ -42,6 +42,8 @@ zoo/iree_static/*_rv64.o
 
 # Large Model Files (TFLite) - usually too big for git
 zoo/models/**/*.tflite
+data/
+apps/mnist_app/src/st_mnistv1_custom_sample.h
 
 # Third Party (Managed by submodules)
 third_party/iree/third_party/

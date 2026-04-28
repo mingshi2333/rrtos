@@ -25,9 +25,13 @@ static uint8_t g_idle_stack[OS_SCHED_CPU_SLOTS][OS_CFG_IDLE_STACK_SIZE];
 static volatile bool g_kernel_running = false;
 static os_tcb_t *g_task_table[OS_CFG_TASK_MAX];
 static uint32_t g_task_count;
+static volatile bool g_sched_pending[OS_SCHED_CPU_SLOTS];
 
 #if OS_CFG_SMP_EN
 static os_cpu_data_t g_cpu_data[OS_CFG_CPU_MAX];
+#else
+static volatile uint32_t g_irq_nest[OS_SCHED_CPU_SLOTS];
+static volatile uint32_t g_sched_lock_nest[OS_SCHED_CPU_SLOTS];
 #endif
 
 static void os_list_init(os_list_t *list) {
@@ -65,6 +69,7 @@ static void os_list_remove(os_list_t *list, os_tcb_t *tcb) {
 }
 
 static void task_ready_add(os_tcb_t *tcb);
+static void task_ready_remove(os_tcb_t *tcb);
 void os_sched_wake_task(os_tcb_t *task, os_err_t result);
 
 #if OS_CFG_SMP_EN
@@ -168,6 +173,101 @@ static int bitmap_ffs(uint8_t *bitmap, uint32_t max) {
     return -1;
 }
 
+static uint32_t sched_irq_nest(os_cpu_t cpu) {
+#if OS_CFG_SMP_EN
+    return g_cpu_data[cpu].irq_nest;
+#else
+    return g_irq_nest[cpu];
+#endif
+}
+
+static void sched_irq_inc(os_cpu_t cpu) {
+#if OS_CFG_SMP_EN
+    g_cpu_data[cpu].irq_nest++;
+#else
+    g_irq_nest[cpu]++;
+#endif
+}
+
+static void sched_irq_dec(os_cpu_t cpu) {
+#if OS_CFG_SMP_EN
+    g_cpu_data[cpu].irq_nest--;
+#else
+    g_irq_nest[cpu]--;
+#endif
+}
+
+static uint32_t sched_lock_nest(os_cpu_t cpu) {
+#if OS_CFG_SMP_EN
+    return g_cpu_data[cpu].sched_lock;
+#else
+    return g_sched_lock_nest[cpu];
+#endif
+}
+
+static void sched_lock_inc(os_cpu_t cpu) {
+#if OS_CFG_SMP_EN
+    g_cpu_data[cpu].sched_lock++;
+#else
+    g_sched_lock_nest[cpu]++;
+#endif
+}
+
+static void sched_lock_dec(os_cpu_t cpu) {
+#if OS_CFG_SMP_EN
+    g_cpu_data[cpu].sched_lock--;
+#else
+    g_sched_lock_nest[cpu]--;
+#endif
+}
+
+static bool sched_deferred(os_cpu_t cpu) {
+    return sched_lock_nest(cpu) > 0 || sched_irq_nest(cpu) > 0;
+}
+
+#if OS_CFG_STACK_CHECK_EN
+static void stack_guard_write(void *stack_base) {
+    uint32_t pattern = (uint32_t)OS_CFG_STACK_GUARD_PATTERN;
+    uint8_t *dst = (uint8_t *)stack_base;
+    const uint8_t *src = (const uint8_t *)&pattern;
+
+    for (uint32_t i = 0; i < sizeof(pattern); i++) {
+        dst[i] = src[i];
+    }
+}
+
+static bool stack_guard_matches(const void *stack_base) {
+    uint32_t pattern = (uint32_t)OS_CFG_STACK_GUARD_PATTERN;
+    uint32_t observed = 0;
+    uint8_t *dst = (uint8_t *)&observed;
+    const uint8_t *src = (const uint8_t *)stack_base;
+
+    for (uint32_t i = 0; i < sizeof(observed); i++) {
+        dst[i] = src[i];
+    }
+
+    return observed == pattern;
+}
+
+static bool task_stack_guard_ok(const os_tcb_t *tcb) {
+    if (!tcb || !tcb->stack_base || tcb->stack_size < sizeof(uint32_t)) {
+        return false;
+    }
+
+    return stack_guard_matches(tcb->stack_base);
+}
+
+static void task_stack_guard_fail(os_tcb_t *tcb) {
+    if (!tcb) {
+        return;
+    }
+
+    tcb->state = OS_TASK_TERMINATED;
+    tcb->next = NULL;
+    tcb->prev = NULL;
+}
+#endif
+
 static void task_ready_add(os_tcb_t *tcb) {
     os_list_append(&g_ready_list[tcb->priority], tcb);
     bitmap_set(g_ready_bitmap, tcb->priority);
@@ -224,9 +324,27 @@ static os_tcb_t *sched_highest_ready(os_cpu_t cpu) {
         while (iter) {
 #if OS_CFG_SMP_EN
             if (task_is_schedulable_on_cpu(iter, cpu)) {
+#if OS_CFG_STACK_CHECK_EN
+                if (!task_stack_guard_ok(iter)) {
+                    os_tcb_t *failed = iter;
+                    iter = iter->next;
+                    task_ready_remove(failed);
+                    task_stack_guard_fail(failed);
+                    continue;
+                }
+#endif
                 return iter;
             }
 #else
+#if OS_CFG_STACK_CHECK_EN
+            if (!task_stack_guard_ok(iter)) {
+                os_tcb_t *failed = iter;
+                iter = iter->next;
+                task_ready_remove(failed);
+                task_stack_guard_fail(failed);
+                continue;
+            }
+#endif
             return iter;
 #endif
             iter = iter->next;
@@ -248,7 +366,6 @@ static os_tcb_t *sched_highest_ready(os_cpu_t cpu) {
 }
 
 static void *stack_init(void *stack_base, os_size_t size, os_task_entry_t entry, void *arg) {
-    (void)arg;
     uint8_t *sp = (uint8_t *)stack_base + size;
     
     sp = (uint8_t *)((os_ubase_t)sp & ~0xF);
@@ -261,12 +378,13 @@ static void *stack_init(void *stack_base, os_size_t size, os_task_entry_t entry,
     
     os_reg_t *frame = (os_reg_t *)sp;
     
-    for (int i = 0; i < 14; i++) {
+    for (int i = 0; i < 15; i++) {
         frame[i] = 0;
     }
     
     frame[0] = (os_reg_t)entry;
     frame[13] = MSTATUS_MPP | MSTATUS_MPIE | MSTATUS_MIE | MSTATUS_FS_INITIAL | MSTATUS_VS_INITIAL;
+    frame[14] = (os_reg_t)arg;
     
     return sp;
 }
@@ -284,6 +402,11 @@ void os_kernel_init(void) {
     g_kernel_running = false;
     for (os_cpu_t i = 0; i < OS_SCHED_CPU_SLOTS; i++) {
         g_current_task[i] = NULL;
+        g_sched_pending[i] = false;
+#if !OS_CFG_SMP_EN
+        g_irq_nest[i] = 0;
+        g_sched_lock_nest[i] = 0;
+#endif
     }
     
     os_heap_init(); /* Initialize heap allocator */
@@ -392,7 +515,7 @@ void os_tick_handler(void) {
                 && ready_list_has_peer_for_cpu(current->priority, cpu, current)
 #endif
             ) {
-                task_ready_remove(current);
+                current->state = OS_TASK_READY;
                 task_ready_add(current);
             }
         }
@@ -451,8 +574,7 @@ os_err_t os_task_create(os_tcb_t *tcb, const char *name, os_task_entry_t entry,
 #endif
     
 #if OS_CFG_STACK_CHECK_EN
-    uint32_t *guard = (uint32_t *)stack;
-    *guard = OS_CFG_STACK_GUARD_PATTERN;
+    stack_guard_write(stack);
 #endif
     
     os_reg_t flags = os_spinlock_irq_save(&g_sched_lock);
@@ -529,17 +651,26 @@ os_err_t os_task_resume(os_tcb_t *tcb) {
 void os_task_yield(void) {
     os_cpu_t cpu = os_cpu_id();
     os_tcb_t *current = g_current_task[cpu];
+    bool should_resched = false;
     
     os_reg_t flags = os_spinlock_irq_save(&g_sched_lock);
     
-    if (current && current->state == OS_TASK_RUNNING) {
+    if (current && current->state == OS_TASK_RUNNING
+        && g_ready_list[current->priority].count > 0
+#if OS_CFG_SMP_EN
+        && ready_list_has_peer_for_cpu(current->priority, cpu, current)
+#endif
+    ) {
         current->state = OS_TASK_READY;
         task_ready_add(current);
+        should_resched = true;
     }
     
     os_spinlock_irq_restore(&g_sched_lock, flags);
     
-    os_sched();
+    if (should_resched) {
+        os_sched();
+    }
 }
 
 os_err_t os_task_delay(os_tick_t ticks) {
@@ -611,22 +742,36 @@ os_tcb_t *os_task_self(void) {
 }
 
 void os_sched_lock(void) {
-#if OS_CFG_SMP_EN
     os_cpu_t cpu = os_cpu_id();
-    g_cpu_data[cpu].sched_lock++;
-#endif
+    sched_lock_inc(cpu);
 }
 
 void os_sched_unlock(void) {
-#if OS_CFG_SMP_EN
     os_cpu_t cpu = os_cpu_id();
-    if (g_cpu_data[cpu].sched_lock > 0) {
-        g_cpu_data[cpu].sched_lock--;
-        if (g_cpu_data[cpu].sched_lock == 0) {
+    if (sched_lock_nest(cpu) > 0) {
+        sched_lock_dec(cpu);
+        if (sched_lock_nest(cpu) == 0 && g_sched_pending[cpu]) {
             os_sched();
         }
     }
-#endif
+}
+
+void os_irq_enter(void) {
+    os_cpu_t cpu = os_cpu_id();
+    sched_irq_inc(cpu);
+}
+
+void os_irq_exit(void) {
+    os_cpu_t cpu = os_cpu_id();
+
+    if (sched_irq_nest(cpu) == 0) {
+        return;
+    }
+
+    sched_irq_dec(cpu);
+    if (!sched_deferred(cpu) && g_sched_pending[cpu]) {
+        os_sched();
+    }
 }
 
 void os_sched(void) {
@@ -636,15 +781,20 @@ void os_sched(void) {
     
     os_cpu_t cpu = os_cpu_id();
     
-#if OS_CFG_SMP_EN
-    if (g_cpu_data[cpu].sched_lock > 0 || g_cpu_data[cpu].irq_nest > 0) {
+    if (sched_deferred(cpu)) {
+        g_sched_pending[cpu] = true;
         return;
     }
-#endif
+    g_sched_pending[cpu] = false;
     
     os_reg_t flags = os_spinlock_irq_save(&g_sched_lock);
     
     os_tcb_t *current = g_current_task[cpu];
+#if OS_CFG_STACK_CHECK_EN
+    if (current && current->state == OS_TASK_RUNNING && !task_stack_guard_ok(current)) {
+        task_stack_guard_fail(current);
+    }
+#endif
     os_tcb_t *next = sched_highest_ready(cpu);
     
     if (next != current && next != &g_idle_tcb[cpu]) {

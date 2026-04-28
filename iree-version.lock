@@ -1,6 +1,6 @@
-IREE_RUNTIME_TAG=v3.1.0
-IREE_COMPILER=iree-base-compiler==3.1.0
-IREE_TOOLS_TFLITE=iree-tools-tflite==20250107.1133
+IREE_RUNTIME_TAG=v3.8.0
+IREE_COMPILER=iree-base-compiler==3.8.0
+IREE_TOOLS_TFLITE=iree-tools-tflite==20251010.1410
 TENSORFLOW=tensorflow==2.17.0
-TOOLCHAIN_ENV=iree-toolchain310
-NOTES=Stable combo per iree-org/iree issue #19777
+TOOLCHAIN_ENV=iree-toolchain380
+NOTES=Selected for RRTOS MCU profile: reported Clang20 compatibility, mature LLVMCPU tiling/codegen path, and still-pre-3.11 integration churn.

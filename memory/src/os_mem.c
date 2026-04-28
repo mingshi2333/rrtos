@@ -1,6 +1,37 @@
 #include "os_kernel.h"
 #include "riscv_atomic.h"
 
+static bool os_mem_pool_ptr_valid(const os_mem_pool_t *pool, const void *ptr) {
+    uintptr_t start = (uintptr_t)pool->start;
+    uintptr_t addr = (uintptr_t)ptr;
+    os_size_t total_size;
+
+    if (pool->block_count != 0 &&
+        pool->block_size > ((os_size_t)-1) / pool->block_count) {
+        return false;
+    }
+
+    total_size = pool->block_size * pool->block_count;
+    if (addr < start || addr >= start + total_size) {
+        return false;
+    }
+
+    return ((addr - start) % pool->block_size) == 0;
+}
+
+static bool os_mem_pool_free_list_contains(const os_mem_pool_t *pool, const void *ptr) {
+    const os_mem_block_t *block = pool->free_list;
+
+    while (block) {
+        if ((const void *)block == ptr) {
+            return true;
+        }
+        block = block->next;
+    }
+
+    return false;
+}
+
 os_err_t os_mem_pool_init(os_mem_pool_t *pool, const char *name,
                           void *start, os_size_t block_size, os_size_t block_count) {
     if (!pool || !start || block_size == 0 || block_count == 0) {
@@ -11,6 +42,9 @@ os_err_t os_mem_pool_init(os_mem_pool_t *pool, const char *name,
         block_size = sizeof(os_mem_block_t);
     }
     block_size = OS_ALIGN_UP(block_size, sizeof(void *));
+    if (block_size > ((os_size_t)-1) / block_count) {
+        return OS_EINVAL;
+    }
     
     pool->start = start;
     pool->block_size = block_size;
@@ -70,6 +104,17 @@ os_err_t os_mem_pool_free(os_mem_pool_t *pool, void *ptr) {
     }
     
     os_reg_t flags = os_spinlock_irq_save(&pool->lock);
+
+    if (!os_mem_pool_ptr_valid(pool, ptr)) {
+        os_spinlock_irq_restore(&pool->lock, flags);
+        return OS_EINVAL;
+    }
+
+    if (pool->free_count >= pool->block_count ||
+        os_mem_pool_free_list_contains(pool, ptr)) {
+        os_spinlock_irq_restore(&pool->lock, flags);
+        return OS_EBUSY;
+    }
     
     os_mem_block_t *block = (os_mem_block_t *)ptr;
     block->next = pool->free_list;
@@ -194,6 +239,10 @@ void os_free(void *ptr) {
 }
 
 void *os_calloc(os_size_t count, os_size_t size) {
+    if (count != 0 && size > ((os_size_t)-1) / count) {
+        return NULL;
+    }
+
     os_size_t total = count * size;
     void *ptr = os_malloc(total);
     if (ptr) {

@@ -8,9 +8,9 @@
       "stats": {
         "max": 2375,
         "median": 1187,
-        "min": 1187,
-        "p95": 2375,
-        "stddev": 318
+        "min": 0,
+        "p95": 1188,
+        "stddev": 435
       },
       "units": "host-monotonic-ns"
     },
@@ -20,11 +20,11 @@
       "scenario": "mutex-unlock-to-waiter-handoff",
       "source": "host-monotonic-raw-ns-proxy",
       "stats": {
-        "max": 2375,
+        "max": 1188,
         "median": 1187,
         "min": 0,
-        "p95": 2374,
-        "stddev": 425
+        "p95": 1188,
+        "stddev": 431
       },
       "units": "host-monotonic-ns"
     },
@@ -36,9 +36,9 @@
       "stats": {
         "max": 2375,
         "median": 1187,
-        "min": 1187,
-        "p95": 2374,
-        "stddev": 318
+        "min": 0,
+        "p95": 1188,
+        "stddev": 355
       },
       "units": "host-monotonic-ns"
     }

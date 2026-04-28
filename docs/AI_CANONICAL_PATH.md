@@ -30,3 +30,11 @@
 - The supported AI gate uses committed multi-sample dataset labels as the pass/fail criterion.
 - The validation path normalizes official MNIST byte pixels to the model's expected floating-point input range before inference.
 - A secondary Renode observation lane may compare the canonical AI batch output metrics and hashes against QEMU, but QEMU remains the normative pass/fail gate.
+
+## Code Requirements
+
+- `ai_models.yaml` is the source of truth for supported generated models; it currently declares only `st_mnist_28`.
+- `apps/mnist_app/CMakeLists.txt` should keep the supported app surface to `mnist_app`, `mnist_validation`, and `mnist_preemption_probe` unless the supported matrix is deliberately expanded.
+- New supported models must update `ai_models.yaml`, generated artifacts under `apps/mnist_app/generated/`, validation fixtures, pixi tasks, this document, and `docs/SUPPORTED_MATRIX.md` in the same change.
+- `zoo/` conversion helpers are optional tooling. A generated zoo artifact is not supported until it is wired through the registry contract and validation matrix.
+- Third-party IREE runtime changes are not the project integration point for model ABI glue; compatibility should live in generated wrappers, registry code, or project-owned helper code.

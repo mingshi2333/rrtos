@@ -255,7 +255,8 @@ def compile_model(config, config_path, model, defaults, output_dir):
     run_command(
         [
             iree_tools["iree-compile"],
-            "--iree-hal-target-backends=llvm-cpu",
+            "--iree-hal-target-device=local",
+            "--iree-hal-local-target-device-backends=llvm-cpu",
             f"--iree-llvmcpu-target-triple={target_triple}",
             f"--iree-llvmcpu-target-cpu-features={cpu_features}",
             f"--iree-llvmcpu-target-abi={target_abi}",
@@ -266,6 +267,7 @@ def compile_model(config, config_path, model, defaults, output_dir):
             f"--iree-llvmcpu-static-library-output-path={output_dir}/{output_obj}",
             "--iree-llvmcpu-loop-unrolling=false",
             "--iree-llvmcpu-enable-ukernels=all",
+            "--iree-opt-data-tiling",
             "--iree-stream-partitioning-favor=min-peak-memory",
             "--iree-stream-resource-alias-mutable-bindings",
             "--iree-stream-resource-index-bits=32",

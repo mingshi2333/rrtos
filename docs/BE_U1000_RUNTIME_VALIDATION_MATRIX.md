@@ -8,6 +8,7 @@ normative support-status decisions in `docs/SUPPORTED_MATRIX.md`.
 ## Status labels
 
 - `supported`: part of the default supported workflow
+- `experimental`: useful runtime or log evidence outside the default supported workflow
 - `historical`: older staged SMP notes retained for context, but no longer exposed as maintained pixi tasks
 - `unresolved`: explicit gap remains
 
@@ -39,6 +40,7 @@ normative support-status decisions in `docs/SUPPORTED_MATRIX.md`.
 ## Current interpretation
 
 - `S0` is the supported fallback behavior: both demo tasks share a single scheduler lane (`OS_CFG_CPU_COUNT=1` with `OS_SMP_EN=OFF`) and the board self-test passes.
+- The supported BE-U1000 gate now includes an ABI/cache check: `RISCV_MARCH=rv32imafc_zifencei`, generated compile flags containing `-march=rv32imafc_zifencei_zicsr`, and `RISCV_MABI=ilp32f`.
 - `E0` is the first focused SDK-port proof: it is useful for migration work, but it does not replace the maintained `S0` supported lane.
 - `E1` extends that focused migration proof to button polling semantics; it also remains experimental and does not replace the maintained `S0` supported lane.
 - `E2` extends the focused migration proof to UART output semantics while still staying outside the maintained `S0` supported lane.

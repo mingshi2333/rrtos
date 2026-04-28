@@ -11,6 +11,7 @@ static os_tcb_t g_flash_task_tcb;
 static uint8_t g_flash_task_stack[768];
 static uint32_t g_flash_signature[4];
 static hal_flash_info_t g_flash_info;
+static uint8_t g_page_boundary_sample[8];
 
 static void busy_wait_cycles(uint32_t iterations)
 {
@@ -69,6 +70,23 @@ void os_kernel_main(void)
         }
     }
 
+    if (g_flash_info.page_size < 4u ||
+        hal_flash_read(g_flash_info.page_size - 4u,
+                       g_page_boundary_sample,
+                       sizeof(g_page_boundary_sample)) != 0) {
+        os_print("[QSPI_APP] page boundary: FAIL\n");
+        while (1) {
+        }
+    }
+
+    if (hal_flash_read(BE_U1000_QSPI1_SIZE - 3u,
+                       g_page_boundary_sample,
+                       sizeof(g_page_boundary_sample)) == 0) {
+        os_print("[QSPI_APP] range guard: FAIL\n");
+        while (1) {
+        }
+    }
+
     os_print("[QSPI_APP] qspi_flash ready window=0x%x sig=%x %x %x %x jedec=%x page=%u sector=%u size=%x\n",
              (uint32_t)BE_U1000_QSPI1_BASE,
              g_flash_signature[0],
@@ -79,6 +97,12 @@ void os_kernel_main(void)
              g_flash_info.page_size,
              g_flash_info.sector_size,
              g_flash_info.capacity_bytes);
+    os_print("[QSPI_APP] page boundary: OK (offset=0x%x len=%u)\n",
+             g_flash_info.page_size - 4u,
+             (uint32_t)sizeof(g_page_boundary_sample));
+    os_print("[QSPI_APP] range guard: OK (offset=0x%x len=%u)\n",
+             BE_U1000_QSPI1_SIZE - 3u,
+             (uint32_t)sizeof(g_page_boundary_sample));
     os_print("[QSPI_APP] Initializing kernel...\n");
 
     os_kernel_init();

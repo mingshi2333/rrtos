@@ -98,6 +98,10 @@
 #error "OS_CFG_CPU_COUNT must be 1 when OS_CFG_SMP_EN is disabled"
 #endif
 
+#if OS_CFG_SMP_EN && (OS_CFG_CPU_COUNT < 2)
+#error "OS_CFG_CPU_COUNT must be at least 2 when OS_CFG_SMP_EN is enabled"
+#endif
+
 /** @brief Enable AMP mode support */
 #define OS_CFG_AMP_EN               1
 

@@ -9,6 +9,8 @@ import sys
 import tempfile
 import textwrap
 
+from run_mnist_validation import validate_ai_validation_output
+
 
 def main() -> int:
     parser = argparse.ArgumentParser()
@@ -90,16 +92,10 @@ def main() -> int:
     log_text = log_path.read_text(encoding="utf-8", errors="ignore")
     sys.stdout.write(log_text)
 
-    if "AI_VALIDATION_PASS" not in log_text:
-        print("AI Renode validation error: missing AI_VALIDATION_PASS token")
-        return 1
-
-    if "AI_VALIDATION_METRICS:" not in log_text:
-        print("AI Renode validation error: missing AI_VALIDATION_METRICS token")
-        return 1
-
-    if "OS_TIMER_CALLBACK_PASS" not in log_text:
-        print("AI Renode validation error: missing OS_TIMER_CALLBACK_PASS token")
+    validation_errors = validate_ai_validation_output(log_text)
+    if validation_errors:
+        for error in validation_errors:
+            print(f"AI Renode validation error: {error}")
         return 1
 
     return 0

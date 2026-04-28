@@ -81,6 +81,51 @@ static int test_semaphore_ready_path(void) {
     return 0;
 }
 
+static int test_semaphore_reset_aborts_waiters_and_sets_count(void) {
+    os_sem_t sem;
+    os_tcb_t waiter_a = {0};
+    os_tcb_t waiter_b = {0};
+    uint8_t stack_a[OS_CFG_STACK_SIZE_MIN] = {0};
+    uint8_t stack_b[OS_CFG_STACK_SIZE_MIN] = {0};
+
+    os_test_kernel_reset();
+
+    OS_TEST_ASSERT(os_sem_init(&sem, "sem-reset", 0, 2) == OS_EOK);
+    OS_TEST_ASSERT(os_task_create(&waiter_a, "sem-waiter-a", noop_task, NULL, 3,
+                                  stack_a, sizeof(stack_a)) == OS_EOK);
+    OS_TEST_ASSERT(os_task_create(&waiter_b, "sem-waiter-b", noop_task, NULL, 4,
+                                  stack_b, sizeof(stack_b)) == OS_EOK);
+
+    os_test_bind_current_task(&waiter_a);
+    (void)os_sem_take(&sem, 5);
+
+    os_test_bind_current_task(&waiter_b);
+    (void)os_sem_take(&sem, 5);
+
+    OS_TEST_ASSERT(sem.wait_list.count == 2);
+    OS_TEST_ASSERT(waiter_a.state == OS_TASK_BLOCKED);
+    OS_TEST_ASSERT(waiter_b.state == OS_TASK_BLOCKED);
+
+    OS_TEST_ASSERT(os_sem_reset(&sem, 1) == OS_EOK);
+
+    OS_TEST_ASSERT(sem.count == 1);
+    OS_TEST_ASSERT(sem.wait_list.count == 0);
+    OS_TEST_ASSERT(waiter_a.pending_result == OS_ERROR);
+    OS_TEST_ASSERT(waiter_b.pending_result == OS_ERROR);
+    OS_TEST_ASSERT(waiter_a.pending_ipc == NULL);
+    OS_TEST_ASSERT(waiter_b.pending_ipc == NULL);
+    OS_TEST_ASSERT(waiter_a.state == OS_TASK_READY);
+    OS_TEST_ASSERT(waiter_b.state == OS_TASK_READY);
+    OS_TEST_ASSERT(os_test_task_in_ready_queue(&waiter_a));
+    OS_TEST_ASSERT(os_test_task_in_ready_queue(&waiter_b));
+
+    OS_TEST_ASSERT(os_sem_take(&sem, OS_NO_WAIT) == OS_EOK);
+    OS_TEST_ASSERT(sem.count == 0);
+    OS_TEST_ASSERT(os_sem_reset(&sem, 3) == OS_EINVAL);
+
+    return 0;
+}
+
 static int test_mutex_unlock_ready_handoff(void) {
     os_mutex_t mutex;
     os_tcb_t owner = {0};
@@ -211,6 +256,7 @@ static int test_queue_send_block_and_timeout(void) {
 
 int os_test_suite_ipc_semantics(void) {
     OS_TEST_ASSERT(test_semaphore_ready_path() == 0);
+    OS_TEST_ASSERT(test_semaphore_reset_aborts_waiters_and_sets_count() == 0);
     OS_TEST_ASSERT(test_mutex_unlock_ready_handoff() == 0);
     OS_TEST_ASSERT(test_queue_recv_wake_path() == 0);
     OS_TEST_ASSERT(test_queue_send_block_and_timeout() == 0);

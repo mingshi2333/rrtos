@@ -20,9 +20,9 @@ The values below are not hardware cycles; they come from the `os_cycle_get()` ho
 
 | Metric | Units | Source | Samples | Min | Median | p95 | Max | Stddev |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| queue_send_to_blocked_recv_handoff | host-monotonic-ns | host-monotonic-raw-ns-proxy | 64 | 1187 | 1187 | 2375 | 2375 | 318 |
-| mutex_unlock_to_waiter_handoff | host-monotonic-ns | host-monotonic-raw-ns-proxy | 64 | 0 | 1187 | 2374 | 2375 | 425 |
-| sem_give_to_blocked_waiter_handoff | host-monotonic-ns | host-monotonic-raw-ns-proxy | 64 | 1187 | 1187 | 2374 | 2375 | 318 |
+| queue_send_to_blocked_recv_handoff | host-monotonic-ns | host-monotonic-raw-ns-proxy | 64 | 0 | 1187 | 1188 | 2375 | 435 |
+| mutex_unlock_to_waiter_handoff | host-monotonic-ns | host-monotonic-raw-ns-proxy | 64 | 0 | 1187 | 1188 | 1188 | 431 |
+| sem_give_to_blocked_waiter_handoff | host-monotonic-ns | host-monotonic-raw-ns-proxy | 64 | 0 | 1187 | 1188 | 2375 | 355 |
 
 ## Notes
 

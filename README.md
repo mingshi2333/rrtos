@@ -59,10 +59,13 @@ What this validates on top of the RTOS lane:
 
 - registry-backed runtime initialization
 - one supported model: `st_mnist_28`
+- model ownership through `ai_models.yaml` and generated artifacts under `apps/mnist_app/generated/`
 - a five-sample official MNIST batch with label-based pass/fail on QEMU
 - optional QEMU-vs-Renode output cross-check using per-sample metrics and hashes
 
 The runtime gate now passes only when the committed sample batch predicts the correct MNIST labels. The logs still emit per-sample hashes so QEMU and Renode runs can be compared for drift.
+
+`zoo/` remains optional model-conversion tooling. A zoo-generated model is not supported until it is promoted through `ai_models.yaml`, the registry contract, deterministic validation, and `docs/SUPPORTED_MATRIX.md`.
 
 ## Project map
 

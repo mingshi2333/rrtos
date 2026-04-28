@@ -3,6 +3,7 @@
 ## Authoritative docs
 
 - `docs/SUPPORTED_MATRIX.md` - RTOS-first supported firmware lanes, subordinate AI extensions, and experimental scope
+- `docs/HAL_CONFIGURATION.md` - lightweight HAL feature configuration model and validation commands
 - `docs/AI_CANONICAL_PATH.md` - canonical AI API, codegen path, and runtime validation rules
 - `docs/CURRENT_FOOTPRINT_BASELINE.md` - current supported-lane footprint summary from generated build artifacts
 - `docs/FOOTPRINT_OPTIMIZATION_BACKLOG.md` - ranked low-risk and medium-risk footprint work with expected gain, risk, and dependency
@@ -10,7 +11,7 @@
 - `docs/BE_U1000_MULTICORE_NOTES.md` - board facts, repo assumptions, and staged multicore strategy for BE-U1000
 - `docs/BE_U1000_RUNTIME_VALIDATION_MATRIX.md` - supported runtime validation story plus historical SMP notes for BE-U1000
 - `docs/BE_U1000_SDK_COMPARISON.md` - SDK-to-rrtos feature comparison and added board HAL supplements
-- `docs/EVU_BA_PINMAP.md` - EVU-BA-2.3 connector/header pin mapping recovered from the schematic tail pages
+- `docs/EVU_BA_PINMAP.md` - EVU-BA-2.3 connector/header pin mapping checked against the official board instruction
 - `docs/EVU_BA_2_3_BOARD_INVENTORY.md` - proof that the active `be_u1000` lane is already EVU-BA-2.3-shaped and what is complete vs partial
 - `docs/EVU_BA_2_3_RTOS_BRINGUP_BASELINE.md` - repo-vs-mainstream RTOS baseline for the current EVU-BA-2.3 board lane
 - `docs/EVU_BA_2_3_PHASE1_VALIDATION_PLAN.md` - phase-one validation plan for the current EVU-BA-2.3 board lane
@@ -27,6 +28,7 @@
 Generated build evidence for the current supported lanes is emitted next to the built artifacts:
 
 - `build/apps/mnist_app/mnist_validation_footprint.md`
+- `build/apps/mnist_app/mnist_validation_ai_footprint.md`
 - `build-be_u1000/rrtos_be_u1000_footprint.md`
 - `logs/be_u1000_smp_probe.md` for the experimental SMP probe
 
@@ -46,5 +48,6 @@ These files capture prior investigation or migration context. They are useful fo
 1. `README.md`
 2. `docs/SUPPORTED_MATRIX.md`
 3. `docs/switching_guide.md`
-4. `docs/AI_CANONICAL_PATH.md`
-5. `boards/be_u1000/DFU_FLASHING_GUIDE.md` or `apps/mnist_app/README.md`
+4. `docs/HAL_CONFIGURATION.md`
+5. `docs/AI_CANONICAL_PATH.md`
+6. `docs/FOOTPRINT_OPTIMIZATION_BACKLOG.md` for footprint work, or `boards/be_u1000/DFU_FLASHING_GUIDE.md` for board flashing

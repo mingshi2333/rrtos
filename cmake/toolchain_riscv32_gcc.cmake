@@ -43,10 +43,12 @@ set(CMAKE_OBJDUMP ${CROSS_PREFIX}objdump)
 set(CMAKE_SIZE ${CROSS_PREFIX}size)
 set(CMAKE_AR ${CROSS_PREFIX}ar)
 
-# RISC-V architecture flags for BE-U1000
-# Base: rv32imafc (Integer, Multiply, Atomic, Float, Compressed)
-set(RISCV_MARCH "rv32imafc_zicsr_zifencei" CACHE STRING "RISC-V march for BE-U1000")
+# RISC-V architecture flags for BE-U1000.
+# Base: rv32imafc (Integer, Multiply, Atomic, Float, Compressed). The
+# top-level RV32 flag path appends zicsr, so keep zifencei in the cache value.
+set(RISCV_MARCH "rv32imafc_zifencei" CACHE STRING "RISC-V march for BE-U1000")
 set(RISCV_MABI "ilp32f" CACHE STRING "RISC-V mabi for BE-U1000")
+set(RISCV_ABI "ilp32d" CACHE STRING "RISC-V ABI selector for BE-U1000")
 
 set(CMAKE_C_FLAGS_INIT
     "-march=${RISCV_MARCH} -mabi=${RISCV_MABI} -mcmodel=medlow \

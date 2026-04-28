@@ -57,6 +57,8 @@ SECTIONS
     . = ALIGN(8);
     _heap_start = .;
     _heap_end = ORIGIN(RAM) + LENGTH(RAM) - STACK_SIZE;
+    PROVIDE(__heap_start = _heap_start);
+    PROVIDE(__heap_end = _heap_end);
 
     .stack (NOLOAD) :
     {

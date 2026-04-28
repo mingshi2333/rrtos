@@ -5,16 +5,16 @@
       "image": "mnist_validation",
       "metric": "kernel_archive_bytes",
       "status": "pass",
-      "threshold_max": 14705,
-      "value": 14705
+      "threshold_max": 14741,
+      "value": 14741
     },
     {
       "artifact": "build-be_u1000/rrtos_be_u1000_footprint.md",
       "image": "rrtos_be_u1000",
       "metric": "kernel_archive_bytes",
       "status": "pass",
-      "threshold_max": 14169,
-      "value": 14169
+      "threshold_max": 14205,
+      "value": 14205
     },
     {
       "artifact": "build-be_u1000/rrtos_be_u1000_footprint.md",
@@ -29,13 +29,13 @@
     {
       "artifact": "build/apps/mnist_app/mnist_validation_footprint.md",
       "image": "mnist_validation",
-      "kernel_archive_bytes": 14705,
+      "kernel_archive_bytes": 14741,
       "total_bytes": 657575
     },
     {
       "artifact": "build-be_u1000/rrtos_be_u1000_footprint.md",
       "image": "rrtos_be_u1000",
-      "kernel_archive_bytes": 14169,
+      "kernel_archive_bytes": 14205,
       "total_bytes": 122401
     }
   ],
@@ -60,11 +60,11 @@
       "scenario": "mutex-unlock-to-waiter-handoff",
       "source": "host-monotonic-raw-ns-proxy",
       "stats": {
-        "max": 2375,
+        "max": 2374,
         "median": 1187,
         "min": 0,
-        "p95": 2374,
-        "stddev": 419
+        "p95": 1188,
+        "stddev": 256
       },
       "units": "host-monotonic-ns"
     },
@@ -74,11 +74,11 @@
       "scenario": "sem-give-to-blocked-waiter-handoff",
       "source": "host-monotonic-raw-ns-proxy",
       "stats": {
-        "max": 2374,
+        "max": 2375,
         "median": 1187,
         "min": 0,
-        "p95": 1188,
-        "stddev": 209
+        "p95": 2375,
+        "stddev": 469
       },
       "units": "host-monotonic-ns"
     }
@@ -108,11 +108,11 @@
       "scenario": "mnist-validation-runtime",
       "source": "supported-rv32-log",
       "units": "ticks",
-      "value": 20
+      "value": 22
     },
     {
       "artifact": "logs/mnist_preemption_probe_qemu.log",
-      "counter": 798027,
+      "counter": 1213832,
       "name": "preemption_resume_tick",
       "scenario": "mnist-preemption-probe",
       "source": "supported-rv32-log",

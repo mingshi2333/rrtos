@@ -10,6 +10,7 @@ enable_testing()
 set(REPO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../..")
 
 add_executable(kernel_semantics_tests
+    ${REPO_ROOT}/memory/src/os_mem.c
     ${REPO_ROOT}/kernel/src/os_sched.c
     ${REPO_ROOT}/kernel/src/os_ipc.c
     ${REPO_ROOT}/kernel/src/os_timer.c
@@ -19,6 +20,7 @@ add_executable(kernel_semantics_tests
     test_sched_semantics.c
     test_ipc_semantics.c
     test_timer_semantics.c
+    test_mem_semantics.c
     test_baseline_metrics.c
     test_microbench_metrics.c
 )
@@ -39,6 +41,7 @@ target_include_directories(kernel_semantics_tests PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/support/include
     ${REPO_ROOT}/kernel/include
+    ${REPO_ROOT}/memory/include
     ${REPO_ROOT}/config
     ${REPO_ROOT}/hal/include
 )

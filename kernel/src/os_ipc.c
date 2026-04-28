@@ -173,6 +173,31 @@ os_err_t os_sem_give(os_sem_t *sem) {
     return OS_EFULL;
 }
 
+os_err_t os_sem_reset(os_sem_t *sem, int32_t count) {
+    if (!sem || count < 0 || count > sem->max_count) {
+        return OS_EINVAL;
+    }
+
+    bool woke_waiters = false;
+    os_reg_t flags = os_spinlock_irq_save(&sem->lock);
+
+    sem->count = count;
+
+    while (sem->wait_list.head) {
+        os_tcb_t *task = os_ipc_wait_list_pop_head(&sem->wait_list);
+        os_sched_wake_task(task, OS_ERROR);
+        woke_waiters = true;
+    }
+
+    os_spinlock_irq_restore(&sem->lock, flags);
+
+    if (woke_waiters) {
+        os_sched();
+    }
+
+    return OS_EOK;
+}
+
 os_err_t os_mutex_init(os_mutex_t *mutex, const char *name) {
     if (!mutex) {
         return OS_EINVAL;

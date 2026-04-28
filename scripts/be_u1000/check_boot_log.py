@@ -187,6 +187,10 @@ def main() -> int:
         "[CHK] CANFD0 irq-fire: OK",
         "[CHK] CANFD0 loopback: OK",
         "[CHK] CANFD0 settle: OK",
+        "[CHK] CANFD0 guard invalid-dlc: OK",
+        "[CHK] CANFD0 guard loopback-required: OK",
+        "[CHK] FLASH page-boundary: OK",
+        "[CHK] FLASH range-guard: OK",
         "[CHK] CANFD1 irq-arm: OK",
         "[CHK] CANFD1 init: OK",
         "[CHK] CANFD1 state: OK",
@@ -195,6 +199,8 @@ def main() -> int:
         "[CHK] CANFD1 irq-fire: OK",
         "[CHK] CANFD1 loopback: OK",
         "[CHK] CANFD1 settle: OK",
+        "[CHK] CANFD1 guard invalid-dlc: OK",
+        "[CHK] CANFD1 guard loopback-required: OK",
         "[BOOT] Starting scheduler...",
     ]
     ordered_tokens = [

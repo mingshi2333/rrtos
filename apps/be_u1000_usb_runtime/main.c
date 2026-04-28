@@ -56,55 +56,47 @@ static void usb_runtime_task(void *arg)
     (void)arg;
 
     while (1) {
-        rc = hal_usb_set_index((uint8_t)(tick & 0x3u));
-        if (rc != 0) {
-            os_print("[USB_APP] set index failed rc=%d idx=%u\n", rc, tick & 0x3u);
-            delay_rc = os_task_delay(100);
-            if (delay_rc != OS_EOK) {
-                os_print("[USB_APP] task delay failed rc=%d\n", (int)delay_rc);
-                while (1) {
-                }
-            }
-            continue;
-        }
+        for (uint32_t sample = 0; sample < 8u; sample++) {
+            uint32_t index = tick & 0x3u;
 
-        rc = hal_usb_get_runtime_state(&state);
-        if (rc != 0) {
-            os_print("[USB_APP] runtime state failed rc=%d idx=%u\n", rc, tick & 0x3u);
-            delay_rc = os_task_delay(100);
-            if (delay_rc != OS_EOK) {
-                os_print("[USB_APP] task delay failed rc=%d\n", (int)delay_rc);
-                while (1) {
-                }
+            rc = hal_usb_set_index((uint8_t)index);
+            if (rc != 0) {
+                os_print("[USB_APP] set index failed rc=%d idx=%u\n", rc, index);
+                break;
             }
-            continue;
-        }
 
-        os_print("[USB_APP] tick %u intr=0x%x intrtx=0x%x idx=%u cfg=0x%x power=0x%x txmaxp=0x%x rxmaxp=0x%x csr0=0x%x count0=%u txcsr=0x%x rxcsr=0x%x rxcount=%u frame=%u view=%s role=%s maxp=0x%x csrsel=%s csr=0x%x csr-valid=%u countsel=%s count=%u count-valid=%u ready=%u\n",
-                 tick++,
-                 (uint32_t)state.controller.intrusb,
-                 (uint32_t)state.controller.intrtx,
-                 (uint32_t)state.controller.index,
-                 (uint32_t)state.controller.configdata,
-                 (uint32_t)state.controller.power,
-                 (uint32_t)state.endpoint.txmaxp,
-                 (uint32_t)state.endpoint.rxmaxp,
-                 (uint32_t)state.endpoint.csr0,
-                 (uint32_t)state.endpoint.count0,
-                 (uint32_t)state.endpoint.txcsr,
-                 (uint32_t)state.endpoint.rxcsr,
-                 (uint32_t)state.endpoint.rxcount,
-                 (uint32_t)state.controller.frame,
-                 usb_view_name(state.endpoint.register_view),
-                 usb_role_name(state.endpoint.role),
-                 (uint32_t)state.endpoint.max_packet,
-                 usb_csr_name(state.endpoint.csr_kind),
-                 (uint32_t)state.endpoint.csr_value,
-                 state.endpoint.csr_valid ? 1u : 0u,
-                 usb_count_name(state.endpoint.count_kind),
-                 (uint32_t)state.endpoint.count_value,
-                 state.endpoint.count_valid ? 1u : 0u,
-                 state.endpoint.ready ? 1u : 0u);
+            rc = hal_usb_get_runtime_state(&state);
+            if (rc != 0) {
+                os_print("[USB_APP] runtime state failed rc=%d idx=%u\n", rc, index);
+                break;
+            }
+
+            os_print("[USB_APP] tick %u intr=0x%x intrtx=0x%x idx=%u cfg=0x%x power=0x%x txmaxp=0x%x rxmaxp=0x%x csr0=0x%x count0=%u txcsr=0x%x rxcsr=0x%x rxcount=%u frame=%u view=%s role=%s maxp=0x%x csrsel=%s csr=0x%x csr-valid=%u countsel=%s count=%u count-valid=%u ready=%u\n",
+                     tick++,
+                     (uint32_t)state.controller.intrusb,
+                     (uint32_t)state.controller.intrtx,
+                     (uint32_t)state.controller.index,
+                     (uint32_t)state.controller.configdata,
+                     (uint32_t)state.controller.power,
+                     (uint32_t)state.endpoint.txmaxp,
+                     (uint32_t)state.endpoint.rxmaxp,
+                     (uint32_t)state.endpoint.csr0,
+                     (uint32_t)state.endpoint.count0,
+                     (uint32_t)state.endpoint.txcsr,
+                     (uint32_t)state.endpoint.rxcsr,
+                     (uint32_t)state.endpoint.rxcount,
+                     (uint32_t)state.controller.frame,
+                     usb_view_name(state.endpoint.register_view),
+                     usb_role_name(state.endpoint.role),
+                     (uint32_t)state.endpoint.max_packet,
+                     usb_csr_name(state.endpoint.csr_kind),
+                     (uint32_t)state.endpoint.csr_value,
+                     state.endpoint.csr_valid ? 1u : 0u,
+                     usb_count_name(state.endpoint.count_kind),
+                     (uint32_t)state.endpoint.count_value,
+                     state.endpoint.count_valid ? 1u : 0u,
+                     state.endpoint.ready ? 1u : 0u);
+        }
         delay_rc = os_task_delay(100);
         if (delay_rc != OS_EOK) {
             os_print("[USB_APP] task delay failed rc=%d\n", (int)delay_rc);
