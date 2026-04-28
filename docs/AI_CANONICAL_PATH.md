@@ -7,6 +7,7 @@
 - Toolchain resolution uses `IREE_TOOLCHAIN_ROOT` when set, otherwise tries the locked env from `iree-version.lock` before falling back to tools on `PATH`
 - Model source resolution uses `RRTOS_AI_MODEL_DIR` when set, otherwise resolves relative paths from `ai_models.yaml`
 - The current supported `st_mnist_28` source is `third_party/iree/samples/models/mnist.mlir`
+- IREE runtime source is pinned by `third_party/iree` and `iree-version.lock`; the current runtime tag is `v3.8.0`
 
 ## Validation fixtures
 
@@ -38,3 +39,5 @@
 - New supported models must update `ai_models.yaml`, generated artifacts under `apps/mnist_app/generated/`, validation fixtures, pixi tasks, this document, and `docs/SUPPORTED_MATRIX.md` in the same change.
 - `zoo/` conversion helpers are optional tooling. A generated zoo artifact is not supported until it is wired through the registry contract and validation matrix.
 - Third-party IREE runtime changes are not the project integration point for model ABI glue; compatibility should live in generated wrappers, registry code, or project-owned helper code.
+- CI initializes only the IREE runtime submodule subset needed by this lane: `benchmark`, `cpuinfo`, `flatcc`, and `googletest`.
+- Do not reintroduce recursive IREE submodule checkout into the supported CI path; the compiler/GPU nested dependencies are outside the supported runtime surface.

@@ -2,6 +2,11 @@
 
 ## Authoritative docs
 
+- `docs/ARCHITECTURE.md` - repository layering, supported firmware lanes, HAL/AI boundaries, and CI architecture
+- `docs/GETTING-STARTED.md` - setup sequence, dependency initialization, and first validation commands
+- `docs/DEVELOPMENT.md` - development workflow, promotion rules, and commit hygiene
+- `docs/TESTING.md` - blocking validation gates, observation lanes, Python tests, and CI triage
+- `docs/CONFIGURATION.md` - Pixi environments, CMake options, HAL feature selection, IREE runtime subset, and RV32 libgcc handling
 - `docs/SUPPORTED_MATRIX.md` - RTOS-first supported firmware lanes, subordinate AI extensions, and experimental scope
 - `docs/HAL_CONFIGURATION.md` - lightweight HAL feature configuration model and validation commands
 - `docs/AI_CANONICAL_PATH.md` - canonical AI API, codegen path, and runtime validation rules
@@ -46,8 +51,13 @@ These files capture prior investigation or migration context. They are useful fo
 ## Reading order for new contributors
 
 1. `README.md`
-2. `docs/SUPPORTED_MATRIX.md`
-3. `docs/switching_guide.md`
-4. `docs/HAL_CONFIGURATION.md`
-5. `docs/AI_CANONICAL_PATH.md`
-6. `docs/FOOTPRINT_OPTIMIZATION_BACKLOG.md` for footprint work, or `boards/be_u1000/DFU_FLASHING_GUIDE.md` for board flashing
+2. `docs/GETTING-STARTED.md`
+3. `docs/SUPPORTED_MATRIX.md`
+4. `docs/ARCHITECTURE.md`
+5. `docs/CONFIGURATION.md`
+6. `docs/TESTING.md`
+7. `docs/DEVELOPMENT.md`
+8. `docs/switching_guide.md`
+9. `docs/HAL_CONFIGURATION.md`
+10. `docs/AI_CANONICAL_PATH.md`
+11. `docs/FOOTPRINT_OPTIMIZATION_BACKLOG.md` for footprint work, or `boards/be_u1000/DFU_FLASHING_GUIDE.md` for board flashing

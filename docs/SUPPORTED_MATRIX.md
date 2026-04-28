@@ -18,6 +18,9 @@ This file is the normative support-status registry for the repository. The repos
   - `pixi run -e rv32 observe-mnist-runtime-renode` and `pixi run -e rv32 compare-mnist-runtime-platforms` as optional cross-platform AI observation lanes
   - `pixi run -e be-u1000 validate-supported` as the normative supported BE-U1000 gate
   - `pixi run -e be-u1000 validate-hal-apps` as an explicit BE-U1000 HAL app matrix observation lane; it is not part of the blocking supported gate until promoted here
+- CI checkout policy:
+  - RV32 initializes `third_party/iree` plus the runtime submodules needed by the supported build
+  - BE-U1000 leaves IREE uninitialized because the supported board lane uses `OS_AI_EN=OFF`
 - HAL configuration:
   - `RRTOS_HAL_FEATURES=auto` maps each `BE_U1000_APP` to an explicit lightweight HAL feature set
   - BE-U1000 non-AI lanes use `OS_AI_EN=OFF`; the supported RV32 AI lane uses `OS_AI_EN=ON`
@@ -39,3 +42,4 @@ This file is the normative support-status registry for the repository. The repos
 - Optional observation or comparison lanes do not promote a path to supported status.
 - New supported boards or AI entrypoints must update this file and the validation matrix together.
 - New supported AI models must update `ai_models.yaml`, generated artifacts, deterministic runtime validation, and the maintained pixi task surface together.
+- Supported CI must not use recursive IREE submodule checkout unless the supported matrix is deliberately expanded to require the full upstream IREE dependency graph.

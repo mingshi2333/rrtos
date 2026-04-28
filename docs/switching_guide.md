@@ -41,6 +41,15 @@ This lane covers:
 - interrupt-map consistency
 - simulated boot-log validation
 
+Use the HAL app matrix when you need broader peripheral observation evidence:
+
+```bash
+pixi run -e be-u1000 validate-hal-apps
+```
+
+This matrix is useful during HAL work, but it remains an observation lane unless
+promoted in `docs/SUPPORTED_MATRIX.md`.
+
 ## Experimental lanes
 
 The following remain in-tree, but they are not the main evidence of correctness:
@@ -55,3 +64,12 @@ The following remain in-tree, but they are not the main evidence of correctness:
 - Use `QEMU` for canonical AI runtime regression on `qemu_virt`
 - Use `Renode` for BE-U1000 board, interrupt, and peripheral behavior checks
 - Use optional `QEMU` vs `Renode` AI comparison only when you want cross-platform confidence on the canonical AI sample batch
+
+## Which document to update
+
+- Supported or experimental status: `docs/SUPPORTED_MATRIX.md`
+- Build and lane options: `docs/CONFIGURATION.md`
+- Runtime architecture or layering: `docs/ARCHITECTURE.md`
+- Validation behavior: `docs/TESTING.md`
+- AI model/runtime contract: `docs/AI_CANONICAL_PATH.md`
+- BE-U1000 HAL feature selection: `docs/HAL_CONFIGURATION.md`
