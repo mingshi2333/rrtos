@@ -5,6 +5,7 @@ on:
     branches: [main, master]
     paths:
       - "CMakeLists.txt"
+      - "cmake/**"
       - "config/**"
       - "kernel/**"
       - "multicore/**"
@@ -45,6 +46,7 @@ on:
   pull_request:
     paths:
       - "CMakeLists.txt"
+      - "cmake/**"
       - "config/**"
       - "kernel/**"
       - "multicore/**"
