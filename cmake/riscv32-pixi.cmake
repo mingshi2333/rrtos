@@ -69,32 +69,14 @@ set(CMAKE_CXX_FLAGS_INIT "${RISCV_FLAGS} -ffreestanding -nostdlib -nostartfiles 
 # selected multilib clearly names an RV32/ILP32 variant.
 set(LIBGCC_PATH "")
 set(LIBGCC_PROBE "")
-foreach(LIBGCC_CANDIDATE riscv64-unknown-elf-gcc riscv64-linux-gnu-gcc)
-  execute_process(
-    COMMAND ${LIBGCC_CANDIDATE} -march=${RISCV_MARCH} -mabi=${RISCV_MABI} -print-libgcc-file-name
-    OUTPUT_VARIABLE LIBGCC_CANDIDATE_PATH
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    ERROR_QUIET
-    RESULT_VARIABLE LIBGCC_CANDIDATE_RC
-  )
-  execute_process(
-    COMMAND ${LIBGCC_CANDIDATE} -march=${RISCV_MARCH} -mabi=${RISCV_MABI} -print-multi-directory
-    OUTPUT_VARIABLE LIBGCC_CANDIDATE_MULTILIB
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    ERROR_QUIET
-  )
-  if(LIBGCC_CANDIDATE_RC EQUAL 0 AND LIBGCC_CANDIDATE_PATH AND EXISTS "${LIBGCC_CANDIDATE_PATH}" AND
-      (LIBGCC_CANDIDATE_PATH MATCHES "/lib32/" OR LIBGCC_CANDIDATE_MULTILIB MATCHES "(rv32|ilp32)"))
-    set(LIBGCC_PATH "${LIBGCC_CANDIDATE_PATH}")
-    set(LIBGCC_PROBE "${LIBGCC_CANDIDATE}")
-    break()
-  endif()
-endforeach()
 
-if(NOT LIBGCC_PATH AND RISCV_MABI STREQUAL "ilp32f")
+if(EXISTS "${PICOLIBC_ROOT}/lib/libgcc.a")
+  set(LIBGCC_PATH "${PICOLIBC_ROOT}/lib/libgcc.a")
+  set(LIBGCC_PROBE "picolibc-rv32 local compiler builtins")
+else()
   foreach(LIBGCC_CANDIDATE riscv64-unknown-elf-gcc riscv64-linux-gnu-gcc)
     execute_process(
-      COMMAND ${LIBGCC_CANDIDATE} -march=rv32imac -mabi=ilp32 -print-libgcc-file-name
+      COMMAND ${LIBGCC_CANDIDATE} -march=${RISCV_MARCH} -mabi=${RISCV_MABI} -print-libgcc-file-name
       OUTPUT_VARIABLE LIBGCC_CANDIDATE_PATH
       OUTPUT_STRIP_TRAILING_WHITESPACE
       ERROR_QUIET
@@ -109,7 +91,7 @@ if(NOT LIBGCC_PATH AND RISCV_MABI STREQUAL "ilp32f")
     if(LIBGCC_CANDIDATE_RC EQUAL 0 AND LIBGCC_CANDIDATE_PATH AND EXISTS "${LIBGCC_CANDIDATE_PATH}" AND
         (LIBGCC_CANDIDATE_PATH MATCHES "/lib32/" OR LIBGCC_CANDIDATE_MULTILIB MATCHES "(rv32|ilp32)"))
       set(LIBGCC_PATH "${LIBGCC_CANDIDATE_PATH}")
-      set(LIBGCC_PROBE "${LIBGCC_CANDIDATE} ilp32 multilib fallback")
+      set(LIBGCC_PROBE "${LIBGCC_CANDIDATE}")
       break()
     endif()
   endforeach()
@@ -124,12 +106,10 @@ else()
   set(CMAKE_EXE_LINKER_FLAGS_INIT "${RISCV_FLAGS} -nostdlib -nostartfiles -static -fuse-ld=lld -Wl,--gc-sections -Wl,--no-relax")
 endif()
 
-if(DEFINED CONFIG_BOARD AND CONFIG_BOARD STREQUAL "be_u1000")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_INIT}" CACHE STRING "C compiler flags" FORCE)
-  set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS_INIT}" CACHE STRING "ASM compiler flags" FORCE)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_INIT}" CACHE STRING "CXX compiler flags" FORCE)
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS_INIT}" CACHE STRING "Executable linker flags" FORCE)
-endif()
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_INIT}" CACHE STRING "C compiler flags" FORCE)
+set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS_INIT}" CACHE STRING "ASM compiler flags" FORCE)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_INIT}" CACHE STRING "CXX compiler flags" FORCE)
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS_INIT}" CACHE STRING "Executable linker flags" FORCE)
 
 # Don't try to compile test programs
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)

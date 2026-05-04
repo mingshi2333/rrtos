@@ -1,0 +1,19 @@
+project_name: rrtos_be_u1000_ai_micro
+app_name: be_u1000_ai_micro_demo
+generate_app_scaffolding: false
+
+toolchain:
+  root_env: IREE_TOOLCHAIN_ROOT
+  tflite_toolchain_env: iree-toolchain310
+
+defaults:
+  target_arch: rv32
+  target_abi: ilp32f
+  cpu_features: +m,+a,+f,+zifencei
+  enable_llvmcpu_microkernels: false
+  enable_data_tiling: false
+  enable_stream_memory_flags: false
+
+models:
+  - name: be_u1000_hello_world_float
+    file: apps/be_u1000_ai_micro_demo/model/hello_world_float.tflite

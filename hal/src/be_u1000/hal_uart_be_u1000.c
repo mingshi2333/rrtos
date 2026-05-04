@@ -16,6 +16,7 @@
  *   MSR      = base + 0x18  (Modem Status)
  *   SCR      = base + 0x1C  (Scratch)
  *   USR      = base + 0x7C  (UART Status)
+ *   DLF      = base + 0xC0  (Divisor Latch Fraction)
  */
 
 #include "hal_uart.h"
@@ -35,6 +36,7 @@
 #define DW_UART_MSR     0x18    /* Modem Status Register */
 #define DW_UART_SCR     0x1C    /* Scratch Register */
 #define DW_UART_USR     0x7C    /* UART Status Register */
+#define DW_UART_DLF     0xC0    /* Divisor Latch Fraction Register */
 
 /* LSR bit definitions */
 #define LSR_DR          0x01    /* Data Ready */
@@ -56,8 +58,67 @@
 #define USR_TFNF        0x02    /* Transmit FIFO Not Full */
 #define USR_RFNE        0x08    /* Receive FIFO Not Empty */
 
+#ifndef BE_U1000_UART_INPUT_CLK_HZ
+#define BE_U1000_UART_INPUT_CLK_HZ 25000000UL
+#endif
+
 /* UART base address (set during init) */
 static volatile uint32_t *g_uart_base = (void *)0;
+
+#if OS_CFG_SMP_EN
+static volatile int32_t g_uart_print_lock;
+
+static os_reg_t uart_irq_save(void)
+{
+    os_reg_t flags;
+    __asm__ volatile("csrrc %0, mstatus, %1" : "=r"(flags) : "r"(8UL));
+    return flags;
+}
+
+static void uart_irq_restore(os_reg_t flags)
+{
+    __asm__ volatile("csrw mstatus, %0" :: "r"(flags));
+}
+
+static os_reg_t uart_print_lock(void)
+{
+    os_reg_t flags = uart_irq_save();
+
+    while (1) {
+        while (g_uart_print_lock != 0) {
+            __asm__ volatile("nop");
+        }
+
+        int32_t tmp;
+        int32_t ret;
+        __asm__ volatile(
+            "li %1, 1\n"
+            "1: lr.w %0, (%2)\n"
+            "   bnez %0, 1b\n"
+            "   sc.w %0, %1, (%2)\n"
+            "   bnez %0, 1b\n"
+            "   fence rw, rw\n"
+            : "=&r"(ret), "=&r"(tmp)
+            : "r"(&g_uart_print_lock)
+            : "memory");
+        if (ret == 0) {
+            break;
+        }
+    }
+
+    return flags;
+}
+
+static void uart_print_unlock(os_reg_t flags)
+{
+    __asm__ volatile("fence rw, w" ::: "memory");
+    g_uart_print_lock = 0;
+    uart_irq_restore(flags);
+}
+#else
+static os_reg_t uart_print_lock(void) { return 0; }
+static void uart_print_unlock(os_reg_t flags) { (void)flags; }
+#endif
 
 /* ============================================================================
  * Register access helpers (word-addressed)
@@ -81,34 +142,32 @@ void hal_uart_init(os_ubase_t base, uint32_t baud)
 {
     g_uart_base = (volatile uint32_t *)base;
 
-    /*
-     * Configure UART: 8N1, FIFO enabled
-     *
-     * Baud rate divisor calculation:
-     *   divisor = uart_clk / (16 * baud)
-     *
-     * For BE-U1000, the UART clock typically derives from the system clock
-     * via the CRU. Without knowing the exact UART clock, we use a common
-     * default. The bootloader/SDK usually configures this before RTOS boot.
-     */
-
     /* Disable interrupts */
     uart_write(DW_UART_IER, 0x00);
 
-    /* Enable DLAB to set baud rate divisor */
+    /*
+     * Match the BE-U1000 SDK divisor scheme for this DesignWare UART:
+     * div is a 16x fixed-point divisor, with the low 4 bits written to DLF.
+     * EVU-BA normally boots from external CLKI, which is 25 MHz.
+     */
+    if (baud == 0) {
+        baud = 115200;
+    }
+
+    uint32_t divisor = BE_U1000_UART_INPUT_CLK_HZ / baud;
+    if (divisor < 16) {
+        divisor = 16;
+    }
+    uint32_t divisor_int = divisor >> 4;
+    uint32_t divisor_fract = divisor & 0x0F;
+
+    uart_write(DW_UART_DLF, divisor_fract);
+
+    /* Enable DLAB to set the integer baud rate divisor */
     uart_write(DW_UART_LCR, LCR_DLAB);
 
-    /*
-     * Set divisor (assuming 50MHz UART input clock as typical for BE-U1000).
-     * divisor = 50000000 / (16 * 115200) = ~27 (0x1B)
-     * Adjust if actual UART clock is different.
-     */
-    uint32_t uart_clk = 50000000; /* 50 MHz — typical, adjust per board */
-    uint32_t divisor = uart_clk / (16 * baud);
-    if (divisor == 0) divisor = 1;
-
-    uart_write(DW_UART_DLL, divisor & 0xFF);
-    uart_write(DW_UART_DLH, (divisor >> 8) & 0xFF);
+    uart_write(DW_UART_DLL, divisor_int & 0xFF);
+    uart_write(DW_UART_DLH, (divisor_int >> 8) & 0xFF);
 
     /* 8 data bits, 1 stop bit, no parity, disable DLAB */
     uart_write(DW_UART_LCR, LCR_WLS_8 | LCR_STB_1);
@@ -174,6 +233,7 @@ static void print_hex(uint32_t n)
 void os_print(const char *fmt, ...)
 {
     va_list args;
+    os_reg_t flags = uart_print_lock();
     va_start(args, fmt);
 
     while (*fmt) {
@@ -214,4 +274,5 @@ void os_print(const char *fmt, ...)
     }
 
     va_end(args);
+    uart_print_unlock(flags);
 }

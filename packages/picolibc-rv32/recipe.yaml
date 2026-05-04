@@ -2,8 +2,8 @@ context:
   version: "1.8.10"
   arch: "rv32"
   target_triple: "riscv32-unknown-elf"
-  march: "rv32imafd"
-  mabi: "ilp32d"
+  march: "rv32imafc_zifencei"
+  mabi: "ilp32f"
 
 package:
   name: "picolibc-${{ arch }}"
@@ -15,7 +15,7 @@ source:
   sha256: 0ce5ee3bde81256633644d7b3bd25f5a6ccfd8b0590fd4ee543df2c3ede6e27e
 
 build:
-  number: 100
+  number: 102
   script:
     - |
       # Dynamically generate Meson cross-file (based on Picolibc official recommendation)
@@ -54,6 +54,296 @@ build:
 
       # Build and install
       ninja -C build install
+
+      # Install a minimal same-ABI compiler builtins archive. The host
+      # riscv64-linux-gnu multilib set does not provide ilp32f libgcc.
+      cat > libgcc_compat.c <<'EOF'
+      typedef unsigned int uint32_t;
+      typedef int int32_t;
+      typedef unsigned long long uint64_t;
+      typedef long long int64_t;
+
+      typedef union {
+          uint64_t all;
+          struct {
+              uint32_t lo;
+              uint32_t hi;
+          } s;
+      } u64_parts_t;
+
+      static uint64_t udivmoddi4(uint64_t n, uint64_t d, uint64_t *rem)
+      {
+          uint64_t q = 0;
+          uint64_t bit = 1;
+
+          if (d == 0) {
+              if (rem) {
+                  *rem = n;
+              }
+              return ~(uint64_t)0;
+          }
+
+          while (((int64_t)d >= 0) && d < n) {
+              d <<= 1;
+              bit <<= 1;
+          }
+
+          while (bit != 0) {
+              if (n >= d) {
+                  n -= d;
+                  q |= bit;
+              }
+              d >>= 1;
+              bit >>= 1;
+          }
+
+          if (rem) {
+              *rem = n;
+          }
+          return q;
+      }
+
+      uint64_t __udivdi3(uint64_t n, uint64_t d)
+      {
+          return udivmoddi4(n, d, 0);
+      }
+
+      uint64_t __umoddi3(uint64_t n, uint64_t d)
+      {
+          uint64_t rem;
+          (void)udivmoddi4(n, d, &rem);
+          return rem;
+      }
+
+      int64_t __divdi3(int64_t a, int64_t b)
+      {
+          int negate = 0;
+          uint64_t ua;
+          uint64_t ub;
+          uint64_t q;
+
+          if (a < 0) {
+              ua = (uint64_t)(-a);
+              negate = !negate;
+          } else {
+              ua = (uint64_t)a;
+          }
+
+          if (b < 0) {
+              ub = (uint64_t)(-b);
+              negate = !negate;
+          } else {
+              ub = (uint64_t)b;
+          }
+
+          q = __udivdi3(ua, ub);
+          return negate ? -(int64_t)q : (int64_t)q;
+      }
+
+      int64_t __moddi3(int64_t a, int64_t b)
+      {
+          uint64_t ua = (a < 0) ? (uint64_t)(-a) : (uint64_t)a;
+          uint64_t ub = (b < 0) ? (uint64_t)(-b) : (uint64_t)b;
+          uint64_t r = __umoddi3(ua, ub);
+          return (a < 0) ? -(int64_t)r : (int64_t)r;
+      }
+
+      uint64_t __ashldi3(uint64_t a, int b)
+      {
+          u64_parts_t in;
+          u64_parts_t out;
+          unsigned int shift = (unsigned int)b & 63u;
+
+          in.all = a;
+          if (shift == 0) {
+              return a;
+          } else if (shift < 32u) {
+              out.s.lo = in.s.lo << shift;
+              out.s.hi = (in.s.hi << shift) | (in.s.lo >> (32u - shift));
+          } else {
+              out.s.lo = 0;
+              out.s.hi = in.s.lo << (shift - 32u);
+          }
+          return out.all;
+      }
+
+      uint64_t __lshrdi3(uint64_t a, int b)
+      {
+          u64_parts_t in;
+          u64_parts_t out;
+          unsigned int shift = (unsigned int)b & 63u;
+
+          in.all = a;
+          if (shift == 0) {
+              return a;
+          } else if (shift < 32u) {
+              out.s.lo = (in.s.lo >> shift) | (in.s.hi << (32u - shift));
+              out.s.hi = in.s.hi >> shift;
+          } else {
+              out.s.lo = in.s.hi >> (shift - 32u);
+              out.s.hi = 0;
+          }
+          return out.all;
+      }
+
+      int64_t __ashrdi3(int64_t a, int b)
+      {
+          u64_parts_t in;
+          u64_parts_t out;
+          unsigned int shift = (unsigned int)b & 63u;
+          int32_t signed_hi;
+
+          in.all = (uint64_t)a;
+          signed_hi = (int32_t)in.s.hi;
+          if (shift == 0) {
+              return a;
+          } else if (shift < 32u) {
+              out.s.lo = (in.s.lo >> shift) | (in.s.hi << (32u - shift));
+              out.s.hi = (uint32_t)(signed_hi >> shift);
+          } else {
+              out.s.lo = (uint32_t)(signed_hi >> (shift - 32u));
+              out.s.hi = (signed_hi < 0) ? ~(uint32_t)0 : 0;
+          }
+          return (int64_t)out.all;
+      }
+
+      int __clzsi2(uint32_t a)
+      {
+          int count = 0;
+          if (a == 0) {
+              return 32;
+          }
+          while ((a & 0x80000000u) == 0) {
+              count++;
+              a <<= 1;
+          }
+          return count;
+      }
+
+      int __clzdi2(uint64_t a)
+      {
+          u64_parts_t in;
+          in.all = a;
+          if (in.s.hi != 0) {
+              return __clzsi2(in.s.hi);
+          }
+          return 32 + __clzsi2(in.s.lo);
+      }
+
+      typedef union {
+          float f;
+          uint32_t u;
+      } float_bits_t;
+
+      typedef union {
+          double d;
+          uint64_t u;
+      } double_bits_t;
+
+      double __extendsfdf2(float a)
+      {
+          float_bits_t in;
+          double_bits_t out;
+          uint64_t sign;
+          uint32_t exp;
+          uint32_t frac;
+
+          in.f = a;
+          sign = (uint64_t)(in.u >> 31) << 63;
+          exp = (in.u >> 23) & 0xffu;
+          frac = in.u & 0x7fffffu;
+
+          if (exp == 0xffu) {
+              out.u = sign | (0x7ffull << 52) | ((uint64_t)frac << 29);
+              if (frac != 0) {
+                  out.u |= 1ull << 51;
+              }
+              return out.d;
+          }
+
+          if (exp == 0) {
+              int e = -126;
+              if (frac == 0) {
+                  out.u = sign;
+                  return out.d;
+              }
+              while ((frac & 0x800000u) == 0) {
+                  frac <<= 1;
+                  e--;
+              }
+              frac &= 0x7fffffu;
+              out.u = sign | ((uint64_t)(e + 1023) << 52) | ((uint64_t)frac << 29);
+              return out.d;
+          }
+
+          out.u = sign | ((uint64_t)((int)exp - 127 + 1023) << 52) |
+                  ((uint64_t)frac << 29);
+          return out.d;
+      }
+
+      static int double_is_nan(uint64_t bits)
+      {
+          return ((bits & 0x7ff0000000000000ull) == 0x7ff0000000000000ull) &&
+                 ((bits & 0x000fffffffffffffull) != 0);
+      }
+
+      static int cmpdf2(double a, double b, int unordered)
+      {
+          double_bits_t da;
+          double_bits_t db;
+          uint64_t aa;
+          uint64_t ab;
+          int sa;
+          int sb;
+
+          da.d = a;
+          db.d = b;
+          if (double_is_nan(da.u) || double_is_nan(db.u)) {
+              return unordered;
+          }
+
+          aa = da.u & 0x7fffffffffffffffull;
+          ab = db.u & 0x7fffffffffffffffull;
+          if (aa == 0 && ab == 0) {
+              return 0;
+          }
+          if (da.u == db.u) {
+              return 0;
+          }
+
+          sa = (int)(da.u >> 63);
+          sb = (int)(db.u >> 63);
+          if (sa != sb) {
+              return sa ? -1 : 1;
+          }
+
+          if (!sa) {
+              return da.u < db.u ? -1 : 1;
+          }
+          return da.u > db.u ? -1 : 1;
+      }
+
+      int __eqdf2(double a, double b) { return cmpdf2(a, b, 1); }
+      int __nedf2(double a, double b) { return cmpdf2(a, b, 1); }
+      int __ltdf2(double a, double b) { return cmpdf2(a, b, 1); }
+      int __ledf2(double a, double b) { return cmpdf2(a, b, 1); }
+      int __gtdf2(double a, double b) { return cmpdf2(a, b, -1); }
+      int __gedf2(double a, double b) { return cmpdf2(a, b, -1); }
+      int __unorddf2(double a, double b)
+      {
+          double_bits_t da;
+          double_bits_t db;
+          da.d = a;
+          db.d = b;
+          return double_is_nan(da.u) || double_is_nan(db.u);
+      }
+      EOF
+
+      clang -target ${{ target_triple }} -march=${{ march }} -mabi=${{ mabi }} \
+        -mcmodel=medany -ffreestanding -fno-builtin -fno-pic -fno-plt \
+        -nostdlib -nodefaultlibs -c libgcc_compat.c -o libgcc_compat.o
+      llvm-ar rc "$PREFIX/lib/libgcc.a" libgcc_compat.o
+      llvm-ranlib "$PREFIX/lib/libgcc.a"
 
 requirements:
   build:

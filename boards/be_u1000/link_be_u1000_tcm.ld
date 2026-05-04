@@ -77,15 +77,11 @@ SECTIONS
         *(.data.*)
         *(.sdata)
         *(.sdata.*)
+        *(.got)
+        *(.got.plt)
 
         . = ALIGN(4);
         _data_end = .;
-    } > TCMA
-
-    /* GOT sections */
-    .got : {
-        *(.got)
-        *(.got.plt)
     } > TCMA
 
     /* ---------------------------------------------------------------
@@ -117,6 +113,8 @@ SECTIONS
         /* Heap grows upward from TCMB base */
         . = ORIGIN(TCMB) + LENGTH(TCMB) - __stack_size;
         _heap_end = .;
+        PROVIDE(__heap_start = _heap_start);
+        PROVIDE(__heap_end = _heap_end);
     } > TCMB
 
     /* ---------------------------------------------------------------

@@ -12,19 +12,23 @@
 #include "hal_uart.h"
 
 #if OS_CFG_SMP_EN
-#include "riscv_csr.h"
 #include "os_smp.h"
+#include "riscv_csr.h"
+#endif
+
+#ifndef BE_U1000_DEMO_ENABLE_IPI_PROBES
+#define BE_U1000_DEMO_ENABLE_IPI_PROBES OS_CFG_SMP_RUNTIME_IPI_EN
 #endif
 
 static uint8_t control_task_stack[1024];
 static uint8_t worker_task_stack[1024];
 static hal_board_execution_profile_t g_execution_profile;
-#if OS_CFG_SMP_EN
+#if OS_CFG_SMP_EN && BE_U1000_DEMO_ENABLE_IPI_PROBES
 static uint8_t balance_task_stack[1024];
 #endif
 static os_tcb_t control_task_tcb;
 static os_tcb_t worker_task_tcb;
-#if OS_CFG_SMP_EN
+#if OS_CFG_SMP_EN && BE_U1000_DEMO_ENABLE_IPI_PROBES
 static os_tcb_t balance_task_tcb;
 static volatile uint32_t g_balance_seen_mask;
 static uint32_t g_balance_expected_mask;
@@ -58,8 +62,9 @@ static void control_task_entry(void *arg) {
     while (1) {
 #if OS_CFG_SMP_EN
         os_tcb_t *self = os_task_self();
+        uint32_t tick = count++;
         os_print("[AFFINITY] control on Core%u affinity Core%u tick %u\n",
-                 self->cpu_id, self->affinity, count++);
+                 self->cpu_id, self->affinity, tick);
 #else
         os_print("[CTRL] single-core tick %u\n", count++);
 #endif
@@ -83,7 +88,7 @@ static void worker_task_entry(void *arg) {
     }
 }
 
-#if OS_CFG_SMP_EN
+#if OS_CFG_SMP_EN && BE_U1000_DEMO_ENABLE_IPI_PROBES
 static void balance_remote_marker(void *unused)
 {
     (void)unused;
@@ -149,9 +154,11 @@ void os_kernel_main(void) {
 
 #if OS_CFG_SMP_EN
     (void)hal_board_bind_demo_tasks(&control_task_tcb, &worker_task_tcb);
+#if BE_U1000_DEMO_ENABLE_IPI_PROBES
     g_balance_expected_mask = hal_board_balance_expected_mask();
     os_task_create(&balance_task_tcb, "balance", balance_task_entry, NULL,
                    12, balance_task_stack, sizeof(balance_task_stack));
+#endif
     if (g_execution_profile.available) {
         const char *task_map_description = hal_board_task_map_description(true);
 

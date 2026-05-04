@@ -66,8 +66,8 @@ picolibc-rv32 = { path = "packages/picolibc-rv32" }
 compiler-rt = ">=21.1.8,<22"
 
 [feature.rv32.tasks]
-configure = "cmake -B build -DCMAKE_TOOLCHAIN_FILE=cmake/riscv32-pixi.cmake -DARCH_BITS=32 -DARCH=riscv -DCMAKE_BUILD_TYPE=MinSizeRel -DOS_SMP_EN=OFF -DOS_AI_EN=ON"
-configure-flash = "cmake -B build -DCMAKE_TOOLCHAIN_FILE=cmake/riscv32-pixi.cmake -DARCH_BITS=32 -DARCH=riscv -DCMAKE_BUILD_TYPE=MinSizeRel -DLINKER_SCRIPT=arch/riscv/link_flash.ld -DOS_SMP_EN=OFF -DOS_AI_EN=ON"
+configure = "cmake -B build -DCMAKE_TOOLCHAIN_FILE=cmake/riscv32-pixi.cmake -DARCH_BITS=32 -DARCH=riscv -DRISCV_MABI=ilp32f -DRISCV_ABI=ilp32d -DCMAKE_BUILD_TYPE=MinSizeRel -DOS_SMP_EN=OFF -DOS_AI_EN=ON"
+configure-flash = "cmake -B build -DCMAKE_TOOLCHAIN_FILE=cmake/riscv32-pixi.cmake -DARCH_BITS=32 -DARCH=riscv -DRISCV_MABI=ilp32f -DRISCV_ABI=ilp32d -DCMAKE_BUILD_TYPE=MinSizeRel -DLINKER_SCRIPT=arch/riscv/link_flash.ld -DOS_SMP_EN=OFF -DOS_AI_EN=ON"
 build = "cmake --build build"
 report-footprint = "python scripts/report_build_footprint.py --label mnist_validation --image build/apps/mnist_app/mnist_validation --kernel-archive build/kernel/librv_aios_kernel.a --cache build/CMakeCache.txt --linker-script arch/riscv/link.ld --map build/apps/mnist_app/mnist_validation.map --output build/apps/mnist_app/mnist_validation_footprint.md"
 report-ai-footprint = "sh scripts/report_ai_footprint_attribution.sh --label mnist_validation --image build/apps/mnist_app/mnist_validation --map build/apps/mnist_app/mnist_validation.map --model-wrapper-obj build/apps/mnist_app/generated/CMakeFiles/rv_aios_models.dir/ai_models.c.obj --dispatch-obj apps/mnist_app/generated/st_mnist_28.o --ai-runtime-obj build/ai/CMakeFiles/rv_aios_ai.dir/src/ai_model_registry.c.obj --iree-root build/third_party/iree/runtime/src --output build/apps/mnist_app/mnist_validation_ai_footprint.md"

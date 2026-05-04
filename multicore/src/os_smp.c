@@ -17,6 +17,11 @@
 #include "hal_clint.h"
 #include "hal_uart.h"
 
+#if defined(CONFIG_BOARD_BE_U1000)
+#include "hal_corectrl.h"
+extern void _start1(void);
+#endif
+
 extern volatile uint32_t _hart_ready[];
 
 #if OS_CFG_SMP_EN
@@ -63,8 +68,58 @@ static os_smp_call_t g_smp_call[OS_CFG_CPU_MAX];
 /** Per-CPU load tracking indexed by compile-time CPU ceiling slots */
 static volatile uint32_t g_cpu_load[OS_CFG_CPU_MAX];
 
+#if OS_CFG_LOAD_BALANCE_EN
 /** Load balance timer */
 static os_timer_t g_lb_timer;
+#endif
+
+/*===========================================================================*/
+/* Board Hooks                                                                */
+/*===========================================================================*/
+
+#if defined(CONFIG_BOARD_BE_U1000)
+static void smp_board_reset_settle_delay(void) {
+    for (volatile uint32_t i = 0; i < 10000u; ++i) {
+        __asm__ volatile("nop");
+    }
+}
+
+static bool smp_board_prepare_cpu(os_cpu_t cpu) {
+    if (cpu != 1) {
+        return false;
+    }
+
+    (void)hal_corectrl_force_reset_all(HAL_CORECTRL_CORE1);
+    smp_board_reset_settle_delay();
+    return true;
+}
+
+static bool smp_board_start_cpu(os_cpu_t cpu) {
+    if (cpu != 1) {
+        return false;
+    }
+
+    uintptr_t reset_vector = (uintptr_t)_start1;
+    os_print("[SMP] CPU1 start-vector: 0x%x\n", (uint32_t)reset_vector);
+    int rc = hal_corectrl_start(HAL_CORECTRL_CORE1, reset_vector);
+    os_print("[SMP] CPU1 start-rc: %d\n", rc);
+    return rc == 0;
+}
+#else
+static bool smp_board_prepare_cpu(os_cpu_t cpu) {
+    (void)cpu;
+    return false;
+}
+
+static bool smp_board_start_cpu(os_cpu_t cpu) {
+    (void)cpu;
+    return false;
+}
+#endif
+
+static bool smp_runtime_ipi_enabled(void) {
+    return OS_CFG_SMP_RUNTIME_IPI_EN != 0;
+}
 
 /*===========================================================================*/
 /* External Functions                                                         */
@@ -151,6 +206,7 @@ static void update_load_stats(void) {
     }
 }
 
+#if OS_CFG_LOAD_BALANCE_EN
 /**
  * @brief Load balance timer callback
  */
@@ -158,11 +214,16 @@ static void lb_timer_callback(void *arg) {
     (void)arg;
     os_smp_load_balance();
 }
+#endif
 
 /**
  * @brief Push a task from busy CPU to idle CPU
  */
 static void lb_push(os_cpu_t from, os_cpu_t to) {
+    if (!smp_runtime_ipi_enabled()) {
+        return;
+    }
+
     os_cpu_data_t *from_data = os_cpu_data(from);
     os_cpu_data_t *to_data = os_cpu_data(to);
     
@@ -277,6 +338,10 @@ void os_smp_start_cpus(void) {
     /* Signal secondary CPUs to start */
     for (os_cpu_t i = 0; i < OS_CFG_CPU_COUNT; i++) {
         if (i != boot_cpu) {
+            bool board_started;
+
+            (void)smp_board_prepare_cpu(i);
+
             /* Set ready flag for secondary CPU */
             g_cpu_ready_mask |= (1U << i);
 
@@ -284,8 +349,12 @@ void os_smp_start_cpus(void) {
             _hart_ready[i] = 1;
             OS_MEMORY_BARRIER();
 
-            /* Send IPI to wake secondary CPU */
-            hal_clint_ipi_send(i);
+            board_started = smp_board_start_cpu(i);
+
+            if (!board_started) {
+                /* Send IPI to wake secondary CPU */
+                hal_clint_ipi_send(i);
+            }
         }
     }
     
@@ -314,7 +383,9 @@ void os_smp_release_cpus(void) {
 
         g_scheduler_release_mask |= (1U << i);
         OS_MEMORY_BARRIER();
+#if OS_CFG_SMP_RELEASE_IPI_EN
         hal_clint_ipi_send(i);
+#endif
     }
 }
 
@@ -331,10 +402,10 @@ void os_smp_secondary_start(void) {
     os_cpu_data_t *data = os_cpu_data(cpu);
     data->irq_nest = 0;
     data->sched_lock = 0;
-    
-    csr_set(mie, MIE_MSIE | MIE_MTIE);
+
+    csr_set(mie, MIE_MSIE);
     csr_set(mstatus, MSTATUS_MIE);
-    
+
     /* Mark CPU as online (atomic OR) */
     __asm__ volatile("amoor.w zero, %0, (%1)" 
                      : 
@@ -342,11 +413,9 @@ void os_smp_secondary_start(void) {
                      : "memory");
 
     os_print("[SMP] CPU%d secondary online\n", cpu);
-    os_print("[BALANCE] balance on Core%u affinity any bootstrap seen-mask=0x%x\n",
-             cpu, 1u << cpu);
 
     while (!(g_scheduler_release_mask & (1U << cpu))) {
-        os_wfi();
+        __asm__ volatile("nop");
     }
     
     os_kernel_start();
@@ -358,6 +427,10 @@ void os_smp_secondary_start(void) {
 }
 
 void os_ipi_send(os_cpu_t cpu, uint32_t reason) {
+    if (!smp_runtime_ipi_enabled()) {
+        return;
+    }
+
     if (cpu == OS_CPU_ANY) {
         os_ipi_broadcast(reason);
         return;
@@ -381,6 +454,10 @@ void os_ipi_send(os_cpu_t cpu, uint32_t reason) {
 }
 
 void os_ipi_broadcast(uint32_t reason) {
+    if (!smp_runtime_ipi_enabled()) {
+        return;
+    }
+
     os_cpu_t self = os_cpu_id();
     
     for (os_cpu_t i = 0; i < OS_CFG_CPU_COUNT; i++) {
@@ -440,6 +517,10 @@ void os_smp_set_lb_mode(os_lb_mode_t mode) {
 }
 
 void os_smp_load_balance(void) {
+    if (!smp_runtime_ipi_enabled()) {
+        return;
+    }
+
     if (g_lb_mode == OS_LB_NONE) {
         return;
     }
@@ -474,6 +555,10 @@ void os_smp_load_balance(void) {
 os_err_t os_smp_migrate_task(os_tcb_t *tcb, os_cpu_t target) {
     if (!tcb || target >= OS_CFG_CPU_COUNT) {
         return OS_EINVAL;
+    }
+
+    if (!smp_runtime_ipi_enabled() && target != os_cpu_id()) {
+        return OS_ENOSYS;
     }
     
     if (!(g_cpu_online_mask & (1U << target))) {
@@ -557,6 +642,10 @@ os_err_t os_smp_call_on_cpu(os_cpu_t cpu, os_smp_call_func_t func,
     if (cpu == os_cpu_id()) {
         func(arg);
         return OS_EOK;
+    }
+
+    if (!smp_runtime_ipi_enabled()) {
+        return OS_ENOSYS;
     }
     
     os_smp_call_t *call = &g_smp_call[cpu];

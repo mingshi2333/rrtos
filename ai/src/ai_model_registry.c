@@ -13,6 +13,12 @@
 
 #define AI_MAX_MODELS 8
 
+#if defined(IREE_HAL_WHOLE_BUFFER)
+#define AI_IREE_WHOLE_BUFFER IREE_HAL_WHOLE_BUFFER
+#else
+#define AI_IREE_WHOLE_BUFFER IREE_WHOLE_BUFFER
+#endif
+
 extern const ai_emitc_model_descriptor_t *g_emitc_models[];
 
 typedef struct ai_model_entry_s {
@@ -147,7 +153,7 @@ int ai_runtime_init(void) {
     
     if (iree_status_is_ok(status)) {
         status = iree_hal_sync_device_create(
-            iree_make_cstring_view("local-sync"), &params,
+            iree_make_cstring_view("local"), &params,
             /*loader_count=*/1, &g_registry.loader,
             device_allocator, g_registry.allocator, &g_registry.hal_device);
     }
@@ -165,7 +171,6 @@ int ai_runtime_init(void) {
     iree_vm_module_t *hal_module;
     status = iree_hal_module_create(
         g_registry.vm_instance,
-        iree_hal_module_device_policy_default(),
         /*device_count=*/1, &g_registry.hal_device,
         IREE_HAL_MODULE_FLAG_SYNCHRONOUS,
         iree_hal_module_debug_sink_null(),
@@ -432,7 +437,7 @@ int ai_infer_sync(ai_model_handle_t handle,
         iree_hal_buffer_mapping_t mapping;
         status = iree_hal_buffer_map_range(
             buffer, IREE_HAL_MAPPING_MODE_SCOPED, IREE_HAL_MEMORY_ACCESS_READ,
-            0, IREE_HAL_WHOLE_BUFFER, &mapping);
+            0, AI_IREE_WHOLE_BUFFER, &mapping);
         if (!iree_status_is_ok(status)) {
             ai_log_status("output buffer map", status);
             iree_vm_ref_release(&ref);
