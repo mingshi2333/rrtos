@@ -178,6 +178,9 @@ typedef struct {
     volatile uint32_t IOAFCR3;
     volatile uint32_t IOAFCR4;
     volatile uint32_t IOAFCR5;
+    volatile uint32_t IODSCR0;
+    volatile uint32_t IODSCR1;
+    volatile uint32_t IODSCR2;
 } be_u1000_cru_t;
 
 static volatile be_u1000_cru_t *be_u1000_cru(void)
@@ -212,6 +215,16 @@ static volatile uint32_t *be_u1000_ioafcr_reg(unsigned port, unsigned pin)
     return ((volatile uint32_t *)&be_u1000_cru()->IOAFCR0) + (port * 2u) + (pin / 8u);
 }
 
+static volatile uint32_t *be_u1000_iopull_reg(volatile uint32_t *base, unsigned port)
+{
+    return base + (port / 2u);
+}
+
+static volatile uint32_t *be_u1000_iodscr_reg(unsigned port)
+{
+    return ((volatile uint32_t *)&be_u1000_cru()->IODSCR0) + port;
+}
+
 static void be_u1000_set_pin_af(unsigned port, unsigned pin, unsigned af, bool input_enable)
 {
     const uint32_t shift = (pin & 7u) * 4u;
@@ -227,6 +240,37 @@ static void be_u1000_set_pin_af(unsigned port, unsigned pin, unsigned af, bool i
     }
 
     *reg = value;
+}
+
+static void be_u1000_set_pin_pull_up(unsigned port, unsigned pin)
+{
+    const uint32_t bit = 1u << (((port & 1u) * 16u) + pin);
+    volatile uint32_t *pull_up = be_u1000_iopull_reg(&be_u1000_cru()->IOPUCR0, port);
+    volatile uint32_t *pull_down = be_u1000_iopull_reg(&be_u1000_cru()->IOPDCR0, port);
+
+    *pull_up |= bit;
+    *pull_down &= ~bit;
+}
+
+static void be_u1000_set_pin_drive_strength(unsigned port, unsigned pin, unsigned strength)
+{
+    const uint32_t shift = pin * 2u;
+    volatile uint32_t *reg = be_u1000_iodscr_reg(port);
+    uint32_t value = *reg;
+
+    value &= ~(0x3u << shift);
+    value |= (strength & 0x3u) << shift;
+    *reg = value;
+}
+
+static void be_u1000_apply_qspi1_electrical(void)
+{
+    unsigned pin;
+
+    for (pin = BE_U1000_QSPI1_CS_PIN; pin <= BE_U1000_QSPI1_IO3_PIN; ++pin) {
+        be_u1000_set_pin_drive_strength(BE_U1000_QSPI1_PORT, pin, 3u);
+        be_u1000_set_pin_pull_up(BE_U1000_QSPI1_PORT, pin);
+    }
 }
 
 static void be_u1000_apply_pinmux_entries(
@@ -313,6 +357,7 @@ static int be_u1000_apply_pinmux_group(hal_board_pinmux_group_t group)
         be_u1000_enable_apb1(0u);
         be_u1000_enable_apb1(11u);
         be_u1000_apply_pinmux_entries(qspi1_entries, 6u);
+        be_u1000_apply_qspi1_electrical();
         return 0;
     case HAL_BOARD_PINMUX_GROUP_CANFD0:
         be_u1000_enable_apb0(13u);
@@ -577,6 +622,29 @@ static void run_flash_selftest(const hal_board_selftest_profile_t *profile)
             }
         } else {
             os_print("[CHK] FLASH identify: FAIL\n");
+            hal_flash_diag_t diag;
+            if (hal_flash_get_diag(&diag) == 0) {
+                os_print("[CHK] FLASH identify diag: status=%u recv=%u raw=0x%x xip=%u\n",
+                         diag.status,
+                         diag.received,
+                         diag.jedec_raw,
+                         diag.xip_was_enabled);
+                os_print("[CHK] FLASH qspi diag: pclk1=0x%x syscr0=0x%x qspien=0x%x ser=0x%x sr=0x%x rxflr=%u txflr=%u\n",
+                         diag.pclk1en,
+                         diag.syscr0,
+                         diag.qspienr,
+                         diag.ser,
+                         diag.sr,
+                         diag.rxflr,
+                         diag.txflr);
+                os_print("[CHK] FLASH qspi cfg: ctrlr0=0x%x ctrlr1=0x%x spi_ctrlr0=0x%x baudr=%u isr=0x%x risr=0x%x\n",
+                         diag.ctrlr0,
+                         diag.ctrlr1,
+                         diag.spi_ctrlr0,
+                         diag.baudr,
+                         diag.isr,
+                         diag.risr);
+            }
         }
     } else {
         os_print("[CHK] FLASH init: FAIL\n");
@@ -1024,6 +1092,9 @@ os_err_t hal_board_bind_demo_tasks(os_tcb_t *control_task, os_tcb_t *worker_task
 
 bool hal_board_issue_reschedule_probe(void)
 {
+#if !OS_CFG_SMP_RUNTIME_IPI_EN
+    return false;
+#else
     hal_board_demo_topology_t topology;
 
     hal_board_fill_demo_topology(&topology);
@@ -1035,6 +1106,7 @@ bool hal_board_issue_reschedule_probe(void)
 
     os_ipi_send(topology.reschedule_probe_cpu, OS_IPI_RESCHEDULE);
     return true;
+#endif
 }
 
 bool hal_board_get_balance_peer(os_cpu_t current_cpu, os_cpu_t *peer_cpu)

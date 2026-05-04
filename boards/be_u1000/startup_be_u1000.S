@@ -10,11 +10,11 @@
  */
 
 /* CLIC CSR addresses */
-.equ CSR_MTVT,     0x307
-.equ CSR_NMITVEC,  0x7C0
+.equ BEU1000_ASM_CSR_MTVT,     0x307
+.equ BEU1000_ASM_CSR_NMITVEC,  0x7C0
 
 /* mtvec mode bits */
-.equ MTVEC_MODE_CLIC, 0x3
+.equ BEU1000_ASM_MTVEC_MODE_CLIC, 0x3
 
 /* mstatus bits */
 .equ MSTATUS_MIE,   0x00000008  /* Machine Interrupt Enable */
@@ -30,8 +30,11 @@
 .globl _start
 .type _start, @function
 #if OS_CFG_SMP_EN
+.globl _start1
+.type _start1, @function
 .extern os_smp_secondary_start
 #endif
+
 _start:
     /* ---------------------------------------------------------------
      * Multi-core boot: only Core0 (mhartid=0) proceeds to boot
@@ -43,6 +46,14 @@ _start:
     bnez    t0, _halt
 #else
     bnez    t0, _secondary_wait
+#endif
+    j       _primary_boot
+
+#if OS_CFG_SMP_EN
+.align 2
+_start1:
+    li      t0, 1
+    j       _secondary_boot
 #endif
 
     /* ---------------------------------------------------------------
@@ -99,12 +110,12 @@ _primary_boot:
      *   MTVT  = _clic_vector_table (base of vector table)
      * --------------------------------------------------------------- */
     la      t0, _trap_entry
-    ori     t0, t0, MTVEC_MODE_CLIC
+    ori     t0, t0, BEU1000_ASM_MTVEC_MODE_CLIC
     csrw    mtvec, t0
 
     /* Set CLIC vector table (MTVT CSR) */
     la      t0, _clic_vector_table
-    csrw    CSR_MTVT, t0
+    csrw    BEU1000_ASM_CSR_MTVT, t0
 
     /* ---------------------------------------------------------------
      * Configure mstatus for kernel entry
@@ -132,6 +143,7 @@ _secondary_wait:
     li      t1, 2
     bge     t0, t1, _halt
 
+_secondary_boot:
     /* Core1: Wait for primary to signal readiness */
     la      t1, _hart_ready
     slli    t2, t0, 2           /* word offset for this hart */
@@ -152,10 +164,10 @@ _secondary_wait:
 
     /* Configure CLIC for this hart */
     la      t1, _trap_entry
-    ori     t1, t1, MTVEC_MODE_CLIC
+    ori     t1, t1, BEU1000_ASM_MTVEC_MODE_CLIC
     csrw    mtvec, t1
     la      t1, _clic_vector_table
-    csrw    CSR_MTVT, t1
+    csrw    BEU1000_ASM_CSR_MTVT, t1
 
     /* Configure mstatus */
     li      t1, MSTATUS_MPP | MSTATUS_MPIE | MSTATUS_FS
@@ -265,91 +277,18 @@ _trap_entry:
 /* ===================================================================
  * CLIC Vector Table
  *
- * In CLIC mode, each interrupt has a dedicated vector entry.
- * All entries jump to _trap_entry which dispatches via C code.
- * Specific high-frequency interrupts can be made direct for speed.
+ * In BE-U1000 CLIC mode, MTVT points at a table of handler addresses, not
+ * executable jump instructions.  Keep every interrupt routed through the
+ * shared trap frame path so the C handler can dispatch by mcause.
  * =================================================================== */
 .align 8
 .globl _clic_vector_table
+.type _clic_vector_table, @object
 _clic_vector_table:
-    /* IRQ  0 */ j _trap_entry  /* Reserved */
-    /* IRQ  1 */ j _trap_entry  /* Reserved */
-    /* IRQ  2 */ j _trap_entry  /* Reserved */
-    /* IRQ  3 */ j _trap_entry  /* Software IRQ (IPI) */
-    /* IRQ  4 */ j _trap_entry  /* Reserved */
-    /* IRQ  5 */ j _trap_entry  /* Reserved */
-    /* IRQ  6 */ j _trap_entry  /* Reserved */
-    /* IRQ  7 */ j _trap_entry  /* Timer IRQ (CLINT mtime) */
-    /* IRQ  8 */ j _trap_entry  /* Reserved */
-    /* IRQ  9 */ j _trap_entry  /* Reserved */
-    /* IRQ 10 */ j _trap_entry  /* Reserved */
-    /* IRQ 11 */ j _trap_entry  /* Reserved */
-    /* IRQ 12 */ j _trap_entry  /* CLIC Software IRQ */
-    /* IRQ 13 */ j _trap_entry  /* QSPI0 */
-    /* IRQ 14 */ j _trap_entry  /* QSPI1 */
-    /* IRQ 15 */ j _trap_entry  /* Reserved */
-    /* IRQ 16 */ j _trap_entry  /* Reserved */
-    /* IRQ 17 */ j _trap_entry  /* UART0 */
-    /* IRQ 18 */ j _trap_entry  /* UART1 */
-    /* IRQ 19 */ j _trap_entry  /* UART2 */
-    /* IRQ 20 */ j _trap_entry  /* I2C0 */
-    /* IRQ 21 */ j _trap_entry  /* I2C1 */
-    /* IRQ 22 */ j _trap_entry  /* I2S0 */
-    /* IRQ 23 */ j _trap_entry  /* TIM0_CH0 */
-    /* IRQ 24 */ j _trap_entry  /* TIM0_CH1 */
-    /* IRQ 25 */ j _trap_entry  /* TIM0_CH2 */
-    /* IRQ 26 */ j _trap_entry  /* TIM0_CH3 */
-    /* IRQ 27 */ j _trap_entry  /* WDT0 */
-    /* IRQ 28 */ j _trap_entry  /* GPIO0 */
-    /* IRQ 29 */ j _trap_entry  /* GPIO1 */
-    /* IRQ 30 */ j _trap_entry  /* GPIO2 */
-    /* IRQ 31 */ j _trap_entry  /* PWMG0 */
-    /* IRQ 32 */ j _trap_entry  /* SPI0 */
-    /* IRQ 33 */ j _trap_entry  /* SPI1 */
-    /* IRQ 34 */ j _trap_entry  /* UART3 */
-    /* IRQ 35 */ j _trap_entry  /* UART4 */
-    /* IRQ 36 */ j _trap_entry  /* UART5 */
-    /* IRQ 37 */ j _trap_entry  /* I2C2 */
-    /* IRQ 38 */ j _trap_entry  /* I2C3 */
-    /* IRQ 39 */ j _trap_entry  /* I2S1 */
-    /* IRQ 40 */ j _trap_entry  /* TIM1_CH0 */
-    /* IRQ 41 */ j _trap_entry  /* TIM1_CH1 */
-    /* IRQ 42 */ j _trap_entry  /* TIM1_CH2 */
-    /* IRQ 43 */ j _trap_entry  /* TIM1_CH3 */
-    /* IRQ 44 */ j _trap_entry  /* WDT1 */
-    /* IRQ 45 */ j _trap_entry  /* PWMG1 */
-    /* IRQ 46 */ j _trap_entry  /* SPI2 */
-    /* IRQ 47 */ j _trap_entry  /* SPI3 */
-    /* IRQ 48 */ j _trap_entry  /* CANFD0 */
-    /* IRQ 49 */ j _trap_entry  /* CANFD1 */
-    /* IRQ 50 */ j _trap_entry  /* ADC0 */
-    /* IRQ 51 */ j _trap_entry  /* ADC1 */
-    /* IRQ 52 */ j _trap_entry  /* ADC2 */
-    /* IRQ 53 */ j _trap_entry  /* PWMA0 */
-    /* IRQ 54 */ j _trap_entry  /* PWMA1 */
-    /* IRQ 55 */ j _trap_entry  /* PWMA2 */
-    /* IRQ 56 */ j _trap_entry  /* PWMA3 */
-    /* IRQ 57 */ j _trap_entry  /* QE0 */
-    /* IRQ 58 */ j _trap_entry  /* QE1 */
-    /* IRQ 59 */ j _trap_entry  /* QE2 */
-    /* IRQ 60 */ j _trap_entry  /* QE3 */
-    /* IRQ 61 */ j _trap_entry  /* USB */
-    /* IRQ 62 */ j _trap_entry  /* UART6 */
-    /* IRQ 63 */ j _trap_entry  /* UART7 */
-    /* IRQ 64 */ j _trap_entry  /* DMA0 */
-    /* IRQ 65 */ j _trap_entry  /* DMA1 */
-    /* IRQ 66 */ j _trap_entry  /* USB_DMA */
-    /* IRQ 67 */ j _trap_entry  /* CORE2 */
-    /* IRQ 68 */ j _trap_entry  /* MAILBOX */
-    /* IRQ 69 */ j _trap_entry  /* EXTI */
-    /* IRQ 70 */ j _trap_entry  /* BUS_ERROR */
-    /* IRQ 71 */ j _trap_entry  /* PLL_UNLOCK */
-    /* IRQ 72-76: Reserved padding */
-    /* IRQ 72 */ j _trap_entry
-    /* IRQ 73 */ j _trap_entry
-    /* IRQ 74 */ j _trap_entry
-    /* IRQ 75 */ j _trap_entry
-    /* IRQ 76 */ j _trap_entry
+    .rept 78
+    .word _trap_entry
+    .endr
+.size _clic_vector_table, . - _clic_vector_table
 
 /* ===================================================================
  * Data

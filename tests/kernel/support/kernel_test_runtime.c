@@ -48,6 +48,10 @@ void hal_clint_ipi_clear(os_cpu_t hart) {
     (void)hart;
 }
 
+void os_print(const char *fmt, ...) {
+    (void)fmt;
+}
+
 void os_test_kernel_reset(void) {
     memset(&g_trace, 0, sizeof(g_trace));
     os_test_fake_mstatus = 0;

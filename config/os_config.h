@@ -52,6 +52,17 @@
 /** @brief Default time slice in ticks */
 #define OS_CFG_TIME_SLICE_TICKS     10
 
+/**
+ * @brief Allow os_irq_exit() to switch tasks directly from interrupt context.
+ *
+ * Ports whose trap entry restores a full hardware frame after the C trap
+ * handler returns should disable this until they provide a trap-frame-aware
+ * interrupt return switch path.
+ */
+#ifndef OS_CFG_IRQ_EXIT_SCHED_EN
+#define OS_CFG_IRQ_EXIT_SCHED_EN    1
+#endif
+
 /** @brief Maximum number of tasks */
 #define OS_CFG_TASK_MAX             32
 
@@ -102,11 +113,51 @@
 #error "OS_CFG_CPU_COUNT must be at least 2 when OS_CFG_SMP_EN is enabled"
 #endif
 
+/**
+ * @brief SMP tick owner policy.
+ *
+ * The default policy lets every schedulable CPU program and handle its own
+ * CLINT timer. Boards that have only validated one global scheduler tick can
+ * set OS_CFG_SMP_TICK_OWNER_CPU to a concrete CPU index.
+ */
+#define OS_CFG_SMP_TICK_OWNER_ANY   0xFFFFFFFFUL
+
+#ifndef OS_CFG_SMP_TICK_OWNER_CPU
+#define OS_CFG_SMP_TICK_OWNER_CPU   OS_CFG_SMP_TICK_OWNER_ANY
+#endif
+
+/**
+ * @brief Per-CPU idle polling mask for SMP boards without reliable idle wakeup.
+ *
+ * A set bit keeps that CPU in an idle poll/schedule loop instead of executing
+ * wfi. The default is zero, so single-core and mature SMP ports keep using wfi.
+ */
+#ifndef OS_CFG_SMP_IDLE_POLL_MASK
+#define OS_CFG_SMP_IDLE_POLL_MASK   0UL
+#endif
+
+/**
+ * @brief Runtime IPI capability.
+ *
+ * When disabled, APIs that require a working software interrupt path avoid
+ * sending IPIs and return OS_ENOSYS where they cannot complete correctly.
+ */
+#ifndef OS_CFG_SMP_RUNTIME_IPI_EN
+#define OS_CFG_SMP_RUNTIME_IPI_EN   1
+#endif
+
+/** @brief Send an IPI when releasing secondary CPUs into scheduler startup. */
+#ifndef OS_CFG_SMP_RELEASE_IPI_EN
+#define OS_CFG_SMP_RELEASE_IPI_EN   OS_CFG_SMP_RUNTIME_IPI_EN
+#endif
+
 /** @brief Enable AMP mode support */
 #define OS_CFG_AMP_EN               1
 
 /** @brief Enable dynamic load balancing */
+#ifndef OS_CFG_LOAD_BALANCE_EN
 #define OS_CFG_LOAD_BALANCE_EN      1
+#endif
 
 /** @brief Load balance interval in ticks */
 #define OS_CFG_LOAD_BALANCE_TICKS   100

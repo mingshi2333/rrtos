@@ -4,6 +4,11 @@ app_name: "mnist_app"
 
 defaults:
   target_arch: "rv32"
+  target_abi: "ilp32f"
+  cpu_features: "+m,+a,+f,+zicsr"
+  enable_llvmcpu_microkernels: false
+  enable_data_tiling: false
+  enable_stream_memory_flags: false
   optimization: "size"
   memory_strategy: "static"
 

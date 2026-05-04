@@ -7,7 +7,7 @@
 - Toolchain resolution uses `IREE_TOOLCHAIN_ROOT` when set, otherwise tries the locked env from `iree-version.lock` before falling back to tools on `PATH`
 - Model source resolution uses `RRTOS_AI_MODEL_DIR` when set, otherwise resolves relative paths from `ai_models.yaml`
 - The current supported `st_mnist_28` source is `third_party/iree/samples/models/mnist.mlir`
-- IREE runtime source is pinned by `third_party/iree` and `iree-version.lock`; the current runtime tag is `v3.8.0`
+- IREE runtime source is pinned by `third_party/iree` and `iree-version.lock`; the current runtime tag is `v3.1.0`
 
 ## Validation fixtures
 

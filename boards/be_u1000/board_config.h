@@ -31,7 +31,7 @@
  * ========================================================================= */
 #define BE_U1000_IRQ_MODEL_CLIC     1
 #define BE_U1000_CLIC_NUM_IRQS      78      /* Total CLIC interrupt sources (0..77) */
-#define BE_U1000_CLIC_BASE          0x04000000UL
+#define BE_U1000_CLIC_BASE          0x0D000000UL
 
 /* CLIC CSR addresses (non-standard RISC-V extensions) */
 #define CSR_MTVT                    0x307   /* Machine Trap Vector Table Base */
@@ -280,7 +280,7 @@
 #define BE_U1000_DIAG_CANFD_FRAME_LEN 8u
 #define BE_U1000_DIAG_CANFD0_FRAME_ID 0x321u
 #define BE_U1000_DIAG_CANFD1_FRAME_ID 0x322u
-#define BE_U1000_DIAG_FLASH_JEDEC_ID 0x00EF4018u
+#define BE_U1000_DIAG_FLASH_JEDEC_ID 0x0020BA18u
 #define BE_U1000_DIAG_FLASH_PAGE_SIZE 256u
 #define BE_U1000_DIAG_FLASH_SECTOR_SIZE 4096u
 #define BE_U1000_DIAG_FLASH_CAPACITY_BYTES BE_U1000_QSPI1_SIZE

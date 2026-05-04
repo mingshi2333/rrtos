@@ -5,6 +5,7 @@ import yaml
 import subprocess
 import re
 import shutil
+import argparse
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent.resolve()
@@ -51,11 +52,14 @@ def read_locked_toolchain_env():
     return ""
 
 
-def candidate_toolchain_roots(config):
+def candidate_toolchain_roots(config, preferred_env_name=None):
     toolchain_cfg = config.get("toolchain", {})
     root_env = toolchain_cfg.get("root_env", "IREE_TOOLCHAIN_ROOT")
     root_value = os.environ.get(root_env, "")
     candidates = []
+    if preferred_env_name:
+        candidates.append(Path.home() / ".mamba" / "envs" / preferred_env_name / "bin")
+
     if root_value:
         candidates.append(Path(root_value).expanduser())
 
@@ -66,10 +70,10 @@ def candidate_toolchain_roots(config):
     return candidates
 
 
-def resolve_iree_tools(config, required_tools):
+def resolve_iree_tools(config, required_tools, preferred_env_name=None):
     resolved = {}
 
-    for root in candidate_toolchain_roots(config):
+    for root in candidate_toolchain_roots(config, preferred_env_name):
         missing = []
         for tool_name in required_tools:
             candidate = root / tool_name
@@ -94,7 +98,8 @@ def resolve_iree_tools(config, required_tools):
     if missing:
         print("Error: Missing usable IREE toolchain components: " + ", ".join(missing))
         print(
-            "Set IREE_TOOLCHAIN_ROOT or install the locked toolchain env from iree-version.lock."
+            "Set IREE_TOOLCHAIN_ROOT, configure toolchain.tflite_toolchain_env, "
+            "or install the locked toolchain env from iree-version.lock."
         )
         sys.exit(1)
 
@@ -174,9 +179,11 @@ def compile_model(config, config_path, model, defaults, output_dir):
     model_path = resolve_model_path(config, model, config_path)
     source_suffix = model_path.suffix.lower()
     required_tools = ["iree-compile"]
+    preferred_env_name = None
     if source_suffix == ".tflite":
         required_tools = ["iree-import-tflite", "iree-opt", "iree-compile"]
-    iree_tools = resolve_iree_tools(config, required_tools)
+        preferred_env_name = config.get("toolchain", {}).get("tflite_toolchain_env")
+    iree_tools = resolve_iree_tools(config, required_tools, preferred_env_name)
 
     if not model_path.exists():
         print(f"Error: Model file not found: {model_path}")
@@ -241,38 +248,51 @@ def compile_model(config, config_path, model, defaults, output_dir):
     arch = defaults.get("target_arch", "rv32")
     if arch == "rv64":
         target_triple = "riscv64-unknown-elf"
-        target_abi = "lp64d"
+        target_abi = defaults.get("target_abi", "lp64d")
         vm_index_bits = "64"
         output_obj = f"{name}_rv64.o"
     else:
         target_triple = "riscv32-unknown-elf"
-        target_abi = "ilp32d"
+        target_abi = defaults.get("target_abi", "ilp32d")
         vm_index_bits = "32"
         output_obj = f"{name}.o"
 
-    cpu_features = "+m,+a,+f,+d,+zicsr"
+    cpu_features = defaults.get("cpu_features", "+m,+a,+f,+d,+zicsr")
 
-    run_command(
+    compile_cmd = [
+        iree_tools["iree-compile"],
+        "--iree-hal-target-device=local",
+        "--iree-hal-local-target-device-backends=llvm-cpu",
+        f"--iree-llvmcpu-target-triple={target_triple}",
+        f"--iree-llvmcpu-target-cpu-features={cpu_features}",
+        f"--iree-llvmcpu-target-abi={target_abi}",
+        "--output-format=vm-c",
+        f"--iree-vm-target-index-bits={vm_index_bits}",
+        "--iree-llvmcpu-link-embedded=false",
+        "--iree-llvmcpu-link-static",
+        f"--iree-llvmcpu-static-library-output-path={output_dir}/{output_obj}",
+        "--iree-llvmcpu-loop-unrolling=false",
+    ]
+
+    if defaults.get("enable_llvmcpu_microkernels", True):
+        compile_cmd.append("--iree-llvmcpu-enable-ukernels=all")
+
+    if defaults.get("enable_data_tiling", True):
+        compile_cmd.append("--iree-opt-data-tiling")
+
+    if defaults.get("enable_stream_memory_flags", True):
+        compile_cmd.extend(
+            [
+                "--iree-stream-partitioning-favor=min-peak-memory",
+                "--iree-stream-resource-alias-mutable-bindings",
+                "--iree-stream-resource-index-bits=32",
+                "--iree-stream-resource-memory-model=unified",
+                "--iree-stream-resource-max-allocation-size=1048576",
+            ]
+        )
+
+    compile_cmd.extend(
         [
-            iree_tools["iree-compile"],
-            "--iree-hal-target-device=local",
-            "--iree-hal-local-target-device-backends=llvm-cpu",
-            f"--iree-llvmcpu-target-triple={target_triple}",
-            f"--iree-llvmcpu-target-cpu-features={cpu_features}",
-            f"--iree-llvmcpu-target-abi={target_abi}",
-            "--output-format=vm-c",
-            f"--iree-vm-target-index-bits={vm_index_bits}",
-            "--iree-llvmcpu-link-embedded=false",
-            "--iree-llvmcpu-link-static",
-            f"--iree-llvmcpu-static-library-output-path={output_dir}/{output_obj}",
-            "--iree-llvmcpu-loop-unrolling=false",
-            "--iree-llvmcpu-enable-ukernels=all",
-            "--iree-opt-data-tiling",
-            "--iree-stream-partitioning-favor=min-peak-memory",
-            "--iree-stream-resource-alias-mutable-bindings",
-            "--iree-stream-resource-index-bits=32",
-            "--iree-stream-resource-memory-model=unified",
-            "--iree-stream-resource-max-allocation-size=1048576",
             "--iree-flow-inline-constants-max-byte-length=0",
             "--iree-llvmcpu-debug-symbols=false",
             str(opt_mlir_path),
@@ -280,6 +300,8 @@ def compile_model(config, config_path, model, defaults, output_dir):
             f"{output_dir}/{name}.h",
         ]
     )
+
+    run_command(compile_cmd)
 
     return output_obj, metadata
 
@@ -638,9 +660,22 @@ add_custom_command(TARGET {app_name} POST_BUILD
 
 
 def main():
-    config_path = PROJECT_ROOT / "ai_models.yaml"
+    parser = argparse.ArgumentParser(
+        description="Generate IREE static-library model bindings for RRTOS apps."
+    )
+    parser.add_argument(
+        "--config",
+        default=str(PROJECT_ROOT / "ai_models.yaml"),
+        help="Path to AI model YAML configuration.",
+    )
+    args = parser.parse_args()
+
+    config_path = Path(args.config).expanduser()
+    if not config_path.is_absolute():
+        config_path = PROJECT_ROOT / config_path
+
     if not config_path.exists():
-        print("Config file not found: ai_models.yaml")
+        print(f"Config file not found: {config_path}")
         sys.exit(1)
 
     with open(config_path, "r") as f:
@@ -697,7 +732,9 @@ def main():
         else []
     )
 
-    if app_dir and not all(path.exists() for path in scaffold_targets):
+    should_generate_scaffold = config.get("generate_app_scaffolding", True)
+
+    if app_dir and should_generate_scaffold and not all(path.exists() for path in scaffold_targets):
         print("=== Generating App Scaffolding ===")
         generate_app_scaffolding(config, app_dir)
     elif app_dir:

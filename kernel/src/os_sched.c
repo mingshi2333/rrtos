@@ -3,6 +3,7 @@
 #include "riscv_csr.h"
 #include "riscv_atomic.h"
 #include "hal_clint.h"
+#include "hal_uart.h"
 
 #if OS_CFG_SMP_EN
 #include "os_smp.h"
@@ -26,6 +27,7 @@ static volatile bool g_kernel_running = false;
 static os_tcb_t *g_task_table[OS_CFG_TASK_MAX];
 static uint32_t g_task_count;
 static volatile bool g_sched_pending[OS_SCHED_CPU_SLOTS];
+static volatile uint32_t g_idle_seen_mask;
 
 #if OS_CFG_SMP_EN
 static os_cpu_data_t g_cpu_data[OS_CFG_CPU_MAX];
@@ -389,10 +391,56 @@ static void *stack_init(void *stack_base, os_size_t size, os_task_entry_t entry,
     return sp;
 }
 
+static bool cpu_owns_scheduler_tick(os_cpu_t cpu) {
+#if OS_CFG_SMP_EN
+    return OS_CFG_SMP_TICK_OWNER_CPU == OS_CFG_SMP_TICK_OWNER_ANY ||
+           cpu == (os_cpu_t)OS_CFG_SMP_TICK_OWNER_CPU;
+#else
+    (void)cpu;
+    return true;
+#endif
+}
+
+static bool cpu_idle_polls(os_cpu_t cpu) {
+#if OS_CFG_SMP_EN
+    return (OS_CFG_SMP_IDLE_POLL_MASK & (1UL << cpu)) != 0UL;
+#else
+    (void)cpu;
+    return false;
+#endif
+}
+
+static void cpu_enable_scheduler_interrupts(os_cpu_t cpu) {
+    os_reg_t mie_bits = MIE_MSIE;
+
+    if (cpu_owns_scheduler_tick(cpu)) {
+        mie_bits |= MIE_MTIE;
+    }
+
+    csr_set(mie, mie_bits);
+    csr_set(mstatus, MSTATUS_MIE);
+}
+
 static void idle_task_entry(void *arg) {
     (void)arg;
     while (1) {
+        os_cpu_t cpu = os_cpu_id();
+        uint32_t mask = 1u << cpu;
+        if ((g_idle_seen_mask & mask) == 0u) {
+            g_idle_seen_mask |= mask;
+            os_print("[IDLE] Core%u entered\n", cpu);
+        }
+        cpu_enable_scheduler_interrupts(cpu);
+#if !OS_CFG_IRQ_EXIT_SCHED_EN
+        os_sched();
+#endif
+        if (cpu_idle_polls(cpu)) {
+            continue;
+        }
         os_wfi();
+#if !OS_CFG_IRQ_EXIT_SCHED_EN
+        os_sched();
+#endif
     }
 }
 
@@ -450,8 +498,11 @@ void os_kernel_init(void) {
 
 void os_kernel_start(void) {
     os_cpu_t cpu = os_cpu_id();
+    os_reg_t flags;
+    os_tcb_t *first;
     
-    os_tcb_t *first = sched_highest_ready(cpu);
+    flags = os_spinlock_irq_save(&g_sched_lock);
+    first = sched_highest_ready(cpu);
     if (first != &g_idle_tcb[cpu]) {
         task_ready_remove(first);
     }
@@ -464,12 +515,13 @@ void os_kernel_start(void) {
 #endif
     
     g_kernel_running = true;
+    os_spinlock_irq_restore(&g_sched_lock, flags);
     
-    uint64_t next_tick = hal_clint_mtime_get() + (OS_CFG_TIMER_FREQ_HZ / OS_CFG_TICK_FREQ_HZ);
-    hal_clint_mtimecmp_set(cpu, next_tick);
-    
-    csr_set(mie, MIE_MTIE | MIE_MSIE);
-    csr_set(mstatus, MSTATUS_MIE);
+    if (cpu_owns_scheduler_tick(cpu)) {
+        uint64_t next_tick = hal_clint_mtime_get() + (OS_CFG_TIMER_FREQ_HZ / OS_CFG_TICK_FREQ_HZ);
+        hal_clint_mtimecmp_set(cpu, next_tick);
+    }
+    cpu_enable_scheduler_interrupts(cpu);
     
     os_context_switch_first(&first->sp);
 }
@@ -479,6 +531,8 @@ os_tick_t os_tick_get(void) {
 }
 
 void os_tick_handler(void) {
+    os_cpu_t cpu = os_cpu_id();
+
     os_reg_t flags = os_spinlock_irq_save(&g_sched_lock);
     
     g_tick_count++;
@@ -502,7 +556,6 @@ void os_tick_handler(void) {
         }
     }
     
-    os_cpu_t cpu = os_cpu_id();
     os_tcb_t *current = g_current_task[cpu];
     
 #if OS_CFG_TIME_SLICE_EN
@@ -770,7 +823,9 @@ void os_irq_exit(void) {
 
     sched_irq_dec(cpu);
     if (!sched_deferred(cpu) && g_sched_pending[cpu]) {
+#if OS_CFG_IRQ_EXIT_SCHED_EN
         os_sched();
+#endif
     }
 }
 
@@ -808,7 +863,9 @@ void os_sched(void) {
     
     if (current && current->state == OS_TASK_RUNNING) {
         current->state = OS_TASK_READY;
-        task_ready_add(current);
+        if (current != &g_idle_tcb[cpu]) {
+            task_ready_add(current);
+        }
     }
     
     next->state = OS_TASK_RUNNING;
@@ -885,7 +942,9 @@ os_err_t os_task_set_affinity(os_tcb_t *tcb, os_cpu_t affinity) {
 
     if (g_kernel_running) {
         if (tcb->state == OS_TASK_RUNNING && affinity != OS_CPU_ANY && tcb->cpu_id != affinity) {
+#if OS_CFG_SMP_RUNTIME_IPI_EN
             os_ipi_send(tcb->cpu_id, OS_IPI_RESCHEDULE);
+#endif
         }
         os_sched();
     }

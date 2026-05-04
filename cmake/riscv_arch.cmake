@@ -16,7 +16,7 @@ if(NOT DEFINED RISCV_MABI)
   elseif(DEFINED CONFIG_BOARD AND CONFIG_BOARD STREQUAL "be_u1000")
     set(RISCV_MABI "ilp32f" CACHE STRING "RISC-V mabi")
   else()
-    set(RISCV_MABI "ilp32d" CACHE STRING "RISC-V mabi")
+    set(RISCV_MABI "ilp32f" CACHE STRING "RISC-V mabi")
   endif()
 endif()
 

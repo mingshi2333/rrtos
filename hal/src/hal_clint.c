@@ -7,13 +7,25 @@ void hal_clint_init(os_ubase_t base) {
 }
 
 uint64_t hal_clint_mtime_get(void) {
-    volatile uint64_t *mtime = (volatile uint64_t *)(g_clint_base + CLINT_MTIME_OFFSET);
-    return *mtime;
+    volatile uint32_t *mtime = (volatile uint32_t *)(g_clint_base + CLINT_MTIME_OFFSET);
+    uint32_t hi;
+    uint32_t lo;
+
+    do {
+        hi = mtime[1];
+        lo = mtime[0];
+    } while (hi != mtime[1]);
+
+    return ((uint64_t)hi << 32) | lo;
 }
 
 void hal_clint_mtimecmp_set(os_cpu_t hart, uint64_t value) {
-    volatile uint64_t *mtimecmp = (volatile uint64_t *)(g_clint_base + CLINT_MTIMECMP_OFFSET + hart * 8);
-    *mtimecmp = value;
+    volatile uint32_t *mtimecmp =
+        (volatile uint32_t *)(g_clint_base + CLINT_MTIMECMP_OFFSET + hart * 8);
+
+    mtimecmp[0] = 0xFFFFFFFFu;
+    mtimecmp[1] = (uint32_t)(value >> 32);
+    mtimecmp[0] = (uint32_t)value;
 }
 
 void hal_clint_ipi_send(os_cpu_t hart) {

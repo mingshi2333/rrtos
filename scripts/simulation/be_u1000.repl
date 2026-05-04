@@ -30,7 +30,7 @@ clint: IRQControllers.CoreLevelInterruptor @ sysbus 0x02000000
 // CLIC-compatible direct IRQ wiring: UART sources routed to cpu0 IRQ IDs
 
 clic: IRQControllers.CoreLocalInterruptController @ {
-        sysbus <0x04000000, +0x10000>;
+        sysbus <0x0D000000, +0x10000>;
         cpu0 <0x1000, +0x4A1>
     }
     cpu: cpu0
@@ -791,7 +791,7 @@ elif req_get("isRead", "IsRead"):
 '''
 
 canfd0: Python.PythonPeripheral @ sysbus 0x11010000
-    size: 0x1000
+    size: 0x6000
     initable: true
     script: '''
 def req_get(*names):
@@ -806,38 +806,60 @@ def req_set_value(value):
     else:
         request.value = value
 
-STATUS_READY = 0x01
-STATUS_TX_FIFO_SPACE = 0x02
-STATUS_RX_PENDING = 0x04
-STATUS_LOOPBACK = 0x08
-STATUS_IRQ_PENDING = 0x10
-STATUS_ERROR = 0x20
+SRR_CEN = 0x2
+MSR_LBACK = 0x2
+SR_LBACK = 0x2
+SR_NORMAL = 0x8
+IT_TXOK = 0x2
+IT_RXOK = 0x10
+IT_ERROR = 0x100
+FSR_IRI = 0x80
+FSR_FL_POS = 8
+TB_BASE = 0x100
+TB_STRIDE = 0x48
+RB0_BASE = 0x2100
+RB_STRIDE = 0x48
 
-IRQ_TX_COMPLETE = 0x01
-IRQ_RX_READY = 0x02
-IRQ_ERROR = 0x04
+def current_sr():
+    if srr & SRR_CEN:
+        if msr & MSR_LBACK:
+            return SR_LBACK
+        return SR_NORMAL
+    return 0
 
-CMD_TX_KICK = 0x01
-CMD_RX_POP = 0x02
+def current_fsr():
+    return (rx_read_index & 0x3F) | ((rx_fifo_level & 0x7F) << FSR_FL_POS)
 
-def recompute_status():
-    global status
-    status = 0
-    if ctrl & 0x1:
-        status |= STATUS_READY | STATUS_TX_FIFO_SPACE
-    if ctrl & 0x2:
-        status |= STATUS_LOOPBACK
-    if rx_fifo_level:
-        status |= STATUS_RX_PENDING
-    if irq_status & irq_enable:
-        status |= STATUS_IRQ_PENDING
-    if error_status:
-        status |= STATUS_ERROR
+def tb_offset(index, member_offset):
+    return TB_BASE + index * TB_STRIDE + member_offset
+
+def rb0_offset(index, member_offset):
+    return RB0_BASE + index * RB_STRIDE + member_offset
+
+def tb_dw_index(offset):
+    return int((offset - tb_offset(0, 0x08)) / 4)
+
+def rb_dw_index(offset):
+    return int((offset - rb0_offset(0, 0x08)) / 4)
+
+def is_tb_dw_offset(offset):
+    if offset < tb_offset(0, 0x08):
+        return False
+    if offset >= tb_offset(0, 0x48):
+        return False
+    return ((offset - tb_offset(0, 0x08)) % 4) == 0
+
+def is_rb_dw_offset(offset):
+    if offset < rb0_offset(0, 0x08):
+        return False
+    if offset >= rb0_offset(0, 0x48):
+        return False
+    return ((offset - rb0_offset(0, 0x08)) % 4) == 0
 
 def update_irq_line(irq_num):
     global irq_asserted
     clic = self.GetMachine()["sysbus.clic"]
-    should_assert = (irq_status & irq_enable) != 0
+    should_assert = (isr & ier) != 0
     if should_assert and not irq_asserted:
         clic.OnGPIO(irq_num, True)
         irq_asserted = True
@@ -845,108 +867,101 @@ def update_irq_line(irq_num):
         clic.OnGPIO(irq_num, False)
         irq_asserted = False
 
+def complete_loopback():
+    global trr, isr, rx_fifo_level, rb_id, rb_dlc, rb_dw
+    if (srr & SRR_CEN) and (msr & MSR_LBACK):
+        rb_id = tb_id
+        rb_dlc = tb_dlc
+        rb_dw = list(tb_dw)
+        rx_fifo_level = 1
+        trr = 0
+        isr |= IT_TXOK | IT_RXOK
+    else:
+        isr |= IT_ERROR
+
 if req_get("isInit", "IsInit"):
-    ctrl = 0
-    bitrate = 0
-    irq_enable = 0
-    irq_status = 0
-    error_status = 0
+    srr = 0
+    msr = 0
+    brpr = 0
+    btr = 0
+    esr = 0
+    isr = 0
+    ier = 0
+    trr = 0
+    afr = 0
+    wmr = 0
     irq_asserted = False
-    status = 0
-    tx_fifo_level = 0
     rx_fifo_level = 0
-    tx_id = 0
-    tx_dlc = 0
-    tx_data0 = 0
-    tx_data1 = 0
-    rx_id = 0
-    rx_dlc = 0
-    rx_data0 = 0
-    rx_data1 = 0
-    signature = 0x43414E46
+    rx_read_index = 0
+    tb_id = 0
+    tb_dlc = 0
+    tb_dw = [0] * 16
+    rb_id = 0
+    rb_dlc = 0
+    rb_dw = [0] * 16
 elif req_get("isWrite", "IsWrite"):
     offset = req_get("offset", "Offset")
     value = req_get("value", "Value") & 0xFFFFFFFF
     if offset == 0x00:
-        ctrl = value
+        srr = value
     elif offset == 0x04:
-        bitrate = value
-    elif offset == 0x10:
-        irq_enable = value & 0x7
+        msr = value
     elif offset == 0x14:
-        irq_status &= ~value
-    elif offset == 0x18:
-        error_status &= ~value
+        esr &= ~value
+    elif offset == 0x20:
+        ier = value & (IT_TXOK | IT_RXOK | IT_ERROR)
     elif offset == 0x24:
-        tx_id = value
-    elif offset == 0x28:
-        tx_dlc = value
-    elif offset == 0x2C:
-        tx_data0 = value
-    elif offset == 0x30:
-        tx_data1 = value
-    elif offset == 0x0C:
-        if value & CMD_TX_KICK:
-            if (ctrl & 0x3) == 0x3 and bitrate != 0 and (tx_dlc & 0xFF) <= 8:
-                rx_id = tx_id
-                rx_dlc = tx_dlc & 0xFF
-                rx_data0 = tx_data0
-                rx_data1 = tx_data1
-                tx_fifo_level = 0
-                rx_fifo_level = 1
-                irq_status |= IRQ_TX_COMPLETE | IRQ_RX_READY
-                error_status = 0
-            else:
-                irq_status |= IRQ_ERROR
-                error_status |= 0x1
-        if value & CMD_RX_POP:
+        isr &= ~value
+    elif offset == 0x90:
+        trr = value
+        if value & 0x1:
+            complete_loopback()
+    elif offset == 0xE0:
+        afr = value
+    elif offset == 0xEC:
+        wmr = value
+    elif offset == 0xE8:
+        if value & FSR_IRI:
             rx_fifo_level = 0
-    recompute_status()
+    elif offset == tb_offset(0, 0x00):
+        tb_id = value
+    elif offset == tb_offset(0, 0x04):
+        tb_dlc = value
+    elif is_tb_dw_offset(offset):
+        tb_dw[tb_dw_index(offset)] = value
     update_irq_line(32)
 elif req_get("isRead", "IsRead"):
     offset = req_get("offset", "Offset")
     if offset == 0x00:
-        req_set_value(ctrl)
+        req_set_value(srr)
     elif offset == 0x04:
-        req_set_value(bitrate)
-    elif offset == 0x08:
-        req_set_value(status)
-    elif offset == 0x0C:
-        req_set_value(0x0)
-    elif offset == 0x10:
-        req_set_value(irq_enable)
-    elif offset == 0x14:
-        req_set_value(irq_status)
+        req_set_value(msr)
     elif offset == 0x18:
-        req_set_value(error_status)
+        req_set_value(current_sr())
     elif offset == 0x1C:
-        req_set_value(tx_fifo_level)
+        req_set_value(isr)
     elif offset == 0x20:
-        req_set_value(rx_fifo_level)
+        req_set_value(ier)
     elif offset == 0x24:
-        req_set_value(tx_id)
-    elif offset == 0x28:
-        req_set_value(tx_dlc)
-    elif offset == 0x2C:
-        req_set_value(tx_data0)
-    elif offset == 0x30:
-        req_set_value(tx_data1)
-    elif offset == 0x34:
-        req_set_value(rx_id)
-    elif offset == 0x38:
-        req_set_value(rx_dlc)
-    elif offset == 0x3C:
-        req_set_value(rx_data0)
-    elif offset == 0x40:
-        req_set_value(rx_data1)
-    elif offset == 0x44:
-        req_set_value(signature)
+        req_set_value(0)
+    elif offset == 0x90:
+        req_set_value(trr)
+    elif offset == 0xE0:
+        req_set_value(afr)
+    elif offset == 0xE8:
+        req_set_value(current_fsr())
+    elif offset == rb0_offset(0, 0x00):
+        req_set_value(rb_id)
+    elif offset == rb0_offset(0, 0x04):
+        req_set_value(rb_dlc)
+    elif is_rb_dw_offset(offset):
+        req_set_value(rb_dw[rb_dw_index(offset)])
     else:
         req_set_value(0x0)
 '''
 
 canfd1: Python.PythonPeripheral @ sysbus 0x13010000
-    size: 0x1000
+    size: 0x6000
     initable: true
     script: '''
 def req_get(*names):
@@ -961,38 +976,60 @@ def req_set_value(value):
     else:
         request.value = value
 
-STATUS_READY = 0x01
-STATUS_TX_FIFO_SPACE = 0x02
-STATUS_RX_PENDING = 0x04
-STATUS_LOOPBACK = 0x08
-STATUS_IRQ_PENDING = 0x10
-STATUS_ERROR = 0x20
+SRR_CEN = 0x2
+MSR_LBACK = 0x2
+SR_LBACK = 0x2
+SR_NORMAL = 0x8
+IT_TXOK = 0x2
+IT_RXOK = 0x10
+IT_ERROR = 0x100
+FSR_IRI = 0x80
+FSR_FL_POS = 8
+TB_BASE = 0x100
+TB_STRIDE = 0x48
+RB0_BASE = 0x2100
+RB_STRIDE = 0x48
 
-IRQ_TX_COMPLETE = 0x01
-IRQ_RX_READY = 0x02
-IRQ_ERROR = 0x04
+def current_sr():
+    if srr & SRR_CEN:
+        if msr & MSR_LBACK:
+            return SR_LBACK
+        return SR_NORMAL
+    return 0
 
-CMD_TX_KICK = 0x01
-CMD_RX_POP = 0x02
+def current_fsr():
+    return (rx_read_index & 0x3F) | ((rx_fifo_level & 0x7F) << FSR_FL_POS)
 
-def recompute_status():
-    global status
-    status = 0
-    if ctrl & 0x1:
-        status |= STATUS_READY | STATUS_TX_FIFO_SPACE
-    if ctrl & 0x2:
-        status |= STATUS_LOOPBACK
-    if rx_fifo_level:
-        status |= STATUS_RX_PENDING
-    if irq_status & irq_enable:
-        status |= STATUS_IRQ_PENDING
-    if error_status:
-        status |= STATUS_ERROR
+def tb_offset(index, member_offset):
+    return TB_BASE + index * TB_STRIDE + member_offset
+
+def rb0_offset(index, member_offset):
+    return RB0_BASE + index * RB_STRIDE + member_offset
+
+def tb_dw_index(offset):
+    return int((offset - tb_offset(0, 0x08)) / 4)
+
+def rb_dw_index(offset):
+    return int((offset - rb0_offset(0, 0x08)) / 4)
+
+def is_tb_dw_offset(offset):
+    if offset < tb_offset(0, 0x08):
+        return False
+    if offset >= tb_offset(0, 0x48):
+        return False
+    return ((offset - tb_offset(0, 0x08)) % 4) == 0
+
+def is_rb_dw_offset(offset):
+    if offset < rb0_offset(0, 0x08):
+        return False
+    if offset >= rb0_offset(0, 0x48):
+        return False
+    return ((offset - rb0_offset(0, 0x08)) % 4) == 0
 
 def update_irq_line(irq_num):
     global irq_asserted
     clic = self.GetMachine()["sysbus.clic"]
-    should_assert = (irq_status & irq_enable) != 0
+    should_assert = (isr & ier) != 0
     if should_assert and not irq_asserted:
         clic.OnGPIO(irq_num, True)
         irq_asserted = True
@@ -1000,102 +1037,95 @@ def update_irq_line(irq_num):
         clic.OnGPIO(irq_num, False)
         irq_asserted = False
 
+def complete_loopback():
+    global trr, isr, rx_fifo_level, rb_id, rb_dlc, rb_dw
+    if (srr & SRR_CEN) and (msr & MSR_LBACK):
+        rb_id = tb_id
+        rb_dlc = tb_dlc
+        rb_dw = list(tb_dw)
+        rx_fifo_level = 1
+        trr = 0
+        isr |= IT_TXOK | IT_RXOK
+    else:
+        isr |= IT_ERROR
+
 if req_get("isInit", "IsInit"):
-    ctrl = 0
-    bitrate = 0
-    irq_enable = 0
-    irq_status = 0
-    error_status = 0
+    srr = 0
+    msr = 0
+    brpr = 0
+    btr = 0
+    esr = 0
+    isr = 0
+    ier = 0
+    trr = 0
+    afr = 0
+    wmr = 0
     irq_asserted = False
-    status = 0
-    tx_fifo_level = 0
     rx_fifo_level = 0
-    tx_id = 0
-    tx_dlc = 0
-    tx_data0 = 0
-    tx_data1 = 0
-    rx_id = 0
-    rx_dlc = 0
-    rx_data0 = 0
-    rx_data1 = 0
-    signature = 0x43414E46
+    rx_read_index = 0
+    tb_id = 0
+    tb_dlc = 0
+    tb_dw = [0] * 16
+    rb_id = 0
+    rb_dlc = 0
+    rb_dw = [0] * 16
 elif req_get("isWrite", "IsWrite"):
     offset = req_get("offset", "Offset")
     value = req_get("value", "Value") & 0xFFFFFFFF
     if offset == 0x00:
-        ctrl = value
+        srr = value
     elif offset == 0x04:
-        bitrate = value
-    elif offset == 0x10:
-        irq_enable = value & 0x7
+        msr = value
     elif offset == 0x14:
-        irq_status &= ~value
-    elif offset == 0x18:
-        error_status &= ~value
+        esr &= ~value
+    elif offset == 0x20:
+        ier = value & (IT_TXOK | IT_RXOK | IT_ERROR)
     elif offset == 0x24:
-        tx_id = value
-    elif offset == 0x28:
-        tx_dlc = value
-    elif offset == 0x2C:
-        tx_data0 = value
-    elif offset == 0x30:
-        tx_data1 = value
-    elif offset == 0x0C:
-        if value & CMD_TX_KICK:
-            if (ctrl & 0x3) == 0x3 and bitrate != 0 and (tx_dlc & 0xFF) <= 8:
-                rx_id = tx_id
-                rx_dlc = tx_dlc & 0xFF
-                rx_data0 = tx_data0
-                rx_data1 = tx_data1
-                tx_fifo_level = 0
-                rx_fifo_level = 1
-                irq_status |= IRQ_TX_COMPLETE | IRQ_RX_READY
-                error_status = 0
-            else:
-                irq_status |= IRQ_ERROR
-                error_status |= 0x1
-        if value & CMD_RX_POP:
+        isr &= ~value
+    elif offset == 0x90:
+        trr = value
+        if value & 0x1:
+            complete_loopback()
+    elif offset == 0xE0:
+        afr = value
+    elif offset == 0xEC:
+        wmr = value
+    elif offset == 0xE8:
+        if value & FSR_IRI:
             rx_fifo_level = 0
-    recompute_status()
+    elif offset == tb_offset(0, 0x00):
+        tb_id = value
+    elif offset == tb_offset(0, 0x04):
+        tb_dlc = value
+    elif is_tb_dw_offset(offset):
+        tb_dw[tb_dw_index(offset)] = value
     update_irq_line(49)
 elif req_get("isRead", "IsRead"):
     offset = req_get("offset", "Offset")
     if offset == 0x00:
-        req_set_value(ctrl)
+        req_set_value(srr)
     elif offset == 0x04:
-        req_set_value(bitrate)
-    elif offset == 0x08:
-        req_set_value(status)
-    elif offset == 0x0C:
-        req_set_value(0x0)
-    elif offset == 0x10:
-        req_set_value(irq_enable)
-    elif offset == 0x14:
-        req_set_value(irq_status)
+        req_set_value(msr)
     elif offset == 0x18:
-        req_set_value(error_status)
+        req_set_value(current_sr())
     elif offset == 0x1C:
-        req_set_value(tx_fifo_level)
+        req_set_value(isr)
     elif offset == 0x20:
-        req_set_value(rx_fifo_level)
+        req_set_value(ier)
     elif offset == 0x24:
-        req_set_value(tx_id)
-    elif offset == 0x28:
-        req_set_value(tx_dlc)
-    elif offset == 0x2C:
-        req_set_value(tx_data0)
-    elif offset == 0x30:
-        req_set_value(tx_data1)
-    elif offset == 0x34:
-        req_set_value(rx_id)
-    elif offset == 0x38:
-        req_set_value(rx_dlc)
-    elif offset == 0x3C:
-        req_set_value(rx_data0)
-    elif offset == 0x40:
-        req_set_value(rx_data1)
-    elif offset == 0x44:
-        req_set_value(signature)
+        req_set_value(0)
+    elif offset == 0x90:
+        req_set_value(trr)
+    elif offset == 0xE0:
+        req_set_value(afr)
+    elif offset == 0xE8:
+        req_set_value(current_fsr())
+    elif offset == rb0_offset(0, 0x00):
+        req_set_value(rb_id)
+    elif offset == rb0_offset(0, 0x04):
+        req_set_value(rb_dlc)
+    elif is_rb_dw_offset(offset):
+        req_set_value(rb_dw[rb_dw_index(offset)])
     else:
         req_set_value(0x0)
 '''

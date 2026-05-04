@@ -187,7 +187,7 @@ typedef struct {
 #define IREE_HAL_MEMORY_TYPE_DEVICE_LOCAL 0x1u
 #define IREE_HAL_MEMORY_TYPE_HOST_VISIBLE 0x2u
 #define IREE_HAL_MAPPING_MODE_SCOPED 1
-#define IREE_HAL_WHOLE_BUFFER ((iree_device_size_t)-1)
+#define IREE_WHOLE_BUFFER ((iree_device_size_t)-1)
 #define IREE_HAL_MODULE_FLAG_SYNCHRONOUS 1
 
 iree_hal_executable_import_provider_t iree_hal_executable_import_provider_null(void);
@@ -229,11 +229,10 @@ typedef int iree_hal_module_device_policy_t;
 typedef int iree_hal_module_debug_sink_t;
 
 iree_status_t iree_hal_module_register_all_types(iree_vm_instance_t *instance);
-iree_hal_module_device_policy_t iree_hal_module_device_policy_default(void);
 iree_hal_module_debug_sink_t iree_hal_module_debug_sink_null(void);
 iree_status_t iree_hal_module_create(
-    iree_vm_instance_t *instance, iree_hal_module_device_policy_t device_policy,
-    iree_host_size_t device_count, iree_hal_device_t **devices, int flags,
+    iree_vm_instance_t *instance, iree_host_size_t device_count,
+    iree_hal_device_t **devices, int flags,
     iree_hal_module_debug_sink_t debug_sink, iree_allocator_t allocator,
     iree_vm_module_t **out_module);
 
@@ -323,6 +322,7 @@ static int g_fail_hal_module_create;
 static int g_fail_push_ref_move;
 static int g_fail_get_ref;
 static int g_fail_map_range;
+static char g_sync_device_identifier[32];
 
 static void reset_fakes(void) {
     memset(&g_registry, 0, sizeof(g_registry));
@@ -340,6 +340,7 @@ static void reset_fakes(void) {
     g_fail_push_ref_move = 0;
     g_fail_get_ref = 0;
     g_fail_map_range = 0;
+    memset(g_sync_device_identifier, 0, sizeof(g_sync_device_identifier));
 }
 
 static int assert_true(int condition, const char *message) {
@@ -610,21 +611,16 @@ iree_status_t iree_hal_module_register_all_types(iree_vm_instance_t *instance) {
     return IREE_STATUS_OK;
 }
 
-iree_hal_module_device_policy_t iree_hal_module_device_policy_default(void) {
-    return 0;
-}
-
 iree_hal_module_debug_sink_t iree_hal_module_debug_sink_null(void) {
     return 0;
 }
 
 iree_status_t iree_hal_module_create(
-    iree_vm_instance_t *instance, iree_hal_module_device_policy_t device_policy,
-    iree_host_size_t device_count, iree_hal_device_t **devices, int flags,
+    iree_vm_instance_t *instance, iree_host_size_t device_count,
+    iree_hal_device_t **devices, int flags,
     iree_hal_module_debug_sink_t debug_sink, iree_allocator_t allocator,
     iree_vm_module_t **out_module) {
     (void)instance;
-    (void)device_policy;
     (void)device_count;
     (void)devices;
     (void)flags;
@@ -647,9 +643,14 @@ iree_status_t iree_hal_sync_device_create(
     iree_host_size_t loader_count, iree_hal_executable_loader_t **loaders,
     iree_hal_allocator_t *device_allocator, iree_allocator_t host_allocator,
     iree_hal_device_t **out_device) {
-    (void)identifier;
     (void)params;
     (void)host_allocator;
+    size_t copy_length = identifier.size;
+    if (copy_length >= sizeof(g_sync_device_identifier)) {
+        copy_length = sizeof(g_sync_device_identifier) - 1;
+    }
+    memcpy(g_sync_device_identifier, identifier.data, copy_length);
+    g_sync_device_identifier[copy_length] = '\0';
     g_device_refs = 1;
     iree_hal_allocator_retain(device_allocator);
     for (iree_host_size_t i = 0; i < loader_count; i++) {
@@ -740,6 +741,17 @@ static int test_deinit_releases_loader_and_is_idempotent(void) {
     return 0;
 }
 
+static int test_sync_device_identifier_matches_iree_local_target(void) {
+    reset_fakes();
+    if (init_successfully()) return 1;
+    if (assert_true(strcmp(g_sync_device_identifier, "local") == 0,
+                    "sync device identifier must match IREE local target")) {
+        return 1;
+    }
+    ai_runtime_deinit();
+    return 0;
+}
+
 static int run_inference_with_failure(int *failure_flag) {
     uint8_t input_data[4] = {9, 8, 7, 6};
     uint8_t output_data[4] = {0};
@@ -790,6 +802,7 @@ int main(void) {
     int failures = 0;
     failures += test_init_failure_releases_partial_resources();
     failures += test_deinit_releases_loader_and_is_idempotent();
+    failures += test_sync_device_identifier_matches_iree_local_target();
     failures += test_input_push_failure_propagates();
     failures += test_output_get_ref_failure_propagates();
     failures += test_output_map_failure_propagates();

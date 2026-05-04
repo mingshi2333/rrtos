@@ -148,7 +148,7 @@ def renode_run(app: str, build_dir: Path, log_path: Path, sleep_seconds: int, re
         sysbus WriteDoubleWord 0x90000004 0x5F4C444D
         sysbus WriteDoubleWord 0x90000008 0x00010010
         sysbus WriteDoubleWord 0x9000000C 0xA55A3CC3
-        sysbus WriteDoubleWord 0x90000010 0x00EF4018
+        sysbus WriteDoubleWord 0x90000010 0x0020BA18
         sysbus WriteDoubleWord 0x90000014 0x00000100
         sysbus WriteDoubleWord 0x90000018 0x00001000
         sysbus WriteDoubleWord 0x9000001C 0x01000000
