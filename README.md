@@ -2,52 +2,231 @@
 
 [![DeepWiki](https://img.shields.io/badge/DeepWiki-Project%20Docs-00C7B7?logo=bookstack&logoColor=white)](https://deepwiki.com/mingshi2333/rrtos)
 
-`rrtos` is a bare-metal RISC-V RTOS repository with two explicit supported firmware lanes: a virtual RV32 validation lane on `qemu_virt` and a board bring-up lane on `be_u1000` / EVU-BA-2.3-shaped hardware.
+`rrtos` is a bare-metal RISC-V RTOS repository. Its supported surface is
+RTOS-first: the project is organized around explicit firmware lanes, and AI is
+an optional runtime extension on top of those lanes rather than the repository's
+primary identity.
 
-AI integration remains part of the supported story, but it is a subordinate extension on top of the RTOS-first validation lanes rather than the primary identity of the repository.
+The current supported firmware lanes are:
 
-## Supported firmware lanes
+- `rv32` on `qemu_virt`, with the canonical MNIST AI validation app.
+- `be-u1000` on BE-U1000 / EVU-BA-2.3-shaped hardware, with board self-test
+  validation in Renode.
+
+Supported lane markers used by the validation contract:
 
 - `qemu_virt` + `apps/mnist_app` + `ai/include/ai_model_registry.h`
 - `be_u1000` + `apps/be_u1000_demo` (current EVU-BA-2.3-shaped board path)
-- Supported validation:
-  - `pixi run -e rv32 validate-supported-rv32`
-  - `pixi run -e be-u1000 validate-supported`
-- Optional observation lanes do not promote a path to supported status.
 
-## Quick start
+The tree also contains observation lanes and historical experiments. A path is
+supported only when it is listed in `docs/SUPPORTED_MATRIX.md` and has a
+documented validation gate.
+Optional observation lanes do not promote a path to supported status.
 
-### 1. Initialize dependencies
+## Overall Architecture
 
-```bash
-pixi install
-pixi install -e be-u1000
-pixi run init-iree
+```mermaid
+flowchart TB
+    dev[Developer / CI] --> pixi[Pixi task surface]
+    pixi --> cmake[CMake build policy]
+    pixi --> scripts[Validation scripts]
+
+    cmake --> toolchain[RV32 Clang + lld + Picolibc + libgcc]
+    cmake --> config[OS_CFG_* lane policy]
+    cmake --> boardfacts[Board facts]
+
+    boardfacts --> qemu_board[qemu_virt]
+    boardfacts --> be_board[boards/be_u1000]
+
+    config --> kernel[Kernel]
+    kernel --> sched[Scheduler + timer + IPC]
+    kernel --> mem[Memory]
+    kernel --> smp[SMP scaffolding]
+
+    config --> hal[HAL contracts]
+    hal --> generic_hal[hal/include]
+    hal --> be_hal[BE-U1000 HAL drivers]
+    be_hal --> clic[CLIC + CLINT]
+    be_hal --> uart[UART]
+    be_hal --> board_io[GPIO / I2C / SPI / QSPI / CANFD]
+
+    config --> ai_enabled{OS_AI_EN}
+    ai_enabled -->|ON| ai[AI runtime registry]
+    ai --> iree[IREE runtime subset]
+    ai --> models[Generated model artifacts]
+
+    kernel --> apps[Applications]
+    hal --> apps
+    ai --> apps
+
+    apps --> mnist[apps/mnist_app]
+    apps --> be_demo[apps/be_u1000_demo]
+    apps --> be_ai[apps/be_u1000_ai_micro_demo]
+
+    scripts --> host_tests[Host kernel semantic tests]
+    scripts --> qemu_val[QEMU MNIST runtime validation]
+    scripts --> renode_val[Renode BE-U1000 boot log validation]
+
+    mnist --> qemu_val
+    be_demo --> renode_val
 ```
 
-The default pixi environment targets the supported `rv32` lane.
+## What Lives Where
 
-For a fuller setup walkthrough, see `docs/GETTING-STARTED.md`.
+| Area | Main paths | Role |
+| --- | --- | --- |
+| Architecture | `arch/riscv/`, `cmake/riscv*_*.cmake` | RISC-V context/trap code, linker defaults, ISA and ABI selection |
+| Board facts | `boards/be_u1000/` | BE-U1000 memory map, IRQ numbers, startup code, board linker scripts |
+| Kernel | `kernel/`, `memory/`, `multicore/` | Scheduler, timers, IPC, memory helpers, SMP support scaffolding |
+| HAL | `hal/include/`, `hal/src/` | Generic HAL interfaces and board-specific driver implementations |
+| AI runtime | `ai/`, `third_party/iree/` | Registry-backed IREE runtime integration for bare-metal firmware |
+| Applications | `apps/` | Firmware entrypoints for supported, observation, and experimental lanes |
+| Validation | `scripts/`, `tests/`, `.github/workflows/` | Local gates, boot-log checkers, unit-style tests, CI workflows |
+| Docs | `docs/` | Architecture, configuration, testing, support matrix, and board notes |
 
-### 2. Validate the supported RV32 firmware lane
+## Build And Runtime Model
+
+`CMakeLists.txt` is the central build-policy file. Board headers publish
+hardware facts, while CMake chooses the active lane policy and exports it
+through `OS_CFG_*` compile definitions.
+
+Important CMake options:
+
+| Option | Meaning |
+| --- | --- |
+| `CONFIG_BOARD` | Selects `qemu_virt` or `be_u1000` |
+| `ARCH_BITS` | Supported lanes use RV32 |
+| `RISCV_MARCH` / `RISCV_MABI` | Select target ISA and ABI; BE-U1000 uses `rv32imafc_zifencei` + `ilp32f` |
+| `OS_AI_EN` | Enables the IREE-backed AI runtime |
+| `OS_SMP_EN` | Enables SMP configuration; BE-U1000 runtime support is still staged |
+| `BE_U1000_APP` | Selects the BE-U1000 app lane |
+| `RRTOS_HAL_FEATURES` | `auto` derives a small HAL feature set from the selected app |
+
+The build links freestanding firmware with Picolibc, `lld`, section GC, and
+project-owned linker scripts. The RV32 Pixi environments also provide a local
+`libgcc.a` compatibility path so helper routines resolve consistently.
+
+## Supported Firmware Lanes
+
+### RV32 QEMU Lane
+
+The canonical RV32 lane is the supported AI validation path:
+
+- board: `qemu_virt`
+- app: `apps/mnist_app`
+- AI model registry: `ai/include/ai_model_registry.h`
+- model declaration: `ai_models.yaml`
+- generated model artifacts: `apps/mnist_app/generated/`
+- runtime proof: QEMU runs a committed five-sample MNIST batch and checks labels
+
+Run it with:
 
 ```bash
 pixi run -e rv32 validate-supported-rv32
 ```
 
-This builds the supported RV32 firmware lane and runs the canonical QEMU validation flow for `apps/mnist_app`.
+### BE-U1000 Board Lane
 
-### 3. Validate the supported BE-U1000 firmware lane
+The canonical BE-U1000 lane validates board bring-up behavior:
+
+- board: `be_u1000`
+- app: `apps/be_u1000_demo`
+- IRQ model: CLIC with CLINT timer/IPI support
+- board self-test: UART, GPIO, I2C, SPI, QSPI flash, CANFD
+- runtime proof: Renode boot log validation via `scripts/be_u1000/check_boot_log.py`
+
+Run it with:
 
 ```bash
 pixi run -e be-u1000 validate-supported
 ```
 
-This builds the board image and runs the supported interrupt and boot-log checks.
+The supported BE-U1000 lane currently builds with `OS_AI_EN=OFF`. Additional
+BE-U1000 app lanes are useful for bring-up and regression work, but they remain
+observation or experimental lanes until promoted in `docs/SUPPORTED_MATRIX.md`.
 
-## Development workflow
+## AI Runtime Extension
 
-Use Pixi tasks as the public command surface:
+The AI runtime is registry-backed. Applications find models by name, query
+tensor metadata through the registry API, then call synchronous inference:
+
+```text
+ai_models*.yaml
+  -> scripts/ai_codegen.py
+  -> generated C wrappers and static model objects
+  -> rv_aios_models
+  -> ai/src/ai_model_registry.c
+  -> application calls ai_runtime_init / ai_model_find_by_name / ai_infer_sync
+```
+
+The supported AI path is `apps/mnist_app` on the RV32 QEMU lane. The maintained
+AI task surface is:
+
+```bash
+pixi run -e rv32 validate-supported-ai
+pixi run -e rv32 validate-mnist-runtime
+pixi run -e rv32 observe-mnist-runtime-renode
+pixi run -e rv32 compare-mnist-runtime-platforms
+```
+
+`third_party/iree` is pinned as a runtime dependency. The supported build
+initializes only the IREE runtime submodules it needs; it does not depend on the
+full upstream compiler or GPU dependency graph.
+
+## BE-U1000 AI Micro Demo
+
+`apps/be_u1000_ai_micro_demo` is an explicit BE-U1000 AI bring-up app. It is
+useful for checking the static-library IREE path on the board target, but it is
+not the blocking supported BE-U1000 lane.
+
+It uses:
+
+- `BE_U1000_APP=ai_micro_demo`
+- `OS_AI_EN=ON`
+- `ai_models_be_u1000_ai_micro.yaml`
+- `apps/be_u1000_ai_micro_demo/model/hello_world_float.tflite`
+- generated static model object code under `apps/be_u1000_ai_micro_demo/generated/`
+- binary size guard: `scripts/check_be_u1000_ai_demo_size.py`
+
+Manual build:
+
+```bash
+python3 scripts/ai_codegen.py --config ai_models_be_u1000_ai_micro.yaml
+cmake -B build-be_u1000_ai_micro \
+  -DCMAKE_TOOLCHAIN_FILE=cmake/riscv32-pixi.cmake \
+  -DARCH_BITS=32 \
+  -DCONFIG_BOARD=be_u1000 \
+  -DBE_U1000_APP=ai_micro_demo \
+  -DOS_AI_EN=ON \
+  -DOS_SMP_EN=OFF \
+  -DRISCV_MARCH=rv32imafc_zifencei \
+  -DRISCV_MABI=ilp32f \
+  -DRISCV_ABI=ilp32d \
+  -DCMAKE_BUILD_TYPE=MinSizeRel
+cmake --build build-be_u1000_ai_micro -j
+python3 scripts/check_be_u1000_ai_demo_size.py \
+  --binary build-be_u1000_ai_micro/rrtos_be_u1000.bin \
+  --max-bytes 262144
+```
+
+## Quick Start
+
+Install the Pixi environments:
+
+```bash
+pixi install
+pixi install -e be-u1000
+```
+
+The default pixi environment targets the supported `rv32` lane.
+
+Initialize the supported IREE runtime subset:
+
+```bash
+pixi run init-iree
+```
+
+Run the main local gates:
 
 ```bash
 pixi run validate-kernel-semantics
@@ -55,58 +234,84 @@ pixi run -e rv32 validate-supported-rv32
 pixi run -e be-u1000 validate-supported
 ```
 
-The firmware CI workflow mirrors these supported gates. The RV32 job checks out
-only the IREE runtime submodule subset needed by the supported build; the
-BE-U1000 job does not require IREE.
+For a fuller setup walkthrough, see `docs/GETTING-STARTED.md`.
 
-See:
+## Validation Strategy
 
-- `docs/ARCHITECTURE.md` for repository layering and lane ownership
-- `docs/CONFIGURATION.md` for CMake/Pixi options
-- `docs/DEVELOPMENT.md` for contribution workflow inside this repo
-- `docs/TESTING.md` for blocking gates and observation lanes
+Blocking gates define supported behavior:
 
-## AI runtime extension
+| Gate | Command | What it proves |
+| --- | --- | --- |
+| Kernel semantics | `pixi run validate-kernel-semantics` | Host-side scheduler, IPC, timer, memory, and harness semantics |
+| RV32 supported lane | `pixi run -e rv32 validate-supported-rv32` | Config contracts, build, footprint reports, AI footprint, QEMU MNIST runtime |
+| BE-U1000 supported lane | `pixi run -e be-u1000 validate-supported` | Config contracts, ABI cache, build, footprint, IRQ map, Renode boot-log self-test |
 
-The canonical AI runtime validation target is `build/apps/mnist_app/mnist_validation`. It is the supported AI extension attached to the `qemu_virt` firmware lane.
-
-Useful commands:
+Observation lanes are intentionally separate:
 
 ```bash
-pixi run -e rv32 validate-mnist-runtime
 pixi run -e rv32 observe-mnist-runtime-renode
 pixi run -e rv32 compare-mnist-runtime-platforms
+pixi run -e be-u1000 validate-hal-apps
 ```
 
-What this validates on top of the RTOS lane:
+The firmware CI workflow mirrors the two supported firmware lanes in
+`.github/workflows/firmware-supported-matrix.yml`.
 
-- registry-backed runtime initialization
-- one supported model: `st_mnist_28`
-- model ownership through `ai_models.yaml` and generated artifacts under `apps/mnist_app/generated/`
-- a five-sample official MNIST batch with label-based pass/fail on QEMU
-- optional QEMU-vs-Renode output cross-check using per-sample metrics and hashes
+## Common Workflows
 
-The runtime gate now passes only when the committed sample batch predicts the correct MNIST labels. The logs still emit per-sample hashes so QEMU and Renode runs can be compared for drift.
+### Regenerate Canonical MNIST Artifacts
 
-`zoo/` remains optional model-conversion tooling. A zoo-generated model is not supported until it is promoted through `ai_models.yaml`, the registry contract, deterministic validation, and `docs/SUPPORTED_MATRIX.md`.
+```bash
+python3 scripts/ai_codegen.py
+pixi run -e rv32 validate-supported-ai
+pixi run -e rv32 validate-supported-rv32
+```
 
-## Project map
+### Work On BE-U1000 HAL Apps
 
-- `docs/README.md` - documentation index
-- `docs/ARCHITECTURE.md` - repository layering and supported lane architecture
+```bash
+pixi run -e be-u1000 validate-hal-apps --build-only
+pixi run -e be-u1000 validate-hal-apps
+pixi run -e be-u1000 validate-supported
+```
+
+### Inspect Generated Evidence
+
+Useful local evidence files include:
+
+- `build/apps/mnist_app/mnist_validation_footprint.md`
+- `build/apps/mnist_app/mnist_validation_ai_footprint.md`
+- `build-be_u1000/rrtos_be_u1000_footprint.md`
+- `logs/be_u1000_selftest_runtime.md`
+- `logs/be_u1000_hal_matrix.md`
+
+Avoid committing timestamp-only log churn unless refreshing evidence is the
+purpose of the change.
+
+## Documentation Map
+
+Start here:
+
+- `docs/README.md` - documentation index and suggested reading order
 - `docs/GETTING-STARTED.md` - setup and first validation commands
-- `docs/DEVELOPMENT.md` - development workflow and promotion rules
-- `docs/TESTING.md` - blocking gates, observation lanes, and CI notes
-- `docs/CONFIGURATION.md` - Pixi, CMake, HAL, IREE, and toolchain configuration
 - `docs/SUPPORTED_MATRIX.md` - supported vs experimental scope
-- `docs/AI_CANONICAL_PATH.md` - canonical AI contract, tooling, and validation rules
-- `docs/HAL_CONFIGURATION.md` - BE-U1000 HAL feature-selection model
-- `docs/switching_guide.md` - target and validation selection guide
-- `boards/be_u1000/DFU_FLASHING_GUIDE.md` - BE-U1000 flashing notes
-- `docs/reports/RRTOS_ARCHITECTURE_AI_REVIEW.md` - architecture review snapshot
+- `docs/ARCHITECTURE.md` - deeper architecture and lane ownership
+- `docs/CONFIGURATION.md` - Pixi, CMake, HAL, IREE, and toolchain options
+- `docs/TESTING.md` - blocking gates, observation lanes, and CI notes
+- `docs/DEVELOPMENT.md` - contribution workflow and promotion rules
+- `docs/HAL_CONFIGURATION.md` - BE-U1000 HAL feature selection
+- `docs/AI_CANONICAL_PATH.md` - AI model registry and validation contract
+- `docs/switching_guide.md` - which target or validator to use for a task
 
-## Experimental and historical content
+Board-focused references:
 
-Some files remain in-tree for research or bring-up history, but they are not part of the supported matrix. Prefer the docs above over older notes that mention `ai_demo`, `mobilenet_test`, legacy RV64 simulation workflows, or board experiments outside the declared firmware lanes.
+- `boards/be_u1000/DFU_FLASHING_GUIDE.md`
+- `docs/BE_U1000_MULTICORE_NOTES.md`
+- `docs/BE_U1000_RUNTIME_VALIDATION_MATRIX.md`
+- `docs/EVU_BA_PINMAP.md`
+- `docs/EVU_BA_2_3_BOARD_INVENTORY.md`
 
-The maintained pixi task surface is intentionally smaller than the full historical repo surface. Prefer the supported and observation commands documented here over older staged SMP, RV64, or legacy demo aliases.
+Historical reports remain in-tree for archaeology, but they are not the source
+of truth for support status. Prefer the docs listed above over older notes that
+mention legacy RV64 workflows, `ai_demo`, `mobilenet_test`, or board experiments
+outside the declared firmware lanes.
