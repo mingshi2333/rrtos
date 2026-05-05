@@ -161,23 +161,14 @@ observation or experimental lanes until promoted in `docs/SUPPORTED_MATRIX.md`.
 ## Optional C++/ETL Extension
 
 The RTOS core remains C/ASM. `RRTOS_CXX_EN=ON` adds an optional freestanding C++
-facade and pins ETLCPP to `mingshi2333/etl` commit
-`293c7dfcfc9582cf955a4d72264f92db4bba3c8e`. The first proof lane is
+facade. ETLCPP is provided by the Pixi-managed `etlcpp` package, pinned to the
+official `ETLCPP/etl` release tag `20.41.7`. The first proof lane is
 `BE_U1000_APP=etl_smoke`, which exercises a fixed-capacity ETL-backed queue
 without enabling exceptions, RTTI, STL containers, or global constructors.
 
 ```bash
-cmake -S . -B build-be_u1000_etl_smoke \
-  -DCMAKE_TOOLCHAIN_FILE=cmake/riscv32-pixi.cmake \
-  -DARCH_BITS=32 \
-  -DCONFIG_BOARD=be_u1000 \
-  -DRISCV_MARCH=rv32imafc_zifencei \
-  -DRISCV_MABI=ilp32f \
-  -DRISCV_ABI=ilp32d \
-  -DOS_AI_EN=OFF \
-  -DRRTOS_CXX_EN=ON \
-  -DBE_U1000_APP=etl_smoke
-cmake --build build-be_u1000_etl_smoke
+pixi run -e be-u1000 configure-etl-smoke
+pixi run -e be-u1000 build-etl-smoke
 ```
 
 ## AI Runtime Extension

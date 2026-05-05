@@ -50,7 +50,7 @@
 - Create: `apps/be_u1000_etl_smoke/main.cpp`
 
 - [ ] Add `RRTOS_CXX_EN=OFF` and only enable C++/ETL when the option is ON.
-- [ ] Fetch or use ETLCPP as an interface dependency pinned to `mingshi2333/etl` commit `293c7dfcfc9582cf955a4d72264f92db4bba3c8e`.
+- [ ] Use ETLCPP through the Pixi-managed `etlcpp` package pinned to the official `ETLCPP/etl` release tag `20.41.7`.
 - [ ] Compile C++ with `-ffreestanding -fno-exceptions -fno-rtti -fno-threadsafe-statics -fno-use-cxa-atexit`.
 - [ ] Add `rrtos::StaticQueue<T, N>` as the first C++ facade, backed by ETL fixed-capacity storage.
 - [ ] Add `BE_U1000_APP=etl_smoke`, requiring `RRTOS_CXX_EN=ON`.

@@ -63,6 +63,7 @@ validate-supported-rv32 = { depends-on = ["validate-config-authority", "validate
 
 [feature.rv32.dependencies]
 picolibc-rv32 = { path = "packages/picolibc-rv32" }
+etlcpp = { path = "packages/etlcpp" }
 compiler-rt = ">=21.1.8,<22"
 
 [feature.rv32.tasks]
@@ -75,11 +76,14 @@ ai-gen = { cmd = "python3 scripts/ai_codegen.py", description = "Generate AI mod
 
 [feature.be_u1000.dependencies]
 picolibc-rv32 = { path = "packages/picolibc-rv32" }
+etlcpp = { path = "packages/etlcpp" }
 compiler-rt = ">=21.1.8,<22"
 
 [feature.be_u1000.tasks]
 configure = "cmake -B build-be_u1000 -DCMAKE_TOOLCHAIN_FILE=cmake/riscv32-pixi.cmake -DARCH_BITS=32 -DCONFIG_BOARD=be_u1000 -DRISCV_MARCH=rv32imafc_zifencei -DRISCV_MABI=ilp32f -DRISCV_ABI=ilp32d -DCMAKE_BUILD_TYPE=MinSizeRel -DOS_SMP_EN=OFF -DOS_AI_EN=OFF"
 build = "cmake --build build-be_u1000"
+configure-etl-smoke = "cmake -B build-be_u1000_etl_smoke -DCMAKE_TOOLCHAIN_FILE=cmake/riscv32-pixi.cmake -DARCH_BITS=32 -DCONFIG_BOARD=be_u1000 -DRISCV_MARCH=rv32imafc_zifencei -DRISCV_MABI=ilp32f -DRISCV_ABI=ilp32d -DCMAKE_BUILD_TYPE=MinSizeRel -DOS_SMP_EN=OFF -DOS_AI_EN=OFF -DRRTOS_CXX_EN=ON -DBE_U1000_APP=etl_smoke"
+build-etl-smoke = "cmake --build build-be_u1000_etl_smoke"
 report-footprint = "python scripts/report_build_footprint.py --label rrtos_be_u1000 --image build-be_u1000/rrtos_be_u1000.elf --kernel-archive build-be_u1000/kernel/librv_aios_kernel.a --cache build-be_u1000/CMakeCache.txt --linker-script boards/be_u1000/link_be_u1000_tcm.ld --map build-be_u1000/rrtos_be_u1000.map --output build-be_u1000/rrtos_be_u1000_footprint.md"
 validate-irq-map = "python scripts/be_u1000/validate_interrupt_consistency.py --board-config boards/be_u1000/board_config.h --repl scripts/simulation/be_u1000.repl"
 validate-selftest-sim = "python scripts/be_u1000/run_smp_runtime.py --kernel build-be_u1000/rrtos_be_u1000.elf --binary build-be_u1000/rrtos_be_u1000.bin --log logs/be_u1000_boot_sim.log --summary logs/be_u1000_selftest_runtime.md --sleep-seconds 4 --check-bootlog --expect-irq-model CLIC --expect-single-core-fallback --expect-qspi-signature 0x31505351 0x5F4C444D 0x00010010 0xA55A3CC3"
