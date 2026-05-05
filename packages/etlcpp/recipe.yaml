@@ -1,0 +1,32 @@
+context:
+  version: "20.41.7"
+
+package:
+  name: "etlcpp"
+  version: "${{ version }}"
+
+source:
+  url: https://github.com/ETLCPP/etl/archive/refs/tags/${{ version }}.tar.gz
+  sha256: 10a26f084fcd603bc2b2b8df98221c8896036a558f069acaa1fbaecce7974a39
+
+build:
+  number: 0
+  script:
+    - |
+      cmake -S . -B build \
+        -DCMAKE_INSTALL_PREFIX=$PREFIX \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_TESTS=OFF \
+        -DNO_STL=ON \
+        -DNO_SYSTEM_INCLUDE=ON
+      cmake --install build
+
+requirements:
+  build:
+    - cmake
+    - ninja
+
+about:
+  homepage: https://github.com/ETLCPP/etl
+  license: MIT
+  summary: "Embedded Template Library headers and CMake package"

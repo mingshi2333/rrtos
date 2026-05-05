@@ -137,7 +137,13 @@ With `RRTOS_HAL_FEATURES=auto`, the top-level build maps each app to a
 minimal HAL feature set. See `docs/HAL_CONFIGURATION.md` for the feature map.
 
 `etl_smoke` is an experimental C++/ETL proof lane. It requires
-`RRTOS_CXX_EN=ON` and keeps `OS_AI_EN=OFF`.
+`RRTOS_CXX_EN=ON` and keeps `OS_AI_EN=OFF`. ETLCPP is installed by Pixi through
+the local `etlcpp` package recipe, not fetched by CMake:
+
+```bash
+pixi run -e be-u1000 configure-etl-smoke
+pixi run -e be-u1000 build-etl-smoke
+```
 
 ## RISC-V Toolchain And Libgcc
 
