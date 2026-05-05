@@ -1,0 +1,9 @@
+#ifndef ETL_PROFILE_H
+#define ETL_PROFILE_H
+
+#define ETL_TARGET_DEVICE_GENERIC
+#define ETL_TARGET_OS_NONE
+#define ETL_NO_STL
+#define ETL_NO_CHECKS
+
+#endif

@@ -89,6 +89,8 @@ def main():
     parser.add_argument("--linker-script", required=True)
     parser.add_argument("--output", required=True)
     parser.add_argument("--map", required=False)
+    parser.add_argument("--max-image-bytes", type=int, required=False)
+    parser.add_argument("--max-kernel-dec-bytes", type=int, required=False)
     args = parser.parse_args()
 
     image = Path(args.image)
@@ -102,6 +104,20 @@ def main():
 
     kernel_size = run(["llvm-size", str(kernel_archive)]).stdout
     kernel_totals = parse_archive_totals(kernel_size)
+    budget_failures = []
+
+    if args.max_image_bytes is not None and (image_total or 0) > args.max_image_bytes:
+        budget_failures.append(
+            f"image total {image_total or 0} exceeds max {args.max_image_bytes}"
+        )
+
+    if (
+        args.max_kernel_dec_bytes is not None
+        and kernel_totals[3] > args.max_kernel_dec_bytes
+    ):
+        budget_failures.append(
+            f"kernel dec {kernel_totals[3]} exceeds max {args.max_kernel_dec_bytes}"
+        )
 
     cache_values = parse_cache(cache_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -146,6 +162,19 @@ def main():
             f"| bss | {kernel_totals[2]} |",
             f"| dec | {kernel_totals[3]} |",
             "",
+            "## Budgets",
+            "",
+            "| Budget | Limit | Actual | Status |",
+            "| --- | ---: | ---: | --- |",
+            (
+                f"| image total | {args.max_image_bytes} | {image_total or 0} | "
+                f"{'PASS' if args.max_image_bytes is None or (image_total or 0) <= args.max_image_bytes else 'FAIL'} |"
+            ),
+            (
+                f"| kernel dec | {args.max_kernel_dec_bytes} | {kernel_totals[3]} | "
+                f"{'PASS' if args.max_kernel_dec_bytes is None or kernel_totals[3] <= args.max_kernel_dec_bytes else 'FAIL'} |"
+            ),
+            "",
             "## Regeneration",
             "",
             f"```bash\nllvm-size --format=sysv {image}\nllvm-size {kernel_archive}\n```",
@@ -154,6 +183,9 @@ def main():
     )
 
     output_path.write_text("\n".join(lines), encoding="utf-8")
+
+    if budget_failures:
+        raise SystemExit("Footprint budget failed: " + "; ".join(budget_failures))
 
 
 if __name__ == "__main__":

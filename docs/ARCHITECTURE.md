@@ -18,8 +18,9 @@ The build is assembled from these layers:
 | --- | --- | --- |
 | Architecture | `arch/riscv/`, `cmake/riscv*_*.cmake` | RISC-V startup, trap/context code, linker scripts, target ISA/ABI selection |
 | Board | `boards/be_u1000/` | Immutable BE-U1000 hardware facts, startup/linker selection, board headers |
-| Kernel | `kernel/`, `memory/`, `multicore/` | Scheduler, timer, IPC, memory primitives, SMP scaffolding |
-| HAL | `hal/include/`, `hal/src/` | Generic HAL contracts and board-specific peripheral implementations |
+| Kernel | `kernel/`, `memory/`, `multicore/` | Scheduler core, timer, IPC, libc shim, memory primitives, SMP scaffolding |
+| HAL | `hal/include/`, `hal/src/` | Generic HAL contracts, board core/pinmux/selftest, board-specific peripheral implementations |
+| C++ facade | `cxx/` | Optional freestanding C++/ETL adapters over the C RTOS seams |
 | AI runtime | `ai/`, `apps/mnist_app/generated/`, `third_party/iree/` | Registry-backed IREE runtime integration for the supported MNIST path |
 | Apps | `apps/` | Supported firmware entrypoints and observation apps |
 | Validation | `scripts/`, `tests/`, `.github/workflows/` | Local and CI gates for supported behavior |
@@ -72,13 +73,17 @@ to the minimum HAL feature set needed by that app.
 
 ## Kernel Model
 
-The kernel currently exposes:
+The kernel public interface remains C. The build uses object-library modules to
+keep implementation ownership explicit while preserving the aggregate
+`librv_aios_kernel.a` archive used by footprint reporting:
 
-- cooperative and timer-driven scheduling primitives in `kernel/src/os_sched.c`
-- timer behavior in `kernel/src/os_timer.c`
-- IPC semantics in `kernel/src/os_ipc.c`
-- memory helpers in `memory/src/os_mem.c`
-- RISC-V trap/context assembly in `arch/riscv/src/`
+- `rv_aios_kernel_core`: scheduler, task, tick, and IRQ-entry coordination
+- `rv_aios_kernel_timer`: software timer subsystem
+- `rv_aios_kernel_ipc`: semaphores, mutexes, queues, and events
+- `rv_aios_kernel_libc`: string helpers and optional picolibc syscall shim
+- `rv_aios_kernel_arch`: RISC-V trap/context/startup sources
+- `rv_aios_kernel_smp`: optional SMP support when `OS_SMP_EN=ON`
+- `memory/src/os_mem.c`: heap and fixed memory pool implementation
 
 Kernel behavior is covered by the host-side semantic harness:
 
@@ -94,8 +99,14 @@ runtime support.
 ## HAL Model
 
 The HAL is split into generic headers and board-specific implementations.
-Generic contracts live under `hal/include/`; BE-U1000 implementations live under
-`hal/src/be_u1000/`.
+Generic contracts live under `hal/include/`. BE-U1000 board support is split
+behind the same `hal_board.h` interface:
+
+- `hal/src/hal_board.c`: board identity, init sequencing, banner, execution
+  profile, and SMP demo helpers
+- `hal/src/hal_board_be_u1000_pinmux.c`: BE-U1000 CRU and pinmux adapter
+- `hal/src/hal_board_selftest.c`: optional board self-test profiles and runners
+- `hal/src/be_u1000/`: peripheral driver adapters
 
 Feature selection is build-time:
 
@@ -105,6 +116,14 @@ Feature selection is build-time:
 - Disabled HAL features are not added to the driver library target.
 
 See `docs/HAL_CONFIGURATION.md` for the current feature map.
+
+## C++/ETL Extension Model
+
+C++ is an optional adapter layer, not the kernel implementation language.
+`RRTOS_CXX_EN=OFF` is the default. When enabled, the build adds `rv_aios_cxx`,
+uses freestanding C++ flags, disables exceptions and RTTI, and links ETLCPP as a
+header-only fixed-capacity container library. The first facade is
+`rrtos::StaticQueue<T, N>` in `cxx/include/rrtos/cxx/static_queue.hpp`.
 
 ## AI Runtime Model
 
@@ -139,4 +158,3 @@ The workflow also handles the IREE checkout carefully:
 
 This avoids depending on historical nested IREE compiler refs that are not part
 of the supported runtime surface.
-

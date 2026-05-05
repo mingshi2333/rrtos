@@ -94,6 +94,15 @@ Optional features:
 board self-test touches GPIO, I2C, SPI, flash, and CANFD. Firmware that only
 needs board init and a banner should use `board` without `board_selftest`.
 
+The implementation mirrors that feature split:
+
+- `hal/src/hal_board.c`: small board core, identity, init, banner, and execution
+  profile helpers
+- `hal/src/hal_board_be_u1000_pinmux.c`: BE-U1000 CRU/pinmux adapter used by
+  the `board` feature
+- `hal/src/hal_board_selftest.c`: diagnostics and self-test routines compiled
+  only when `board_selftest` is present
+
 ## AI Build Policy
 
 The supported RV32 AI lane explicitly uses `OS_AI_EN=ON`.

@@ -170,7 +170,9 @@
 #define OS_CFG_MEM_POOL_EN          1
 
 /** @brief Enable dynamic heap allocator */
+#ifndef OS_CFG_HEAP_EN
 #define OS_CFG_HEAP_EN              1
+#endif
 
 /** @brief Heap size in bytes (if enabled) */
 #define OS_CFG_HEAP_SIZE            (64 * 1024)
@@ -195,6 +197,11 @@
 /* IPC Configuration                                                          */
 /*===========================================================================*/
 
+/** @brief Enable semaphore, mutex, queue, and event primitives */
+#ifndef OS_CFG_IPC_EN
+#define OS_CFG_IPC_EN               1
+#endif
+
 /** @brief Maximum semaphores */
 #define OS_CFG_SEM_MAX              32
 
@@ -214,8 +221,22 @@
 /* Timer Configuration                                                        */
 /*===========================================================================*/
 
+/** @brief Enable software timer subsystem */
+#ifndef OS_CFG_TIMER_EN
+#define OS_CFG_TIMER_EN             1
+#endif
+
+#if OS_CFG_TIMER_EN && !OS_CFG_IPC_EN
+#error "OS_CFG_TIMER_EN requires OS_CFG_IPC_EN"
+#endif
+
 /** @brief Maximum software timers */
 #define OS_CFG_TIMER_MAX            16
+
+/** @brief Enable picolibc syscall bridge inside the kernel archive */
+#ifndef OS_CFG_LIBC_SHIM_EN
+#define OS_CFG_LIBC_SHIM_EN         1
+#endif
 
 /** @brief Timer task priority */
 #define OS_CFG_TIMER_TASK_PRIO      2

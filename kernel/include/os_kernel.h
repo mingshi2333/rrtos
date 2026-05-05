@@ -24,6 +24,7 @@ void os_sched(void);
 void os_irq_enter(void);
 void os_irq_exit(void);
 
+#if OS_CFG_IPC_EN
 os_err_t os_sem_init(os_sem_t *sem, const char *name, int32_t init, int32_t max);
 os_err_t os_sem_take(os_sem_t *sem, os_tick_t timeout);
 os_err_t os_sem_give(os_sem_t *sem);
@@ -47,13 +48,16 @@ os_err_t os_event_wait(os_event_t *event, uint32_t flags, uint32_t opt,
 #define OS_EVENT_WAIT_ALL       0x01
 #define OS_EVENT_WAIT_ANY       0x00
 #define OS_EVENT_CLEAR_ON_EXIT  0x02
+#endif
 
+#if OS_CFG_TIMER_EN
 os_err_t os_timer_init(os_timer_t *timer, const char *name, os_timer_cb_t cb,
                        void *arg, os_tick_t period, uint8_t periodic);
 os_err_t os_timer_start(os_timer_t *timer);
 os_err_t os_timer_stop(os_timer_t *timer);
 void os_timer_subsys_init(void);
 void os_timer_tick(void);
+#endif
 
 #if OS_CFG_SMP_EN
 os_cpu_t os_cpu_count(void);

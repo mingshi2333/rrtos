@@ -50,12 +50,32 @@ if(CONFIG_BOARD STREQUAL "be_u1000")
 endif()
 
 option(OS_SMP_EN "Enable SMP support" OFF)
+option(OS_IPC_EN "Enable kernel IPC primitives" ON)
+option(OS_TIMER_EN "Enable kernel software timers" ON)
+option(OS_LIBC_SHIM_EN "Enable picolibc syscall shim in the kernel archive" ON)
+option(OS_HEAP_EN "Enable RTOS heap allocator" ON)
 option(OS_AI_EN "Enable AI runtime" ${OS_AI_EN_DEFAULT})
 set(AI_IREE_STATUS_FEATURES "0" CACHE STRING "IREE status detail feature mask for AI runtime diagnostics")
 option(OS_FL_EN "Enable Federated Learning" OFF)
 option(OS_DEBUG "Enable debug build" ON)
+option(RRTOS_CXX_EN "Enable optional freestanding C++ support" OFF)
 option(RRTOS_BUILD_EXPERIMENTAL_APPS "Build experimental apps and legacy AI demos" OFF)
 set(RRTOS_HAL_FEATURES "auto" CACHE STRING "Semicolon-separated HAL features, or 'auto' for the selected board/app")
+
+if(RRTOS_CXX_EN)
+    enable_language(CXX)
+    set(CMAKE_CXX_STANDARD 17)
+    set(CMAKE_CXX_STANDARD_REQUIRED ON)
+    set(CMAKE_CXX_EXTENSIONS OFF)
+endif()
+
+if(OS_TIMER_EN AND NOT OS_IPC_EN)
+    message(FATAL_ERROR "OS_TIMER_EN requires OS_IPC_EN because the software timer task is semaphore-backed")
+endif()
+
+if(OS_LIBC_SHIM_EN AND NOT OS_HEAP_EN)
+    message(FATAL_ERROR "OS_LIBC_SHIM_EN requires OS_HEAP_EN because picolibc malloc/free bridge to os_malloc/os_free")
+endif()
 
 if(CONFIG_BOARD STREQUAL "be_u1000")
     set(CONFIG_BOARD_BE_U1000 ON)
@@ -116,6 +136,30 @@ else()
     set(OS_CFG_AI_EN_VALUE 0)
 endif()
 
+if(OS_IPC_EN)
+    set(OS_CFG_IPC_EN_VALUE 1)
+else()
+    set(OS_CFG_IPC_EN_VALUE 0)
+endif()
+
+if(OS_TIMER_EN)
+    set(OS_CFG_TIMER_EN_VALUE 1)
+else()
+    set(OS_CFG_TIMER_EN_VALUE 0)
+endif()
+
+if(OS_LIBC_SHIM_EN)
+    set(OS_CFG_LIBC_SHIM_EN_VALUE 1)
+else()
+    set(OS_CFG_LIBC_SHIM_EN_VALUE 0)
+endif()
+
+if(OS_HEAP_EN)
+    set(OS_CFG_HEAP_EN_VALUE 1)
+else()
+    set(OS_CFG_HEAP_EN_VALUE 0)
+endif()
+
 if(OS_FL_EN)
     set(OS_CFG_FL_EN_VALUE 1)
 else()
@@ -126,6 +170,10 @@ endif()
 # config/os_config.h provides fallback defaults only when these are absent.
 set(OS_SELECTED_LANE_DEFINITIONS
     OS_CFG_SMP_EN=${OS_CFG_SMP_EN_VALUE}
+    OS_CFG_IPC_EN=${OS_CFG_IPC_EN_VALUE}
+    OS_CFG_TIMER_EN=${OS_CFG_TIMER_EN_VALUE}
+    OS_CFG_LIBC_SHIM_EN=${OS_CFG_LIBC_SHIM_EN_VALUE}
+    OS_CFG_HEAP_EN=${OS_CFG_HEAP_EN_VALUE}
     OS_CFG_AI_EN=${OS_CFG_AI_EN_VALUE}
     OS_CFG_FL_EN=${OS_CFG_FL_EN_VALUE}
     OS_CFG_CPU_FREQ_HZ=${OS_CFG_CPU_FREQ_HZ_VALUE}
@@ -151,16 +199,25 @@ if(ARCH_BITS STREQUAL "32")
     if(RISCV_ABI STREQUAL "ilp32d" OR RISCV_MABI STREQUAL "ilp32f")
         # RV32 hard-float ABI. RISCV_MABI selects single- or double-float.
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=${RISCV_MARCH}_zicsr -mabi=${RISCV_MABI} -mcmodel=medany -mno-relax -Wall -Wextra -ffunction-sections -fdata-sections -Oz")
+        if(RRTOS_CXX_EN)
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=${RISCV_MARCH}_zicsr -mabi=${RISCV_MABI} -mcmodel=medany -mno-relax -Wall -Wextra -ffunction-sections -fdata-sections -Oz")
+        endif()
         set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -march=${RISCV_MARCH}_zicsr -mabi=${RISCV_MABI}")
     else()
         # Soft-Float (rv32imacv) - Default
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=rv32imacv_zicsr -mabi=ilp32 -mcmodel=medany -mno-relax -Wall -Wextra -ffunction-sections -fdata-sections")
+        if(RRTOS_CXX_EN)
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=rv32imacv_zicsr -mabi=ilp32 -mcmodel=medany -mno-relax -Wall -Wextra -ffunction-sections -fdata-sections")
+        endif()
         set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -march=rv32imacv_zicsr -mabi=ilp32")
     endif()
     add_definitions(-DOS_CFG_ARCH_BITS=32)
     set(ARCH "riscv")
 else()
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=${RISCV_MARCH}_zicsr -mabi=${RISCV_MABI} -mcmodel=medany -Wall -Wextra -ffunction-sections -fdata-sections")
+    if(RRTOS_CXX_EN)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=${RISCV_MARCH}_zicsr -mabi=${RISCV_MABI} -mcmodel=medany -Wall -Wextra -ffunction-sections -fdata-sections")
+    endif()
     set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -march=${RISCV_MARCH}_zicsr -mabi=${RISCV_MABI} -mcmodel=medany")
     add_definitions(-DOS_CFG_ARCH_BITS=64)
     set(ARCH_BITS "64")
@@ -183,8 +240,8 @@ else()
 endif()
 
 if(CONFIG_BOARD_BE_U1000)
-    set(BE_U1000_APP "demo" CACHE STRING "BE-U1000 application lane (demo, gpio_ledblink, gpio_inputpolling, uart_printf, canfd_polling, qspi_flash, i2c_polling, tim_timebase, adc_single, wdt_heartbeat, pwmg_outputcompare, dma_mem2mem, i2s_tx, pwma_timebase, usb_runtime, or ai_micro_demo)")
-    set_property(CACHE BE_U1000_APP PROPERTY STRINGS demo gpio_ledblink gpio_inputpolling uart_printf canfd_polling qspi_flash i2c_polling tim_timebase adc_single wdt_heartbeat pwmg_outputcompare dma_mem2mem i2s_tx pwma_timebase usb_runtime ai_micro_demo)
+    set(BE_U1000_APP "demo" CACHE STRING "BE-U1000 application lane (demo, gpio_ledblink, gpio_inputpolling, uart_printf, canfd_polling, qspi_flash, i2c_polling, tim_timebase, adc_single, wdt_heartbeat, pwmg_outputcompare, dma_mem2mem, i2s_tx, pwma_timebase, usb_runtime, ai_micro_demo, or etl_smoke)")
+    set_property(CACHE BE_U1000_APP PROPERTY STRINGS demo gpio_ledblink gpio_inputpolling uart_printf canfd_polling qspi_flash i2c_polling tim_timebase adc_single wdt_heartbeat pwmg_outputcompare dma_mem2mem i2s_tx pwma_timebase usb_runtime ai_micro_demo etl_smoke)
 
     set(RRTOS_BE_U1000_BASE_HAL_FEATURES board uart clint irq_clic)
     if(RRTOS_HAL_FEATURES STREQUAL "auto")
@@ -221,8 +278,10 @@ if(CONFIG_BOARD_BE_U1000)
             list(APPEND RRTOS_EFFECTIVE_HAL_FEATURES usb)
         elseif(BE_U1000_APP STREQUAL "ai_micro_demo")
             # Base HAL features are enough for the UART/CLINT AI smoke demo.
+        elseif(BE_U1000_APP STREQUAL "etl_smoke")
+            # Base HAL features are enough for the UART/CLINT C++/ETL smoke demo.
         else()
-            message(FATAL_ERROR "Unsupported BE_U1000_APP='${BE_U1000_APP}'. Expected one of: demo, gpio_ledblink, gpio_inputpolling, uart_printf, canfd_polling, qspi_flash, i2c_polling, tim_timebase, adc_single, wdt_heartbeat, pwmg_outputcompare, dma_mem2mem, i2s_tx, pwma_timebase, usb_runtime, ai_micro_demo")
+            message(FATAL_ERROR "Unsupported BE_U1000_APP='${BE_U1000_APP}'. Expected one of: demo, gpio_ledblink, gpio_inputpolling, uart_printf, canfd_polling, qspi_flash, i2c_polling, tim_timebase, adc_single, wdt_heartbeat, pwmg_outputcompare, dma_mem2mem, i2s_tx, pwma_timebase, usb_runtime, ai_micro_demo, etl_smoke")
         endif()
     else()
         set(RRTOS_EFFECTIVE_HAL_FEATURES ${RRTOS_HAL_FEATURES})
@@ -295,6 +354,10 @@ target_link_libraries(rv_aios_rtos INTERFACE
     rv_aios_drivers
 )
 
+if(RRTOS_CXX_EN)
+    include(${CMAKE_SOURCE_DIR}/cmake/rrtos_cxx.cmake)
+endif()
+
 # ============================================================================
 # AI Module
 # ============================================================================
@@ -341,8 +404,13 @@ if(CONFIG_BOARD_BE_U1000)
             message(FATAL_ERROR "ai_micro_demo requires OS_AI_EN=ON")
         endif()
         add_subdirectory(apps/be_u1000_ai_micro_demo)
+    elseif(BE_U1000_APP STREQUAL "etl_smoke")
+        if(NOT RRTOS_CXX_EN)
+            message(FATAL_ERROR "etl_smoke requires RRTOS_CXX_EN=ON")
+        endif()
+        add_subdirectory(apps/be_u1000_etl_smoke)
     else()
-        message(FATAL_ERROR "Unsupported BE_U1000_APP='${BE_U1000_APP}'. Expected one of: demo, gpio_ledblink, gpio_inputpolling, uart_printf, canfd_polling, qspi_flash, i2c_polling, tim_timebase, adc_single, wdt_heartbeat, pwmg_outputcompare, dma_mem2mem, i2s_tx, pwma_timebase, usb_runtime, ai_micro_demo")
+        message(FATAL_ERROR "Unsupported BE_U1000_APP='${BE_U1000_APP}'. Expected one of: demo, gpio_ledblink, gpio_inputpolling, uart_printf, canfd_polling, qspi_flash, i2c_polling, tim_timebase, adc_single, wdt_heartbeat, pwmg_outputcompare, dma_mem2mem, i2s_tx, pwma_timebase, usb_runtime, ai_micro_demo, etl_smoke")
     endif()
 else()
     if(OS_AI_EN)
