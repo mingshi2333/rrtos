@@ -4,6 +4,10 @@ if(CONFIG_PLATFORM_ESP32C3)
     file(GLOB HAL_SOURCES CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/esp32/*.c)
 elseif(CONFIG_BOARD_BE_U1000)
     set(RRTOS_BE_U1000_HAL_FEATURES ${RRTOS_EFFECTIVE_HAL_FEATURES})
+    set(RRTOS_BE_U1000_BOARD_SOURCES
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/hal_board.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/hal_board_be_u1000_pinmux.c
+    )
     if(NOT RRTOS_BE_U1000_HAL_FEATURES)
         set(RRTOS_BE_U1000_HAL_FEATURES
             board
@@ -30,10 +34,11 @@ elseif(CONFIG_BOARD_BE_U1000)
 
     foreach(feature IN LISTS RRTOS_BE_U1000_HAL_FEATURES)
         if(feature STREQUAL "board")
-            list(APPEND HAL_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/hal_board.c)
+            list(APPEND HAL_SOURCES ${RRTOS_BE_U1000_BOARD_SOURCES})
         elseif(feature STREQUAL "board_selftest")
             list(APPEND HAL_SOURCES
-                ${CMAKE_CURRENT_SOURCE_DIR}/src/hal_board.c
+                ${RRTOS_BE_U1000_BOARD_SOURCES}
+                ${CMAKE_CURRENT_SOURCE_DIR}/src/hal_board_selftest.c
                 ${CMAKE_CURRENT_SOURCE_DIR}/src/be_u1000/hal_gpio_be_u1000.c
                 ${CMAKE_CURRENT_SOURCE_DIR}/src/be_u1000/hal_i2c_be_u1000.c
                 ${CMAKE_CURRENT_SOURCE_DIR}/src/be_u1000/hal_spi_be_u1000.c
@@ -80,8 +85,14 @@ elseif(CONFIG_BOARD_BE_U1000)
     endforeach()
     list(REMOVE_DUPLICATES HAL_SOURCES)
 else()
-    file(GLOB HAL_SOURCES CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/*.c)
-    list(APPEND HAL_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/hal_board.c)
+    set(HAL_SOURCES
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/hal_board.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/hal_clint.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/hal_plic.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/hal_plic_irq.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/hal_uart.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/math_compat.c
+    )
 endif()
 
 add_library(rv_aios_drivers STATIC ${HAL_SOURCES})

@@ -33,6 +33,13 @@ def main() -> None:
         encoding="utf-8"
     )
     hal_board_c = (REPO_ROOT / "hal/src/hal_board.c").read_text(encoding="utf-8")
+    hal_board_selftest_c = (REPO_ROOT / "hal/src/hal_board_selftest.c").read_text(
+        encoding="utf-8"
+    )
+    hal_board_pinmux_c = (
+        REPO_ROOT / "hal/src/hal_board_be_u1000_pinmux.c"
+    ).read_text(encoding="utf-8")
+    hal_cmake = (REPO_ROOT / "hal/CMakeLists.txt").read_text(encoding="utf-8")
 
     forbid(beu_demo, '"board_config.h"', "apps/be_u1000_demo/main.c")
     forbid(mnist_main, '"board_config.h"', "apps/mnist_app/src/main.c")
@@ -103,97 +110,114 @@ def main() -> None:
     )
     forbid(hal_board_h, "hal_board_get_selftest_profile", "hal/include/hal_board.h")
     require(
-        hal_board_c,
+        hal_board_selftest_c,
         "typedef struct {\n    uintptr_t spi_base;",
-        "hal/src/hal_board.c",
+        "hal/src/hal_board_selftest.c",
     )
     require(
-        hal_board_c, "typedef struct {\n    uintptr_t ctrl_base;", "hal/src/hal_board.c"
+        hal_board_selftest_c,
+        "typedef struct {\n    uintptr_t ctrl_base;",
+        "hal/src/hal_board_selftest.c",
     )
     require(
-        hal_board_c,
+        hal_board_selftest_c,
         "typedef struct {\n    hal_board_pinmux_group_t console_pinmux_group;",
-        "hal/src/hal_board.c",
+        "hal/src/hal_board_selftest.c",
     )
+    require(
+        hal_board_pinmux_c,
+        "int hal_board_be_u1000_apply_pinmux_group(hal_board_pinmux_group_t group)",
+        "hal/src/hal_board_be_u1000_pinmux.c",
+    )
+    require(
+        hal_board_pinmux_c,
+        "void hal_board_be_u1000_pinmux_init(void)",
+        "hal/src/hal_board_be_u1000_pinmux.c",
+    )
+    require(hal_cmake, "hal_board_be_u1000_pinmux.c", "hal/CMakeLists.txt")
+    require(hal_cmake, "hal_board_selftest.c", "hal/CMakeLists.txt")
     require(
         hal_board_c,
         "typedef struct {\n    os_cpu_t control_cpu;",
         "hal/src/hal_board.c",
     )
     require(
-        hal_board_c,
+        hal_board_selftest_c,
         "#define HAL_BOARD_SELFTEST_CANFD_CONTROLLER_COUNT 2u",
-        "hal/src/hal_board.c",
+        "hal/src/hal_board_selftest.c",
     )
     require(
-        hal_board_c,
+        hal_board_selftest_c,
         "static void hal_board_fill_diag_config(hal_board_diag_config_t *config)",
-        "hal/src/hal_board.c",
+        "hal/src/hal_board_selftest.c",
     )
     require(
-        hal_board_c,
+        hal_board_selftest_c,
         "static void hal_board_fill_gpio_resource(hal_board_gpio_role_t role,",
-        "hal/src/hal_board.c",
+        "hal/src/hal_board_selftest.c",
     )
     require(
-        hal_board_c,
+        hal_board_selftest_c,
         "static void hal_board_fill_flash_profile(hal_board_flash_profile_t *profile)",
-        "hal/src/hal_board.c",
+        "hal/src/hal_board_selftest.c",
     )
     require(
-        hal_board_c,
+        hal_board_selftest_c,
         "static void hal_board_fill_canfd_profile(uint32_t index, hal_board_canfd_profile_t *profile)",
-        "hal/src/hal_board.c",
+        "hal/src/hal_board_selftest.c",
     )
     require(
-        hal_board_c,
+        hal_board_selftest_c,
         "static void hal_board_fill_selftest_profile(hal_board_selftest_profile_t *profile)",
-        "hal/src/hal_board.c",
+        "hal/src/hal_board_selftest.c",
     )
-    forbid(hal_board_c, "config->gpio_base", "hal/src/hal_board.c")
-    forbid(hal_board_c, "config->gpio_pin", "hal/src/hal_board.c")
+    forbid(hal_board_selftest_c, "config->gpio_base", "hal/src/hal_board_selftest.c")
+    forbid(hal_board_selftest_c, "config->gpio_pin", "hal/src/hal_board_selftest.c")
     require(
         hal_board_h,
         "int hal_board_run_selftest(void);",
         "hal/include/hal_board.h",
     )
     require(
-        hal_board_c,
+        hal_board_selftest_c,
         "int hal_board_run_selftest(void)",
-        "hal/src/hal_board.c",
+        "hal/src/hal_board_selftest.c",
     )
-    require(hal_board_c, "static void run_gpio_selftest(", "hal/src/hal_board.c")
-    require(hal_board_c, "static void run_serial_bus_selftest(", "hal/src/hal_board.c")
-    require(hal_board_c, "static void run_flash_selftest(", "hal/src/hal_board.c")
-    require(hal_board_c, "static void run_canfd_selftest(", "hal/src/hal_board.c")
-    require(hal_board_c, "const char *window_capture_note;", "hal/src/hal_board.c")
-    require(hal_board_c, "const char *identify_capture_note;", "hal/src/hal_board.c")
-    require(hal_board_c, "uint8_t payload_seed;", "hal/src/hal_board.c")
-    require(hal_board_c, "const char *route;", "hal/src/hal_board.c")
+    require(hal_board_c, "#if !RRTOS_HAL_HAS_BOARD_SELFTEST", "hal/src/hal_board.c")
+    require(hal_board_selftest_c, "static void run_gpio_selftest(", "hal/src/hal_board_selftest.c")
+    require(hal_board_selftest_c, "static void run_serial_bus_selftest(", "hal/src/hal_board_selftest.c")
+    require(hal_board_selftest_c, "static void run_flash_selftest(", "hal/src/hal_board_selftest.c")
+    require(hal_board_selftest_c, "static void run_canfd_selftest(", "hal/src/hal_board_selftest.c")
+    require(hal_board_selftest_c, "const char *window_capture_note;", "hal/src/hal_board_selftest.c")
+    require(hal_board_selftest_c, "const char *identify_capture_note;", "hal/src/hal_board_selftest.c")
+    require(hal_board_selftest_c, "uint8_t payload_seed;", "hal/src/hal_board_selftest.c")
+    require(hal_board_selftest_c, "const char *route;", "hal/src/hal_board_selftest.c")
     require(
-        hal_board_c,
+        hal_board_selftest_c,
         'selftest_label(flash_profile->window_capture_note, "sample captured")',
-        "hal/src/hal_board.c",
+        "hal/src/hal_board_selftest.c",
     )
     require(
-        hal_board_c,
+        hal_board_selftest_c,
         'selftest_label(flash_profile->identify_capture_note, "sample captured")',
-        "hal/src/hal_board.c",
+        "hal/src/hal_board_selftest.c",
     )
-    require(hal_board_c, "hal_gpio_init(button_gpio->base);", "hal/src/hal_board.c")
-    require(hal_board_c, "profile->payload_seed + i", "hal/src/hal_board.c")
-    require(hal_board_c, "[SELFTEST] %s route: %s", "hal/src/hal_board.c")
+    require(hal_board_selftest_c, "hal_gpio_init(button_gpio->base);", "hal/src/hal_board_selftest.c")
+    require(hal_board_selftest_c, "profile->payload_seed + i", "hal/src/hal_board_selftest.c")
+    require(hal_board_selftest_c, "[SELFTEST] %s route: %s", "hal/src/hal_board_selftest.c")
     require(
-        hal_board_c, "HAL_BOARD_SELFTEST_CANFD_CONTROLLER_COUNT", "hal/src/hal_board.c"
+        hal_board_selftest_c,
+        "HAL_BOARD_SELFTEST_CANFD_CONTROLLER_COUNT",
+        "hal/src/hal_board_selftest.c",
     )
-    require(hal_board_c, "CANFD_IRQ_SEEN(index)", "hal/src/hal_board.c")
-    require(hal_board_c, "profile->canfd_count", "hal/src/hal_board.c")
-    require(hal_board_c, "g_canfd_profile_count", "hal/src/hal_board.c")
-    require(hal_board_c, "diag_config->spi_probe_tx", "hal/src/hal_board.c")
-    require(hal_board_c, "flash_profile->window_sample_offset", "hal/src/hal_board.c")
-    require(hal_board_c, "flash_profile->window_sample_words", "hal/src/hal_board.c")
-    require(hal_board_c, "report_flash_sample(", "hal/src/hal_board.c")
-    require(hal_board_c, "profile->internal_loopback", "hal/src/hal_board.c")
+    require(hal_board_selftest_c, "CANFD_IRQ_SEEN(index)", "hal/src/hal_board_selftest.c")
+    require(hal_board_selftest_c, "profile->canfd_count", "hal/src/hal_board_selftest.c")
+    require(hal_board_selftest_c, "g_canfd_profile_count", "hal/src/hal_board_selftest.c")
+    require(hal_board_selftest_c, "diag_config->spi_probe_tx", "hal/src/hal_board_selftest.c")
+    require(hal_board_selftest_c, "flash_profile->window_sample_offset", "hal/src/hal_board_selftest.c")
+    require(hal_board_selftest_c, "flash_profile->window_sample_words", "hal/src/hal_board_selftest.c")
+    require(hal_board_selftest_c, "report_flash_sample(", "hal/src/hal_board_selftest.c")
+    require(hal_board_selftest_c, "profile->internal_loopback", "hal/src/hal_board_selftest.c")
     require(
         hal_board_c,
         "static void hal_board_fill_demo_topology(hal_board_demo_topology_t *topology)",

@@ -39,13 +39,18 @@ flowchart TB
     boardfacts --> be_board[boards/be_u1000]
 
     config --> kernel[Kernel]
-    kernel --> sched[Scheduler + timer + IPC]
+    kernel --> sched[Scheduler core]
+    kernel --> timer[Software timers]
+    kernel --> ipc[IPC primitives]
+    kernel --> libc[Libc syscall shim]
     kernel --> mem[Memory]
     kernel --> smp[SMP scaffolding]
 
     config --> hal[HAL contracts]
     hal --> generic_hal[hal/include]
     hal --> be_hal[BE-U1000 HAL drivers]
+    be_hal --> board_core[Board core + pinmux]
+    be_hal --> board_selftest[Board self-test feature]
     be_hal --> clic[CLIC + CLINT]
     be_hal --> uart[UART]
     be_hal --> board_io[GPIO / I2C / SPI / QSPI / CANFD]
@@ -55,9 +60,13 @@ flowchart TB
     ai --> iree[IREE runtime subset]
     ai --> models[Generated model artifacts]
 
+    config --> cxx_enabled{RRTOS_CXX_EN}
+    cxx_enabled -->|ON| cxx[C++ facade + ETL]
+
     kernel --> apps[Applications]
     hal --> apps
     ai --> apps
+    cxx --> apps
 
     apps --> mnist[apps/mnist_app]
     apps --> be_demo[apps/be_u1000_demo]
@@ -79,6 +88,7 @@ flowchart TB
 | Board facts | `boards/be_u1000/` | BE-U1000 memory map, IRQ numbers, startup code, board linker scripts |
 | Kernel | `kernel/`, `memory/`, `multicore/` | Scheduler, timers, IPC, memory helpers, SMP support scaffolding |
 | HAL | `hal/include/`, `hal/src/` | Generic HAL interfaces and board-specific driver implementations |
+| C++ facade | `cxx/`, `apps/be_u1000_etl_smoke/` | Optional freestanding C++/ETL layer, disabled by default |
 | AI runtime | `ai/`, `third_party/iree/` | Registry-backed IREE runtime integration for bare-metal firmware |
 | Applications | `apps/` | Firmware entrypoints for supported, observation, and experimental lanes |
 | Validation | `scripts/`, `tests/`, `.github/workflows/` | Local gates, boot-log checkers, unit-style tests, CI workflows |
@@ -99,6 +109,9 @@ Important CMake options:
 | `RISCV_MARCH` / `RISCV_MABI` | Select target ISA and ABI; BE-U1000 uses `rv32imafc_zifencei` + `ilp32f` |
 | `OS_AI_EN` | Enables the IREE-backed AI runtime |
 | `OS_SMP_EN` | Enables SMP configuration; BE-U1000 runtime support is still staged |
+| `OS_IPC_EN` / `OS_TIMER_EN` | Select kernel IPC and software timer modules; default ON |
+| `OS_LIBC_SHIM_EN` / `OS_HEAP_EN` | Select picolibc syscall shim and RTOS heap bridge; default ON |
+| `RRTOS_CXX_EN` | Enables the optional freestanding C++/ETL layer; default OFF |
 | `BE_U1000_APP` | Selects the BE-U1000 app lane |
 | `RRTOS_HAL_FEATURES` | `auto` derives a small HAL feature set from the selected app |
 
@@ -144,6 +157,28 @@ pixi run -e be-u1000 validate-supported
 The supported BE-U1000 lane currently builds with `OS_AI_EN=OFF`. Additional
 BE-U1000 app lanes are useful for bring-up and regression work, but they remain
 observation or experimental lanes until promoted in `docs/SUPPORTED_MATRIX.md`.
+
+## Optional C++/ETL Extension
+
+The RTOS core remains C/ASM. `RRTOS_CXX_EN=ON` adds an optional freestanding C++
+facade and pins ETLCPP to `mingshi2333/etl` commit
+`293c7dfcfc9582cf955a4d72264f92db4bba3c8e`. The first proof lane is
+`BE_U1000_APP=etl_smoke`, which exercises a fixed-capacity ETL-backed queue
+without enabling exceptions, RTTI, STL containers, or global constructors.
+
+```bash
+cmake -S . -B build-be_u1000_etl_smoke \
+  -DCMAKE_TOOLCHAIN_FILE=cmake/riscv32-pixi.cmake \
+  -DARCH_BITS=32 \
+  -DCONFIG_BOARD=be_u1000 \
+  -DRISCV_MARCH=rv32imafc_zifencei \
+  -DRISCV_MABI=ilp32f \
+  -DRISCV_ABI=ilp32d \
+  -DOS_AI_EN=OFF \
+  -DRRTOS_CXX_EN=ON \
+  -DBE_U1000_APP=etl_smoke
+cmake --build build-be_u1000_etl_smoke
+```
 
 ## AI Runtime Extension
 

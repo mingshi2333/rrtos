@@ -44,8 +44,13 @@ refs, and CI should not depend on them.
 | `CONFIG_BOARD` | `qemu_virt`, `be_u1000`; default `qemu_virt` | Selects board policy |
 | `ARCH_BITS` | `32`, `64`; supported lanes use `32` | 64-bit paths are historical unless documented otherwise |
 | `OS_SMP_EN` | `OFF` by default | Supported BE-U1000 gate is single-core; SMP build lanes are experimental |
+| `OS_IPC_EN` | `ON` by default | Builds semaphore, mutex, queue, and event primitives |
+| `OS_TIMER_EN` | `ON` by default | Builds software timers; requires `OS_IPC_EN=ON` |
+| `OS_LIBC_SHIM_EN` | `ON` by default | Builds picolibc syscall bridge inside `librv_aios_kernel.a`; requires heap |
+| `OS_HEAP_EN` | `ON` by default | Enables the RTOS heap allocator used by libc and AI shims |
 | `OS_AI_EN` | `ON` for `qemu_virt`, `OFF` for `be_u1000` | AI is supported only in the RV32 lane today |
 | `OS_FL_EN` | `OFF` | Federated learning is not a supported lane |
+| `RRTOS_CXX_EN` | `OFF` | Enables the optional freestanding C++/ETL layer |
 | `RRTOS_BUILD_EXPERIMENTAL_APPS` | `OFF` | Enables historical apps outside the supported matrix |
 | `RRTOS_HAL_FEATURES` | `auto` by default | Semicolon-separated HAL feature override |
 | `BE_U1000_APP` | `demo` by default | Selects a BE-U1000 app lane |
@@ -124,10 +129,15 @@ dma_mem2mem
 i2s_tx
 pwma_timebase
 usb_runtime
+ai_micro_demo
+etl_smoke
 ```
 
 With `RRTOS_HAL_FEATURES=auto`, the top-level build maps each app to a
 minimal HAL feature set. See `docs/HAL_CONFIGURATION.md` for the feature map.
+
+`etl_smoke` is an experimental C++/ETL proof lane. It requires
+`RRTOS_CXX_EN=ON` and keeps `OS_AI_EN=OFF`.
 
 ## RISC-V Toolchain And Libgcc
 
@@ -175,4 +185,3 @@ pixi run validate-be-u1000-abi-cache
 ```
 
 These checks are part of the blocking supported gates.
-

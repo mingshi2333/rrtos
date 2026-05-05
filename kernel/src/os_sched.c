@@ -14,7 +14,9 @@
 
 extern void os_context_switch(void **from_sp, void **to_sp);
 extern void os_context_switch_first(void **to_sp);
+#if OS_CFG_HEAP_EN
 extern void os_heap_init(void);
+#endif
 
 static os_spinlock_t g_sched_lock = OS_SPINLOCK_INIT;
 static os_list_t g_ready_list[OS_CFG_PRIO_MAX];
@@ -457,7 +459,9 @@ void os_kernel_init(void) {
 #endif
     }
     
+#if OS_CFG_HEAP_EN
     os_heap_init(); /* Initialize heap allocator */
+#endif
 
     for (uint32_t i = 0; i < OS_CFG_PRIO_MAX; i++) {
         os_list_init(&g_ready_list[i]);
@@ -473,7 +477,9 @@ void os_kernel_init(void) {
         g_task_table[i] = NULL;
     }
 
+#if OS_CFG_TIMER_EN
     os_timer_subsys_init();
+#endif
     
 #if OS_CFG_SMP_EN
     for (os_cpu_t i = 0; i < OS_CFG_CPU_MAX; i++) {
@@ -577,7 +583,9 @@ void os_tick_handler(void) {
 
     os_spinlock_irq_restore(&g_sched_lock, flags);
 
+#if OS_CFG_TIMER_EN
     os_timer_tick();
+#endif
 
     os_sched();
 }
