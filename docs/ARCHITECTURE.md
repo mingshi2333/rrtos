@@ -125,6 +125,12 @@ uses freestanding C++ flags, disables exceptions and RTTI, and links ETLCPP as a
 header-only fixed-capacity container library. The first facade is
 `rrtos::StaticQueue<T, N>` in `cxx/include/rrtos/cxx/static_queue.hpp`.
 
+C++ apps that call the AI runtime use `ai/include/ai_model_registry_c_api.h`.
+That header exposes only the app-facing C ABI for runtime init, model lookup,
+tensor metadata, and synchronous inference. It deliberately avoids IREE includes
+so freestanding C++ app translation units do not pull in upstream C++ standard
+library dependencies.
+
 ## AI Runtime Model
 
 The supported AI path is registry-backed:
@@ -132,6 +138,7 @@ The supported AI path is registry-backed:
 - model declarations: `ai_models.yaml`
 - generated code: `apps/mnist_app/generated/`
 - public registry API: `ai/include/ai_model_registry.h`
+- app-facing C ABI: `ai/include/ai_model_registry_c_api.h`
 - runtime implementation: `ai/src/ai_model_registry.c`
 - supported validation entrypoint: `apps/mnist_app/src/validation_main.c`
 
@@ -141,6 +148,12 @@ the complete recursive IREE compiler/GPU dependency graph.
 
 Generated wrappers are convenience glue. The supported proof path uses the
 public registry API directly.
+
+The BE-U1000 AI micro apps are experimental board bring-up lanes. The C lane is
+`apps/be_u1000_ai_micro_demo`; the C++ app-layer lane is
+`apps/be_u1000_ai_micro_demo_cpp`. Both reuse the same generated static model
+objects and should be linked with `BE_U1000_MEMORY_MODEL=flash`, because the
+IREE-backed runtime does not fit the TCM-only text layout.
 
 ## Validation Architecture
 

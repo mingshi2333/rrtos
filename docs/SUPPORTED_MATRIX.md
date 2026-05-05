@@ -34,6 +34,7 @@ This file is the normative support-status registry for the repository. The repos
 - Historical RV64 and model-specific simulation workflows not covered by current automation
 - Optional `zoo/` model conversion artifacts until they are promoted through `ai_models.yaml`, the registry contract, and a validation lane
 - BE-U1000 HAL app matrix entries outside `apps/be_u1000_demo`; these are useful regression and bring-up evidence, but they remain observation lanes until promoted
+- BE-U1000 AI micro app lanes, including `apps/be_u1000_ai_micro_demo` and the C++ app-layer variant `apps/be_u1000_ai_micro_demo_cpp`; these are useful AI bring-up evidence but are not the blocking supported BE-U1000 lane
 
 ## Rules
 

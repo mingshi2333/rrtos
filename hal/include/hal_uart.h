@@ -3,6 +3,10 @@
 
 #include "os_types.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void hal_uart_init(os_ubase_t base, uint32_t baud);
 void hal_uart_putc(char c);
 char hal_uart_getc(void);
@@ -10,5 +14,9 @@ int hal_uart_poll(void);
 void hal_uart_puts(const char *s);
 
 void os_print(const char *fmt, ...);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

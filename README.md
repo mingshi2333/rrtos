@@ -71,6 +71,7 @@ flowchart TB
     apps --> mnist[apps/mnist_app]
     apps --> be_demo[apps/be_u1000_demo]
     apps --> be_ai[apps/be_u1000_ai_micro_demo]
+    apps --> be_ai_cpp[apps/be_u1000_ai_micro_demo_cpp]
 
     scripts --> host_tests[Host kernel semantic tests]
     scripts --> qemu_val[QEMU MNIST runtime validation]
@@ -171,6 +172,11 @@ pixi run -e be-u1000 configure-etl-smoke
 pixi run -e be-u1000 build-etl-smoke
 ```
 
+The C++ layer can also host an app entrypoint over the C AI runtime. The
+`BE_U1000_APP=ai_micro_demo_cpp` lane keeps the model registry, IREE runtime,
+and generated model objects in C, while the application orchestration is C++ and
+calls the narrow `ai/include/ai_model_registry_c_api.h` ABI.
+
 ## AI Runtime Extension
 
 The AI runtime is registry-backed. Applications find models by name, query
@@ -208,11 +214,16 @@ not the blocking supported BE-U1000 lane.
 It uses:
 
 - `BE_U1000_APP=ai_micro_demo`
+- `BE_U1000_APP=ai_micro_demo_cpp` for the experimental C++ app-layer variant
 - `OS_AI_EN=ON`
 - `ai_models_be_u1000_ai_micro.yaml`
 - `apps/be_u1000_ai_micro_demo/model/hello_world_float.tflite`
 - generated static model object code under `apps/be_u1000_ai_micro_demo/generated/`
 - binary size guard: `scripts/check_be_u1000_ai_demo_size.py`
+
+The AI micro lanes should use `BE_U1000_MEMORY_MODEL=flash`. The IREE-backed
+runtime is larger than the TCM-only text window, while the generated binary
+still fits the current 256KB flash guard.
 
 Manual build:
 
@@ -222,6 +233,7 @@ cmake -B build-be_u1000_ai_micro \
   -DCMAKE_TOOLCHAIN_FILE=cmake/riscv32-pixi.cmake \
   -DARCH_BITS=32 \
   -DCONFIG_BOARD=be_u1000 \
+  -DBE_U1000_MEMORY_MODEL=flash \
   -DBE_U1000_APP=ai_micro_demo \
   -DOS_AI_EN=ON \
   -DOS_SMP_EN=OFF \
@@ -234,6 +246,23 @@ python3 scripts/check_be_u1000_ai_demo_size.py \
   --binary build-be_u1000_ai_micro/rrtos_be_u1000.bin \
   --max-bytes 262144
 ```
+
+C++ app-layer build:
+
+```bash
+pixi run -e be-u1000 configure-ai-micro-cpp
+pixi run -e be-u1000 build-ai-micro-cpp
+```
+
+Current flash-size evidence for the same model/runtime configuration:
+
+| Lane | `.text` | `.data` | `.bss` | `.bin` |
+| --- | ---: | ---: | ---: | ---: |
+| `ai_micro_demo` | 183372 | 3052 | 111616 | 186424 |
+| `ai_micro_demo_cpp` | 183436 | 3052 | 111616 | 186488 |
+
+The C++ app layer currently adds 64 bytes over the C app. The dominant size
+cost is the IREE runtime and model stack, not the C++ dispatch layer.
 
 ## Quick Start
 

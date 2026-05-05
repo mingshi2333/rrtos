@@ -48,12 +48,13 @@ refs, and CI should not depend on them.
 | `OS_TIMER_EN` | `ON` by default | Builds software timers; requires `OS_IPC_EN=ON` |
 | `OS_LIBC_SHIM_EN` | `ON` by default | Builds picolibc syscall bridge inside `librv_aios_kernel.a`; requires heap |
 | `OS_HEAP_EN` | `ON` by default | Enables the RTOS heap allocator used by libc and AI shims |
-| `OS_AI_EN` | `ON` for `qemu_virt`, `OFF` for `be_u1000` | AI is supported only in the RV32 lane today |
+| `OS_AI_EN` | `ON` for `qemu_virt`, `OFF` for `be_u1000` | Supported RV32 AI lane uses ON; BE-U1000 AI micro lanes are explicit opt-in bring-up paths |
 | `OS_FL_EN` | `OFF` | Federated learning is not a supported lane |
 | `RRTOS_CXX_EN` | `OFF` | Enables the optional freestanding C++/ETL layer |
 | `RRTOS_BUILD_EXPERIMENTAL_APPS` | `OFF` | Enables historical apps outside the supported matrix |
 | `RRTOS_HAL_FEATURES` | `auto` by default | Semicolon-separated HAL feature override |
 | `BE_U1000_APP` | `demo` by default | Selects a BE-U1000 app lane |
+| `BE_U1000_MEMORY_MODEL` | `tcm` by default; `flash` for larger firmware | Selects the BE-U1000 board linker script |
 | `LINKER_SCRIPT` | board or architecture default | Can be overridden for manual builds |
 
 ## Supported RV32 Configuration
@@ -130,6 +131,7 @@ i2s_tx
 pwma_timebase
 usb_runtime
 ai_micro_demo
+ai_micro_demo_cpp
 etl_smoke
 ```
 
@@ -144,6 +146,21 @@ the local `etlcpp` package recipe, not fetched by CMake:
 pixi run -e be-u1000 configure-etl-smoke
 pixi run -e be-u1000 build-etl-smoke
 ```
+
+`ai_micro_demo_cpp` is an experimental C++ app layer over the same BE-U1000 AI
+micro model and runtime contract used by the C `ai_micro_demo` lane. It
+requires `OS_AI_EN=ON`, `RRTOS_CXX_EN=ON`, and the `flash` memory model because
+the IREE-backed AI runtime is too large for the TCM-only linker layout:
+
+```bash
+pixi run -e be-u1000 configure-ai-micro-cpp
+pixi run -e be-u1000 build-ai-micro-cpp
+```
+
+The C++ app includes `ai/include/ai_model_registry_c_api.h`, a narrow C ABI that
+exposes model lookup, tensor metadata, and synchronous inference without pulling
+IREE headers into freestanding C++ translation units. The full registry header
+remains `ai/include/ai_model_registry.h` for runtime/model descriptor code.
 
 ## RISC-V Toolchain And Libgcc
 

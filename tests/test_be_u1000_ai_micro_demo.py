@@ -18,6 +18,19 @@ class BeU1000AiMicroDemoTest(unittest.TestCase):
         self.assertIn("apps/be_u1000_ai_micro_demo", cmake_text)
         self.assertIn("ai_micro_demo requires OS_AI_EN=ON", cmake_text)
 
+    def test_cmake_exposes_cpp_ai_micro_demo_lane(self):
+        cmake_text = (PROJECT_ROOT / "CMakeLists.txt").read_text()
+        pixi_text = (PROJECT_ROOT / "pixi.toml").read_text()
+
+        self.assertIn("ai_micro_demo_cpp", cmake_text)
+        self.assertIn('BE_U1000_APP STREQUAL "ai_micro_demo_cpp"', cmake_text)
+        self.assertIn("apps/be_u1000_ai_micro_demo_cpp", cmake_text)
+        self.assertIn("ai_micro_demo_cpp requires OS_AI_EN=ON", cmake_text)
+        self.assertIn("ai_micro_demo_cpp requires RRTOS_CXX_EN=ON", cmake_text)
+        self.assertIn("configure-ai-micro-cpp", pixi_text)
+        self.assertIn("build-ai-micro-cpp", pixi_text)
+        self.assertIn("-DBE_U1000_MEMORY_MODEL=flash", pixi_text)
+
     def test_demo_sources_and_model_contract_are_present(self):
         app_dir = PROJECT_ROOT / "apps" / "be_u1000_ai_micro_demo"
         main_text = (app_dir / "main.c").read_text()
@@ -46,6 +59,37 @@ class BeU1000AiMicroDemoTest(unittest.TestCase):
         self.assertIn("hello_world_float.tflite", config_text)
         self.assertGreater(model_path.stat().st_size, 1024)
         self.assertLess(model_path.stat().st_size, 4096)
+
+    def test_cpp_demo_reuses_c_ai_contract_through_cxx_app_layer(self):
+        app_dir = PROJECT_ROOT / "apps" / "be_u1000_ai_micro_demo_cpp"
+        main_path = app_dir / "main.cpp"
+        cmake_path = app_dir / "CMakeLists.txt"
+
+        self.assertTrue(main_path.exists(), "C++ AI micro demo must have a main.cpp")
+        self.assertTrue(cmake_path.exists(), "C++ AI micro demo must have a CMakeLists.txt")
+
+        main_text = main_path.read_text()
+        cmake_text = cmake_path.read_text()
+        c_api_text = (PROJECT_ROOT / "ai" / "include" / "ai_model_registry_c_api.h").read_text()
+        registry_text = (PROJECT_ROOT / "ai" / "include" / "ai_model_registry.h").read_text()
+
+        self.assertIn('extern "C"', main_text)
+        self.assertIn("ai_model_registry_c_api.h", main_text)
+        self.assertNotIn("ai_model_registry.h", main_text)
+        self.assertNotIn("iree/", c_api_text)
+        self.assertIn('include "ai_model_registry_c_api.h"', registry_text)
+        self.assertIn("HelloWorldRunner", main_text)
+        self.assertIn("BE_U1000_TFLITE_HELLO_CPP_DEMO_PASS", main_text)
+        self.assertIn('ai_model_find_by_name("be_u1000_hello_world_float")', main_text)
+        self.assertIn("ai_model_get_input_info", main_text)
+        self.assertIn("ai_model_get_output_info", main_text)
+        self.assertIn("ai_infer_sync", main_text)
+        self.assertIn("static_assert", main_text)
+        self.assertIn("add_subdirectory", cmake_text)
+        self.assertIn("be_u1000_ai_micro_demo/generated", cmake_text)
+        self.assertIn("rv_aios_cxx", cmake_text)
+        self.assertIn("rv_aios_models", cmake_text)
+        self.assertIn("check_be_u1000_ai_demo_size.py", cmake_text)
 
     def test_codegen_targets_be_u1000_single_float_abi(self):
         config = yaml.safe_load(
