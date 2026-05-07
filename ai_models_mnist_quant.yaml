@@ -1,0 +1,21 @@
+project_name: "rrtos_mnist_quant"
+output_dir: "apps/mnist_app/generated_quant"
+model_library_name: "rv_aios_mnist_quant_models"
+
+defaults:
+  target_arch: "rv32"
+  target_abi: "ilp32f"
+  cpu_features: "+m,+a,+f,+zicsr"
+  enable_llvmcpu_microkernels: false
+  enable_data_tiling: false
+  enable_stream_memory_flags: false
+  optimization: "size"
+  memory_strategy: "static"
+
+toolchain:
+  root_env: "IREE_TOOLCHAIN_ROOT"
+  tflite_toolchain_env: "iree-toolchain310"
+
+models:
+  - name: "st_mnistv1_28_tfs_int8"
+    file: "models/st_mnistv1_28_tfs_int8.tflite"

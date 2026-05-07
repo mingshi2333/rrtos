@@ -9,12 +9,14 @@ extern "C" {
 #include "hal_clint.h"
 #include "hal_uart.h"
 #include "os_kernel.h"
+#include "os_mem.h"
 }
 
 namespace {
 
 enum : uint32_t {
     AI_TENSOR_SHAPE_CAPACITY = 4u,
+    AI_MICRO_INFERENCE_ITERATIONS = 5u,
     HELLO_WORLD_INPUT_BITS = 0x3f800000u,      // 1.0f
     HELLO_WORLD_MIN_OUTPUT_BITS = 0x3f400000u, // 0.75f
     HELLO_WORLD_MAX_OUTPUT_BITS = 0x3f800000u, // 1.0f
@@ -89,12 +91,38 @@ struct TensorFactory {
     }
 };
 
+os_size_t heap_stats_delta(os_size_t value, os_size_t baseline)
+{
+    return value >= baseline ? value - baseline : 0u;
+}
+
+void print_model_peak(const char *phase_label, const os_heap_stats_t &baseline)
+{
+    const os_heap_stats_t stats = os_heap_stats_get();
+
+    os_print("[AI_MICRO_CPP] MODEL_PEAK model=be_u1000_hello_world_float %s "
+             "heap_current_bytes=%u heap_peak_bytes=%u heap_alloc_count=%u heap_free_count=%u\n",
+             phase_label,
+             static_cast<unsigned int>(stats.current_used_bytes),
+             static_cast<unsigned int>(stats.peak_used_bytes),
+             static_cast<unsigned int>(
+                 heap_stats_delta(stats.allocation_count, baseline.allocation_count)),
+             static_cast<unsigned int>(heap_stats_delta(stats.free_count, baseline.free_count)));
+}
+
 class HelloWorldRunner {
 public:
     bool init()
     {
         os_print("[AI_MICRO_CPP] initializing runtime\n");
+        const os_heap_stats_t init_baseline = os_heap_stats_get();
+        os_heap_stats_reset_peak();
+        const uint64_t init_start_us = ai_get_time_us();
         int rc = ai_runtime_init();
+        const uint32_t init_elapsed_us =
+            static_cast<uint32_t>(ai_get_time_us() - init_start_us);
+        os_print("[AI_MICRO_CPP] runtime_init_us=%u\n", init_elapsed_us);
+        print_model_peak("phase=init", init_baseline);
         if (rc != 0) {
             os_print("[AI_MICRO_CPP] BE_U1000_TFLITE_HELLO_CPP_DEMO_FAIL init rc=%d\n", rc);
             return false;
@@ -125,40 +153,72 @@ public:
 
     bool run_once()
     {
-        ai_be_u1000_hello_world_float_input_t input = {};
-        ai_be_u1000_hello_world_float_output_t output = {};
+        uint32_t min_latency_us = UINT32_MAX;
+        uint32_t max_latency_us = 0u;
+        uint64_t total_latency_us = 0u;
+        uint32_t last_y_bits = 0u;
 
         os_print("[AI_MICRO_CPP] running be_u1000_hello_world_float\n");
-        float_from_bits(input.tensor_0[0], HELLO_WORLD_INPUT_BITS);
+        const os_heap_stats_t invoke_baseline = os_heap_stats_get();
+        os_heap_stats_reset_peak();
 
-        ai_tensor_t input_tensor =
-            TensorFactory::from_spec(input_spec_, input.tensor_0, sizeof(input.tensor_0));
-        ai_tensor_t output_tensor =
-            TensorFactory::from_spec(output_spec_, output.tensor_0, sizeof(output.tensor_0));
+        for (uint32_t iter = 0; iter < AI_MICRO_INFERENCE_ITERATIONS; ++iter) {
+            ai_be_u1000_hello_world_float_input_t input = {};
+            ai_be_u1000_hello_world_float_output_t output = {};
 
-        const int rc = ai_infer_sync(handle_, &input_tensor, 1u, &output_tensor, 1u, 1000u);
-        if (rc != 0) {
-            os_print("[AI_MICRO_CPP] BE_U1000_TFLITE_HELLO_CPP_DEMO_FAIL infer rc=%d\n", rc);
-            return false;
+            float_from_bits(input.tensor_0[0], HELLO_WORLD_INPUT_BITS);
+
+            ai_tensor_t input_tensor =
+                TensorFactory::from_spec(input_spec_, input.tensor_0, sizeof(input.tensor_0));
+            ai_tensor_t output_tensor =
+                TensorFactory::from_spec(output_spec_, output.tensor_0, sizeof(output.tensor_0));
+
+            const uint64_t infer_start_us = ai_get_time_us();
+            const int rc =
+                ai_infer_sync(handle_, &input_tensor, 1u, &output_tensor, 1u, 1000u);
+            const uint32_t latency_us =
+                static_cast<uint32_t>(ai_get_time_us() - infer_start_us);
+            os_print("[AI_MICRO_CPP] infer_iter=%u latency_us=%u\n", iter, latency_us);
+
+            if (latency_us < min_latency_us) {
+                min_latency_us = latency_us;
+            }
+            if (latency_us > max_latency_us) {
+                max_latency_us = latency_us;
+            }
+            total_latency_us += latency_us;
+
+            if (rc != 0) {
+                os_print("[AI_MICRO_CPP] BE_U1000_TFLITE_HELLO_CPP_DEMO_FAIL infer rc=%d\n", rc);
+                return false;
+            }
+
+            last_y_bits = float_to_bits(output.tensor_0[0]);
+            const uint32_t y_key = float_order_key(last_y_bits);
+            if (y_key < float_order_key(HELLO_WORLD_MIN_OUTPUT_BITS) ||
+                y_key > float_order_key(HELLO_WORLD_MAX_OUTPUT_BITS)) {
+                os_print("[AI_MICRO_CPP] BE_U1000_TFLITE_HELLO_CPP_DEMO_FAIL y_hex=0x%x\n",
+                         last_y_bits);
+                return false;
+            }
         }
 
-        const uint32_t y_bits = float_to_bits(output.tensor_0[0]);
-        const uint32_t y_key = float_order_key(y_bits);
+        const uint32_t avg_latency_us =
+            static_cast<uint32_t>(total_latency_us / AI_MICRO_INFERENCE_ITERATIONS);
 
         os_print("[AI_MICRO_CPP] x_hex=0x%x y_hex=0x%x expected_y_range=[0x%x,0x%x]\n",
                  HELLO_WORLD_INPUT_BITS,
-                 y_bits,
+                 last_y_bits,
                  HELLO_WORLD_MIN_OUTPUT_BITS,
                  HELLO_WORLD_MAX_OUTPUT_BITS);
-
-        if (y_key >= float_order_key(HELLO_WORLD_MIN_OUTPUT_BITS) &&
-            y_key <= float_order_key(HELLO_WORLD_MAX_OUTPUT_BITS)) {
-            os_print("[AI_MICRO_CPP] BE_U1000_TFLITE_HELLO_CPP_DEMO_PASS\n");
-            return true;
-        }
-
-        os_print("[AI_MICRO_CPP] BE_U1000_TFLITE_HELLO_CPP_DEMO_FAIL y_hex=0x%x\n", y_bits);
-        return false;
+        os_print("[AI_MICRO_CPP] infer_latency_us_min=%u avg=%u max=%u iterations=%u\n",
+                 min_latency_us,
+                 avg_latency_us,
+                 max_latency_us,
+                 AI_MICRO_INFERENCE_ITERATIONS);
+        print_model_peak("phase=invoke", invoke_baseline);
+        os_print("[AI_MICRO_CPP] BE_U1000_TFLITE_HELLO_CPP_DEMO_PASS\n");
+        return true;
     }
 
 private:

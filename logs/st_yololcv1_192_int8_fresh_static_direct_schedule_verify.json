@@ -1,0 +1,41 @@
+{
+  "allocation_count": 4,
+  "arena_bytes": 1693568,
+  "arena_kib": 1653.875,
+  "command_count": 37,
+  "dispatch_count": 28,
+  "effective_arena_source": "packed_liveness",
+  "max_arena_allocation_bytes": 1676288,
+  "max_arena_allocation_kib": 1637.0,
+  "packed_arena_bytes": 1693568,
+  "packed_arena_kib": 1653.875,
+  "packed_vs_effective_delta_bytes": 0,
+  "packed_vs_effective_delta_kib": 0.0,
+  "peak_transient_bytes": 1693568,
+  "peak_transient_kib": 1653.875,
+  "placements": {
+    "transient_buffer": {
+      "interval": [
+        36,
+        37
+      ],
+      "offset": 0,
+      "size": 17280,
+      "size_kib": 16.875
+    },
+    "transient_buffer_1": {
+      "interval": [
+        0,
+        37
+      ],
+      "offset": 17280,
+      "size": 1676288,
+      "size_kib": 1637.0
+    }
+  },
+  "source": "st_yololcv1_192_int8.11.hal.mlir",
+  "status": "ok",
+  "warnings": [
+    "assumed batch_size=1 for 1 hal.buffer_view.dim value(s)"
+  ]
+}

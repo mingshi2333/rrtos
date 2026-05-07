@@ -1,5 +1,9 @@
+set(BE_U1000_AI_MODELS_DIR
+    "${CMAKE_SOURCE_DIR}/apps/be_u1000_ai_micro_demo/generated"
+    CACHE PATH "Generated BE-U1000 AI model directory")
+
 add_subdirectory(
-    ${CMAKE_SOURCE_DIR}/apps/be_u1000_ai_micro_demo/generated
+    "${BE_U1000_AI_MODELS_DIR}"
     ${CMAKE_BINARY_DIR}/apps/be_u1000_ai_micro_demo_cpp/generated
 )
 
@@ -14,7 +18,7 @@ target_link_libraries(rrtos_be_u1000 PRIVATE
 )
 
 target_include_directories(rrtos_be_u1000 PRIVATE
-    ${CMAKE_SOURCE_DIR}/apps/be_u1000_ai_micro_demo/generated
+    ${BE_U1000_AI_MODELS_DIR}
     ${CMAKE_SOURCE_DIR}/ai/include
     ${CMAKE_SOURCE_DIR}/kernel/include
     ${CMAKE_SOURCE_DIR}/hal/include

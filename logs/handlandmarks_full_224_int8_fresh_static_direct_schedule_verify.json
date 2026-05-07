@@ -1,0 +1,39 @@
+{
+  "allocation_count": 4,
+  "arena_bytes": 2818240,
+  "arena_kib": 2752.188,
+  "command_count": 106,
+  "dispatch_count": 89,
+  "effective_arena_source": "packed_liveness",
+  "max_arena_allocation_bytes": 2817600,
+  "max_arena_allocation_kib": 2751.562,
+  "packed_arena_bytes": 2818240,
+  "packed_arena_kib": 2752.188,
+  "packed_vs_effective_delta_bytes": 0,
+  "packed_vs_effective_delta_kib": 0.0,
+  "peak_transient_bytes": 2818240,
+  "peak_transient_kib": 2752.188,
+  "placements": {
+    "transient_buffer": {
+      "interval": [
+        100,
+        106
+      ],
+      "offset": 0,
+      "size": 640,
+      "size_kib": 0.625
+    },
+    "transient_buffer_1": {
+      "interval": [
+        0,
+        106
+      ],
+      "offset": 640,
+      "size": 2817600,
+      "size_kib": 2751.562
+    }
+  },
+  "source": "handlandmarks_full_224_int8.11.hal.mlir",
+  "status": "ok",
+  "warnings": []
+}

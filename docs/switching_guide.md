@@ -17,15 +17,16 @@ pixi run -e rv32 validate-supported-rv32
 Use QEMU for the normative gate:
 
 - `pixi run -e rv32 validate-mnist-runtime`
+- `pixi run -e rv32 validate-mnist-quant-runtime`
 
 Use Renode only for comparison or observation:
 
 - `pixi run -e rv32 observe-mnist-runtime-renode`
 - `pixi run -e rv32 compare-mnist-runtime-platforms`
 
-Keep the maintained AI task surface small. Prefer the four commands above and do not reintroduce composite aliases on the supported path.
+Keep the maintained AI task surface small. Prefer the five commands above and do not reintroduce composite aliases on the supported path.
 
-The supported model in this lane is `st_mnist_28` from `ai_models.yaml`. Historical direct, ST-specific, or zoo-only conversion targets are not part of the supported AI gate unless they are explicitly added to `docs/SUPPORTED_MATRIX.md`.
+The supported models in this lane are `st_mnist_28` from `ai_models.yaml` and the separated `st_mnistv1_28_tfs_int8` validation model from `ai_models_mnist_quant.yaml`. Historical direct or zoo-only conversion targets are not part of the supported AI gate unless they are explicitly added to `docs/SUPPORTED_MATRIX.md`.
 
 ### 2. Supported BE-U1000 lane
 

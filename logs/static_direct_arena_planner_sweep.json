@@ -1,0 +1,359 @@
+[
+  {
+    "allocation_count": 12,
+    "current_effective_kib": 525.125,
+    "current_planner": "input_order_first_fit",
+    "max_single_allocation_bytes": 404608,
+    "max_single_allocation_kib": 395.125,
+    "name": "miniresnetv2_s1_64x50_tl_int8_fresh_hal_schedule",
+    "peak_transient_bytes": 537728,
+    "peak_transient_kib": 525.125,
+    "planners": {
+      "input_order_first_fit": {
+        "effective_bytes": 537728,
+        "effective_kib": 525.125,
+        "packed_bytes": 537728,
+        "packed_kib": 525.125,
+        "placement_count": 12
+      },
+      "linear_no_reuse": {
+        "effective_bytes": 824360,
+        "effective_kib": 805.039,
+        "packed_bytes": 824360,
+        "packed_kib": 805.039,
+        "placement_count": 12
+      },
+      "size_desc_best_fit": {
+        "effective_bytes": 537728,
+        "effective_kib": 525.125,
+        "packed_bytes": 537728,
+        "packed_kib": 525.125,
+        "placement_count": 12
+      },
+      "size_desc_first_fit": {
+        "effective_bytes": 537728,
+        "effective_kib": 525.125,
+        "packed_bytes": 537728,
+        "packed_kib": 525.125,
+        "placement_count": 12
+      },
+      "start_size_first_fit": {
+        "effective_bytes": 537728,
+        "effective_kib": 525.125,
+        "packed_bytes": 537728,
+        "packed_kib": 525.125,
+        "placement_count": 12
+      }
+    },
+    "savings_vs_current_kib": 0.0,
+    "savings_vs_linear_kib": 279.914,
+    "winner": "input_order_first_fit",
+    "winner_effective_kib": 525.125
+  },
+  {
+    "allocation_count": 36,
+    "current_effective_kib": 1937.125,
+    "current_planner": "input_order_first_fit",
+    "max_single_allocation_bytes": 1901696,
+    "max_single_allocation_kib": 1857.125,
+    "name": "mobilenetv2_a035_128_int8_fresh_hal_schedule",
+    "peak_transient_bytes": 1983616,
+    "peak_transient_kib": 1937.125,
+    "planners": {
+      "input_order_first_fit": {
+        "effective_bytes": 1983616,
+        "effective_kib": 1937.125,
+        "packed_bytes": 1983616,
+        "packed_kib": 1937.125,
+        "placement_count": 36
+      },
+      "linear_no_reuse": {
+        "effective_bytes": 3985376,
+        "effective_kib": 3891.969,
+        "packed_bytes": 3985376,
+        "packed_kib": 3891.969,
+        "placement_count": 36
+      },
+      "size_desc_best_fit": {
+        "effective_bytes": 1983616,
+        "effective_kib": 1937.125,
+        "packed_bytes": 1983616,
+        "packed_kib": 1937.125,
+        "placement_count": 36
+      },
+      "size_desc_first_fit": {
+        "effective_bytes": 1983616,
+        "effective_kib": 1937.125,
+        "packed_bytes": 1983616,
+        "packed_kib": 1937.125,
+        "placement_count": 36
+      },
+      "start_size_first_fit": {
+        "effective_bytes": 1983616,
+        "effective_kib": 1937.125,
+        "packed_bytes": 1983616,
+        "packed_kib": 1937.125,
+        "placement_count": 36
+      }
+    },
+    "savings_vs_current_kib": 0.0,
+    "savings_vs_linear_kib": 1954.844,
+    "winner": "input_order_first_fit",
+    "winner_effective_kib": 1937.125
+  },
+  {
+    "allocation_count": 15,
+    "current_effective_kib": 527.312,
+    "current_planner": "input_order_first_fit",
+    "max_single_allocation_bytes": 163840,
+    "max_single_allocation_kib": 160.0,
+    "name": "resnet8_32_tfs_int8_fresh_hal_schedule",
+    "peak_transient_bytes": 539968,
+    "peak_transient_kib": 527.312,
+    "planners": {
+      "input_order_first_fit": {
+        "effective_bytes": 539968,
+        "effective_kib": 527.312,
+        "packed_bytes": 400960,
+        "packed_kib": 391.562,
+        "placement_count": 15
+      },
+      "linear_no_reuse": {
+        "effective_bytes": 793576,
+        "effective_kib": 774.977,
+        "packed_bytes": 793576,
+        "packed_kib": 774.977,
+        "placement_count": 15
+      },
+      "size_desc_best_fit": {
+        "effective_bytes": 539968,
+        "effective_kib": 527.312,
+        "packed_bytes": 294912,
+        "packed_kib": 288.0,
+        "placement_count": 15
+      },
+      "size_desc_first_fit": {
+        "effective_bytes": 539968,
+        "effective_kib": 527.312,
+        "packed_bytes": 294912,
+        "packed_kib": 288.0,
+        "placement_count": 15
+      },
+      "start_size_first_fit": {
+        "effective_bytes": 539968,
+        "effective_kib": 527.312,
+        "packed_bytes": 400960,
+        "packed_kib": 391.562,
+        "placement_count": 15
+      }
+    },
+    "savings_vs_current_kib": 0.0,
+    "savings_vs_linear_kib": 247.664,
+    "winner": "size_desc_best_fit",
+    "winner_effective_kib": 527.312
+  },
+  {
+    "allocation_count": 6,
+    "current_effective_kib": 2229.125,
+    "current_planner": "input_order_first_fit",
+    "max_single_allocation_bytes": 2282496,
+    "max_single_allocation_kib": 2229.0,
+    "name": "squeezenetv11_128_tfs_int8_fresh_hal_schedule",
+    "peak_transient_bytes": 2282624,
+    "peak_transient_kib": 2229.125,
+    "planners": {
+      "input_order_first_fit": {
+        "effective_bytes": 2282624,
+        "effective_kib": 2229.125,
+        "packed_bytes": 2282624,
+        "packed_kib": 2229.125,
+        "placement_count": 6
+      },
+      "linear_no_reuse": {
+        "effective_bytes": 2283028,
+        "effective_kib": 2229.52,
+        "packed_bytes": 2283028,
+        "packed_kib": 2229.52,
+        "placement_count": 6
+      },
+      "size_desc_best_fit": {
+        "effective_bytes": 2282624,
+        "effective_kib": 2229.125,
+        "packed_bytes": 2282624,
+        "packed_kib": 2229.125,
+        "placement_count": 6
+      },
+      "size_desc_first_fit": {
+        "effective_bytes": 2282624,
+        "effective_kib": 2229.125,
+        "packed_bytes": 2282624,
+        "packed_kib": 2229.125,
+        "placement_count": 6
+      },
+      "start_size_first_fit": {
+        "effective_bytes": 2282624,
+        "effective_kib": 2229.125,
+        "packed_bytes": 2282624,
+        "packed_kib": 2229.125,
+        "placement_count": 6
+      }
+    },
+    "savings_vs_current_kib": 0.0,
+    "savings_vs_linear_kib": 0.395,
+    "winner": "input_order_first_fit",
+    "winner_effective_kib": 2229.125
+  },
+  {
+    "allocation_count": 2,
+    "current_effective_kib": 1653.875,
+    "current_planner": "input_order_first_fit",
+    "max_single_allocation_bytes": 1676288,
+    "max_single_allocation_kib": 1637.0,
+    "name": "st_yololcv1_192_int8_fresh_hal_schedule",
+    "peak_transient_bytes": 1693568,
+    "peak_transient_kib": 1653.875,
+    "planners": {
+      "input_order_first_fit": {
+        "effective_bytes": 1693568,
+        "effective_kib": 1653.875,
+        "packed_bytes": 1693568,
+        "packed_kib": 1653.875,
+        "placement_count": 2
+      },
+      "linear_no_reuse": {
+        "effective_bytes": 1693568,
+        "effective_kib": 1653.875,
+        "packed_bytes": 1693568,
+        "packed_kib": 1653.875,
+        "placement_count": 2
+      },
+      "size_desc_best_fit": {
+        "effective_bytes": 1693568,
+        "effective_kib": 1653.875,
+        "packed_bytes": 1693568,
+        "packed_kib": 1653.875,
+        "placement_count": 2
+      },
+      "size_desc_first_fit": {
+        "effective_bytes": 1693568,
+        "effective_kib": 1653.875,
+        "packed_bytes": 1693568,
+        "packed_kib": 1653.875,
+        "placement_count": 2
+      },
+      "start_size_first_fit": {
+        "effective_bytes": 1693568,
+        "effective_kib": 1653.875,
+        "packed_bytes": 1693568,
+        "packed_kib": 1653.875,
+        "placement_count": 2
+      }
+    },
+    "savings_vs_current_kib": 0.0,
+    "savings_vs_linear_kib": 0.0,
+    "winner": "input_order_first_fit",
+    "winner_effective_kib": 1653.875
+  },
+  {
+    "allocation_count": 2,
+    "current_effective_kib": 5439.875,
+    "current_planner": "input_order_first_fit",
+    "max_single_allocation_bytes": 5520256,
+    "max_single_allocation_kib": 5390.875,
+    "name": "fastdepth_224_int8_fresh_hal_schedule",
+    "peak_transient_bytes": 5570432,
+    "peak_transient_kib": 5439.875,
+    "planners": {
+      "input_order_first_fit": {
+        "effective_bytes": 5570432,
+        "effective_kib": 5439.875,
+        "packed_bytes": 5570432,
+        "packed_kib": 5439.875,
+        "placement_count": 2
+      },
+      "linear_no_reuse": {
+        "effective_bytes": 5570432,
+        "effective_kib": 5439.875,
+        "packed_bytes": 5570432,
+        "packed_kib": 5439.875,
+        "placement_count": 2
+      },
+      "size_desc_best_fit": {
+        "effective_bytes": 5570432,
+        "effective_kib": 5439.875,
+        "packed_bytes": 5570432,
+        "packed_kib": 5439.875,
+        "placement_count": 2
+      },
+      "size_desc_first_fit": {
+        "effective_bytes": 5570432,
+        "effective_kib": 5439.875,
+        "packed_bytes": 5570432,
+        "packed_kib": 5439.875,
+        "placement_count": 2
+      },
+      "start_size_first_fit": {
+        "effective_bytes": 5570432,
+        "effective_kib": 5439.875,
+        "packed_bytes": 5570432,
+        "packed_kib": 5439.875,
+        "placement_count": 2
+      }
+    },
+    "savings_vs_current_kib": 0.0,
+    "savings_vs_linear_kib": 0.0,
+    "winner": "input_order_first_fit",
+    "winner_effective_kib": 5439.875
+  },
+  {
+    "allocation_count": 2,
+    "current_effective_kib": 2752.188,
+    "current_planner": "input_order_first_fit",
+    "max_single_allocation_bytes": 2817600,
+    "max_single_allocation_kib": 2751.562,
+    "name": "handlandmarks_full_224_int8_fresh_hal_schedule",
+    "peak_transient_bytes": 2818240,
+    "peak_transient_kib": 2752.188,
+    "planners": {
+      "input_order_first_fit": {
+        "effective_bytes": 2818240,
+        "effective_kib": 2752.188,
+        "packed_bytes": 2818240,
+        "packed_kib": 2752.188,
+        "placement_count": 2
+      },
+      "linear_no_reuse": {
+        "effective_bytes": 2818240,
+        "effective_kib": 2752.188,
+        "packed_bytes": 2818240,
+        "packed_kib": 2752.188,
+        "placement_count": 2
+      },
+      "size_desc_best_fit": {
+        "effective_bytes": 2818240,
+        "effective_kib": 2752.188,
+        "packed_bytes": 2818240,
+        "packed_kib": 2752.188,
+        "placement_count": 2
+      },
+      "size_desc_first_fit": {
+        "effective_bytes": 2818240,
+        "effective_kib": 2752.188,
+        "packed_bytes": 2818240,
+        "packed_kib": 2752.188,
+        "placement_count": 2
+      },
+      "start_size_first_fit": {
+        "effective_bytes": 2818240,
+        "effective_kib": 2752.188,
+        "packed_bytes": 2818240,
+        "packed_kib": 2752.188,
+        "placement_count": 2
+      }
+    },
+    "savings_vs_current_kib": 0.0,
+    "savings_vs_linear_kib": 0.0,
+    "winner": "input_order_first_fit",
+    "winner_effective_kib": 2752.188
+  }
+]

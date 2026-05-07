@@ -1,0 +1,66 @@
+{
+  "artifact_sha256": {
+    "descriptor_c": "a131da53d6c8e1d15e84b21ecd1216f2ead5603c738dc05308c7fc8d1ddf2467",
+    "descriptor_h": "77cff922e9b8d4a95b470abb26a7baef38253f0545eba6c27a399edf346e6b18",
+    "memory_plan_json": "8f72c6134ba10f3cf27b28dce672ae46ff6b3d889cfa527df4a1f6f5920f1a29",
+    "schedule_json": "eb5ebd6c6ba011b97e0a72d2981b26f424c4f461db53297ab327f72154a9e71b",
+    "verify_json": "8f72c6134ba10f3cf27b28dce672ae46ff6b3d889cfa527df4a1f6f5920f1a29"
+  },
+  "deployment": {
+    "deploy_ready": false,
+    "gates": {
+      "artifact_hash": {
+        "status": "configured"
+      },
+      "no_vm_map": {
+        "command": null,
+        "map": null,
+        "status": "not_configured"
+      },
+      "output_oracle": {
+        "command": null,
+        "kernel": null,
+        "log": null,
+        "memory": null,
+        "runner": null,
+        "status": "not_configured",
+        "timeout_seconds": null
+      }
+    },
+    "validate_command": [
+      "python3",
+      "scripts/validate_static_direct_package.py",
+      "--package",
+      "logs/static_direct_packages/miniresnetv2_s1_64x50_tl_int8_fresh/static_direct.package.json"
+    ]
+  },
+  "entry_name": "main",
+  "files": {
+    "descriptor_c": "miniresnetv2_s1_64x50_tl_int8_fresh_static_direct_desc.c",
+    "descriptor_h": "miniresnetv2_s1_64x50_tl_int8_fresh_static_direct_desc.h",
+    "memory_plan_json": "static_direct.verify.json",
+    "schedule_json": "static_direct.schedule.json",
+    "verify_json": "static_direct.verify.json"
+  },
+  "metrics": {
+    "allocation_count": 14,
+    "arena_bytes": 537728,
+    "arena_kib": 525.125,
+    "command_count": 38,
+    "const_bytes": 131264,
+    "const_kib": 128.188,
+    "dispatch_count": 34,
+    "input_bytes": 3200,
+    "input_kib": 3.125,
+    "output_bytes": 0,
+    "output_kib": 0.0
+  },
+  "model_name": "miniresnetv2_s1_64x50_tl_int8_fresh",
+  "native": {
+    "header": "apps/mnist_app/generated_miniresnet/miniresnetv1_s1_64x50_tl_int8.h",
+    "object": "apps/mnist_app/generated_miniresnet/miniresnetv1_s1_64x50_tl_int8.o"
+  },
+  "remaps": [],
+  "schema": "rrtos.static_direct_package.v1",
+  "source": "miniresnetv2_s1_64x50_tl_int8.11.hal.mlir"
+}

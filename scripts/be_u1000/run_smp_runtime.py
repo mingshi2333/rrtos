@@ -18,9 +18,33 @@ def display_path(path: Path, repo_root: Path) -> str:
         return str(path)
 
 
-def summarize_status(status: str, bootlog_check_status: str) -> tuple[str, str]:
-    if status == "passed" and bootlog_check_status == "not-run":
-        return "incomplete", "boot log check not run"
+def check_required_uart_markers(
+    log_text: str, required_markers: list[str]
+) -> tuple[str, str]:
+    if not required_markers:
+        return "not-run", "none"
+
+    missing = [marker for marker in required_markers if marker not in log_text]
+    if missing:
+        return (
+            "uart-marker-check-failed",
+            "missing UART marker(s): " + ", ".join(missing),
+        )
+
+    return "passed", "none"
+
+
+def summarize_status(
+    status: str,
+    bootlog_check_status: str,
+    uart_marker_check_status: str = "not-run",
+) -> tuple[str, str]:
+    if (
+        status == "passed"
+        and bootlog_check_status == "not-run"
+        and uart_marker_check_status == "not-run"
+    ):
+        return "incomplete", "runtime check not run"
     return status, "none"
 
 
@@ -56,6 +80,13 @@ def main() -> int:
         "--check-bootlog",
         action="store_true",
         help="Run check_boot_log.py against the captured UART log",
+    )
+    parser.add_argument(
+        "--expect-uart-marker",
+        action="append",
+        default=[],
+        metavar="TEXT",
+        help="Require a substring in the captured UART log; may be repeated",
     )
     parser.add_argument(
         "--expect-irq-model",
@@ -164,6 +195,7 @@ def main() -> int:
     status = "passed"
     first_error = "none"
     bootlog_check_status = "not-run"
+    uart_marker_check_status = "not-run"
     if proc.returncode != 0:
         status = f"renode-exit-{proc.returncode}"
 
@@ -188,6 +220,7 @@ def main() -> int:
             f"- Binary: `{binary_display}`",
             f"- UART log: `{log_display}`",
             f"- Boot log check: `{bootlog_check_status}`",
+            f"- UART marker check: `{uart_marker_check_status}`",
             f"- First error: `{first_error}`",
             "",
             "This probe is experimental. Passing requires both board boot markers and SMP markers; current failures should be treated as validation blockers, not proof of SMP support.",
@@ -208,6 +241,7 @@ def main() -> int:
             f"- Binary: `{binary_display}`",
             f"- UART log: `{log_display}`",
             f"- Boot log check: `{bootlog_check_status}`",
+            f"- UART marker check: `{uart_marker_check_status}`",
             f"- First error: `{first_error}`",
             "",
             "This probe is experimental. Passing requires both board boot markers and SMP markers; current failures should be treated as validation blockers, not proof of SMP support.",
@@ -215,6 +249,8 @@ def main() -> int:
         summary_path.write_text("\n".join(summary), encoding="utf-8")
         print(f"BE-U1000 SMP runtime error: log not produced: {log_path}")
         return 1
+
+    log_text = log_path.read_text(encoding="utf-8", errors="ignore")
 
     if args.check_bootlog:
         check_cmd = [
@@ -257,10 +293,20 @@ def main() -> int:
             status = f"bootlog-check-{check_proc.returncode}"
             first_error = "boot log validation failed"
 
-    if first_error == "none":
-        status, first_error = summarize_status(status, bootlog_check_status)
+    if args.expect_uart_marker:
+        uart_marker_check_status, marker_error = check_required_uart_markers(
+            log_text, args.expect_uart_marker
+        )
+        if uart_marker_check_status != "passed" and first_error == "none":
+            status = uart_marker_check_status
+            first_error = marker_error
 
-    sys.stdout.write(log_path.read_text(encoding="utf-8", errors="ignore"))
+    if first_error == "none":
+        status, first_error = summarize_status(
+            status, bootlog_check_status, uart_marker_check_status
+        )
+
+    sys.stdout.write(log_text)
     summary = [
         "# BE-U1000 SMP Runtime Probe",
         "",
@@ -271,6 +317,7 @@ def main() -> int:
         f"- Binary: `{binary_display}`",
         f"- UART log: `{log_display}`",
         f"- Boot log check: `{bootlog_check_status}`",
+        f"- UART marker check: `{uart_marker_check_status}`",
         f"- First error: `{first_error}`",
         "",
         "This probe is experimental. Passing requires both board boot markers and SMP markers; current failures should be treated as validation blockers, not proof of SMP support.",

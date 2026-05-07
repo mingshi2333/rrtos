@@ -1,0 +1,77 @@
+{
+  "allocation_count": 8,
+  "arena_bytes": 2282624,
+  "arena_kib": 2229.125,
+  "command_count": 97,
+  "dispatch_count": 89,
+  "effective_arena_source": "packed_liveness",
+  "max_arena_allocation_bytes": 2282496,
+  "max_arena_allocation_kib": 2229.0,
+  "packed_arena_bytes": 2282624,
+  "packed_arena_kib": 2229.125,
+  "packed_vs_effective_delta_bytes": 0,
+  "packed_vs_effective_delta_kib": 0.0,
+  "peak_transient_bytes": 2282624,
+  "peak_transient_kib": 2229.125,
+  "placements": {
+    "transient_buffer": {
+      "interval": [
+        88,
+        92
+      ],
+      "offset": 0,
+      "size": 128,
+      "size_kib": 0.125
+    },
+    "transient_buffer_1": {
+      "interval": [
+        0,
+        89
+      ],
+      "offset": 128,
+      "size": 2282496,
+      "size_kib": 2229.0
+    },
+    "transient_buffer_15": {
+      "interval": [
+        92,
+        96
+      ],
+      "offset": 0,
+      "size": 128,
+      "size_kib": 0.125
+    },
+    "transient_buffer_22": {
+      "interval": [
+        94,
+        97
+      ],
+      "offset": 128,
+      "size": 128,
+      "size_kib": 0.125
+    },
+    "transient_buffer_29": {
+      "interval": [
+        96,
+        97
+      ],
+      "offset": 0,
+      "size": 20,
+      "size_kib": 0.02
+    },
+    "transient_buffer_8": {
+      "interval": [
+        90,
+        93
+      ],
+      "offset": 128,
+      "size": 128,
+      "size_kib": 0.125
+    }
+  },
+  "source": "squeezenetv11_128_tfs_int8.11.hal.mlir",
+  "status": "ok",
+  "warnings": [
+    "assumed batch_size=1 for 1 hal.buffer_view.dim value(s)"
+  ]
+}

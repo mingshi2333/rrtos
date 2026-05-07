@@ -1,0 +1,7291 @@
+{
+  "allocations": [
+    {
+      "id": "transient_buffer",
+      "lifetime": "transient",
+      "size": 81920
+    },
+    {
+      "id": "transient_buffer_1",
+      "lifetime": "transient",
+      "size": 1901696
+    },
+    {
+      "id": "transient_buffer_8",
+      "lifetime": "transient",
+      "size": 65536
+    },
+    {
+      "id": "transient_buffer_15",
+      "lifetime": "transient",
+      "size": 40960
+    },
+    {
+      "id": "transient_buffer_17",
+      "lifetime": "transient",
+      "size": 488896
+    },
+    {
+      "id": "transient_buffer_26",
+      "lifetime": "transient",
+      "size": 32768
+    },
+    {
+      "id": "transient_buffer_33",
+      "lifetime": "transient",
+      "size": 40960
+    },
+    {
+      "id": "transient_buffer_35",
+      "lifetime": "transient",
+      "size": 170368
+    },
+    {
+      "id": "transient_buffer_44",
+      "lifetime": "transient",
+      "size": 32768
+    },
+    {
+      "id": "transient_buffer_51",
+      "lifetime": "transient",
+      "size": 15360
+    },
+    {
+      "id": "transient_buffer_53",
+      "lifetime": "transient",
+      "size": 227520
+    },
+    {
+      "id": "transient_buffer_62",
+      "lifetime": "transient",
+      "size": 12288
+    },
+    {
+      "id": "transient_buffer_69",
+      "lifetime": "transient",
+      "size": 15360
+    },
+    {
+      "id": "transient_buffer_71",
+      "lifetime": "transient",
+      "size": 66624
+    },
+    {
+      "id": "transient_buffer_80",
+      "lifetime": "transient",
+      "size": 12288
+    },
+    {
+      "id": "transient_buffer_87",
+      "lifetime": "transient",
+      "size": 15360
+    },
+    {
+      "id": "transient_buffer_89",
+      "lifetime": "transient",
+      "size": 66624
+    },
+    {
+      "id": "transient_buffer_98",
+      "lifetime": "transient",
+      "size": 12288
+    },
+    {
+      "id": "transient_buffer_105",
+      "lifetime": "transient",
+      "size": 20480
+    },
+    {
+      "id": "transient_buffer_107",
+      "lifetime": "transient",
+      "size": 150848
+    },
+    {
+      "id": "transient_buffer_116",
+      "lifetime": "transient",
+      "size": 16384
+    },
+    {
+      "id": "transient_buffer_123",
+      "lifetime": "transient",
+      "size": 20480
+    },
+    {
+      "id": "transient_buffer_125",
+      "lifetime": "transient",
+      "size": 88832
+    },
+    {
+      "id": "transient_buffer_134",
+      "lifetime": "transient",
+      "size": 16384
+    },
+    {
+      "id": "transient_buffer_141",
+      "lifetime": "transient",
+      "size": 8960
+    },
+    {
+      "id": "transient_buffer_143",
+      "lifetime": "transient",
+      "size": 124672
+    },
+    {
+      "id": "transient_buffer_152",
+      "lifetime": "transient",
+      "size": 7168
+    },
+    {
+      "id": "transient_buffer_159",
+      "lifetime": "transient",
+      "size": 8960
+    },
+    {
+      "id": "transient_buffer_161",
+      "lifetime": "transient",
+      "size": 42560
+    },
+    {
+      "id": "transient_buffer_170",
+      "lifetime": "transient",
+      "size": 7168
+    },
+    {
+      "id": "transient_buffer_177",
+      "lifetime": "transient",
+      "size": 4096
+    },
+    {
+      "id": "transient_buffer_179",
+      "lifetime": "transient",
+      "size": 152512
+    },
+    {
+      "id": "transient_buffer_188",
+      "lifetime": "transient",
+      "size": 4096
+    },
+    {
+      "id": "transient_buffer_195",
+      "lifetime": "transient",
+      "size": 4096
+    },
+    {
+      "id": "transient_buffer_202",
+      "lifetime": "transient",
+      "size": 4096
+    },
+    {
+      "id": "transient_buffer_209",
+      "lifetime": "transient",
+      "size": 4000
+    },
+    {
+      "id": "buffer",
+      "lifetime": "input",
+      "size": 49152
+    },
+    {
+      "id": "__constant_tensor_1280xi8",
+      "lifetime": "constant",
+      "size": 1764352
+    }
+  ],
+  "commands": [
+    {
+      "pattern": 255,
+      "target": {
+        "access": "write",
+        "base": "transient_buffer_1",
+        "length": 49923,
+        "offset": 0
+      },
+      "type": "fill"
+    },
+    {
+      "dispatch_index": 0,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 1,
+      "type": "dispatch"
+    },
+    {
+      "pattern": 128,
+      "target": {
+        "access": "write",
+        "base": "transient_buffer_1",
+        "length": 69696,
+        "offset": 312128
+      },
+      "type": "fill"
+    },
+    {
+      "dispatch_index": 2,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 3,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 4,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 5,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 6,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 7,
+      "type": "dispatch"
+    },
+    {
+      "pattern": 128,
+      "target": {
+        "access": "write",
+        "base": "transient_buffer_1",
+        "length": 202800,
+        "offset": 1397632
+      },
+      "type": "fill"
+    },
+    {
+      "dispatch_index": 8,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 9,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 10,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 11,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 12,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 13,
+      "type": "dispatch"
+    },
+    {
+      "pattern": 128,
+      "target": {
+        "access": "write",
+        "base": "transient_buffer_1",
+        "length": 55488,
+        "offset": 1846208
+      },
+      "type": "fill"
+    },
+    {
+      "dispatch_index": 14,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 15,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 16,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 17,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 18,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 19,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 20,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 21,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 22,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 23,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 24,
+      "type": "dispatch"
+    },
+    {
+      "pattern": 128,
+      "target": {
+        "access": "write",
+        "base": "transient_buffer_17",
+        "length": 52272,
+        "offset": 204800
+      },
+      "type": "fill"
+    },
+    {
+      "dispatch_index": 25,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 26,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 27,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 28,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 29,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 30,
+      "type": "dispatch"
+    },
+    {
+      "pattern": 128,
+      "target": {
+        "access": "write",
+        "base": "transient_buffer_17",
+        "length": 31104,
+        "offset": 433216
+      },
+      "type": "fill"
+    },
+    {
+      "dispatch_index": 31,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 32,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 33,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 34,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 35,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 36,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 37,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 38,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 39,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 40,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 41,
+      "type": "dispatch"
+    },
+    {
+      "pattern": 128,
+      "target": {
+        "access": "write",
+        "base": "transient_buffer_35",
+        "length": 31104,
+        "offset": 98304
+      },
+      "type": "fill"
+    },
+    {
+      "dispatch_index": 42,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 43,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 44,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 45,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 46,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 47,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 48,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 49,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 50,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 51,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 52,
+      "type": "dispatch"
+    },
+    {
+      "pattern": 128,
+      "target": {
+        "access": "write",
+        "base": "transient_buffer_53",
+        "length": 27744,
+        "offset": 102400
+      },
+      "type": "fill"
+    },
+    {
+      "dispatch_index": 53,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 54,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 55,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 56,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 57,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 58,
+      "type": "dispatch"
+    },
+    {
+      "pattern": 128,
+      "target": {
+        "access": "write",
+        "base": "transient_buffer_53",
+        "length": 14400,
+        "offset": 203904
+      },
+      "type": "fill"
+    },
+    {
+      "dispatch_index": 59,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 60,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 61,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 62,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 63,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 64,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 65,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 66,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 67,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 68,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 69,
+      "type": "dispatch"
+    },
+    {
+      "pattern": 128,
+      "target": {
+        "access": "write",
+        "base": "transient_buffer_71",
+        "length": 14400,
+        "offset": 36864
+      },
+      "type": "fill"
+    },
+    {
+      "dispatch_index": 70,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 71,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 72,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 73,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 74,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 75,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 76,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 77,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 78,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 79,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 80,
+      "type": "dispatch"
+    },
+    {
+      "pattern": 128,
+      "target": {
+        "access": "write",
+        "base": "transient_buffer_89",
+        "length": 14400,
+        "offset": 36864
+      },
+      "type": "fill"
+    },
+    {
+      "dispatch_index": 81,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 82,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 83,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 84,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 85,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 86,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 87,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 88,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 89,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 90,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 91,
+      "type": "dispatch"
+    },
+    {
+      "pattern": 128,
+      "target": {
+        "access": "write",
+        "base": "transient_buffer_107",
+        "length": 14400,
+        "offset": 38400
+      },
+      "type": "fill"
+    },
+    {
+      "dispatch_index": 92,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 93,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 94,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 95,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 96,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 97,
+      "type": "dispatch"
+    },
+    {
+      "pattern": 128,
+      "target": {
+        "access": "write",
+        "base": "transient_buffer_107",
+        "length": 19200,
+        "offset": 119360
+      },
+      "type": "fill"
+    },
+    {
+      "dispatch_index": 98,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 99,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 100,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 101,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 102,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 103,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 104,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 105,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 106,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 107,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 108,
+      "type": "dispatch"
+    },
+    {
+      "pattern": 128,
+      "target": {
+        "access": "write",
+        "base": "transient_buffer_125",
+        "length": 19200,
+        "offset": 49152
+      },
+      "type": "fill"
+    },
+    {
+      "dispatch_index": 109,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 110,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 111,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 112,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 113,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 114,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 115,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 116,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 117,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 118,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 119,
+      "type": "dispatch"
+    },
+    {
+      "pattern": 128,
+      "target": {
+        "access": "write",
+        "base": "transient_buffer_143",
+        "length": 15552,
+        "offset": 51200
+      },
+      "type": "fill"
+    },
+    {
+      "dispatch_index": 120,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 121,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 122,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 123,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 124,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 125,
+      "type": "dispatch"
+    },
+    {
+      "pattern": 128,
+      "target": {
+        "access": "write",
+        "base": "transient_buffer_143",
+        "length": 12096,
+        "offset": 107200
+      },
+      "type": "fill"
+    },
+    {
+      "dispatch_index": 126,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 127,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 128,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 129,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 130,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 131,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 132,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 133,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 134,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 135,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 136,
+      "type": "dispatch"
+    },
+    {
+      "pattern": 128,
+      "target": {
+        "access": "write",
+        "base": "transient_buffer_161",
+        "length": 12096,
+        "offset": 21504
+      },
+      "type": "fill"
+    },
+    {
+      "dispatch_index": 137,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 138,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 139,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 140,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 141,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 142,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 143,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 144,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 145,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 146,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 147,
+      "type": "dispatch"
+    },
+    {
+      "pattern": 128,
+      "target": {
+        "access": "write",
+        "base": "transient_buffer_179",
+        "length": 12096,
+        "offset": 22400
+      },
+      "type": "fill"
+    },
+    {
+      "dispatch_index": 148,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 149,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 150,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 151,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 152,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 153,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 154,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 155,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 156,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 157,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 158,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 159,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 160,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 161,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 162,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 163,
+      "type": "dispatch"
+    },
+    {
+      "dispatch_index": 164,
+      "type": "dispatch"
+    }
+  ],
+  "dispatches": [
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "buffer",
+          "length": 49152,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_1",
+          "length": 1901696,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        1,
+        0
+      ],
+      "ordinal": 0,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_1",
+          "length": 1901696,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_1",
+          "length": 1901696,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        49984,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 1,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_1",
+          "length": 1901696,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_1",
+          "length": 1901696,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        49984,
+        0,
+        312128,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 2,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_1",
+          "length": 1901696,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_1",
+          "length": 1901696,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        312128,
+        0,
+        49984,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 3,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_1",
+          "length": 1901696,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_1",
+          "length": 1901696,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        49984,
+        0,
+        381824,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 4,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_1",
+          "length": 1901696,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_1",
+          "length": 1901696,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        381824,
+        0,
+        447360,
+        0,
+        4096,
+        0
+      ],
+      "ordinal": 5,
+      "workgroups": [
+        64,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_1",
+          "length": 1901696,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_1",
+          "length": 1901696,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        447360,
+        0,
+        578432,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 6,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_1",
+          "length": 1901696,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_1",
+          "length": 1901696,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        578432,
+        0,
+        394752,
+        1707392,
+        1732416,
+        611200,
+        0,
+        4294967292,
+        4096,
+        0
+      ],
+      "ordinal": 7,
+      "workgroups": [
+        2,
+        64,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_1",
+          "length": 1901696,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_1",
+          "length": 1901696,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        611200,
+        0,
+        1397632,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 8,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_1",
+          "length": 1901696,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_1",
+          "length": 1901696,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        1397632,
+        0,
+        1600448,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 9,
+      "workgroups": [
+        3,
+        4,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_1",
+          "length": 1901696,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_1",
+          "length": 1901696,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        1707200,
+        1732608,
+        36288,
+        36224,
+        1600448,
+        0,
+        1797056,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 10,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_1",
+          "length": 1901696,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_1",
+          "length": 1901696,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        1797056,
+        0,
+        394368,
+        1707136,
+        1732800,
+        578432,
+        0,
+        1024,
+        0
+      ],
+      "ordinal": 11,
+      "workgroups": [
+        16,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_1",
+          "length": 1901696,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer",
+          "length": 81920,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        578432,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 12,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer",
+          "length": 81920,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_1",
+          "length": 1901696,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        0,
+        0,
+        393984,
+        1706944,
+        1732864,
+        1600448,
+        0,
+        4,
+        1024,
+        0
+      ],
+      "ordinal": 7,
+      "workgroups": [
+        2,
+        16,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_1",
+          "length": 1901696,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_1",
+          "length": 1901696,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        1600448,
+        0,
+        1846208,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 13,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_1",
+          "length": 1901696,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_1",
+          "length": 1901696,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        1846208,
+        0,
+        1600448,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 14,
+      "workgroups": [
+        3,
+        4,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_1",
+          "length": 1901696,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_1",
+          "length": 1901696,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        1706752,
+        1733056,
+        35712,
+        35648,
+        1600448,
+        0,
+        1797056,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 10,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_1",
+          "length": 1901696,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_1",
+          "length": 1901696,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        1797056,
+        0,
+        393600,
+        1706688,
+        1733248,
+        578432,
+        0,
+        1024,
+        0
+      ],
+      "ordinal": 11,
+      "workgroups": [
+        16,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_1",
+          "length": 1901696,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer",
+          "length": 81920,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        578432,
+        0,
+        8192,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 15,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer",
+          "length": 81920,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer",
+          "length": 81920,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        16384,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 16,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer",
+          "length": 81920,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer",
+          "length": 81920,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        8192,
+        0,
+        49152,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 17,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer",
+          "length": 81920,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_8",
+          "length": 65536,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        1,
+        0
+      ],
+      "ordinal": 18,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer",
+          "length": 81920,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_8",
+          "length": 65536,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        8192,
+        0,
+        32768,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 19,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_8",
+          "length": 32768,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_8",
+          "length": 32768,
+          "offset": 32768,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_17",
+          "length": 488896,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        1,
+        0
+      ],
+      "ordinal": 20,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_17",
+          "length": 488896,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_17",
+          "length": 488896,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        0,
+        0,
+        393216,
+        1706496,
+        1733312,
+        8192,
+        0,
+        4294967288,
+        1024,
+        0
+      ],
+      "ordinal": 7,
+      "workgroups": [
+        2,
+        16,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_17",
+          "length": 488896,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_17",
+          "length": 488896,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        8192,
+        0,
+        204800,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 21,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_17",
+          "length": 488896,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_17",
+          "length": 488896,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        204800,
+        0,
+        257088,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 22,
+      "workgroups": [
+        3,
+        4,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_17",
+          "length": 488896,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_17",
+          "length": 488896,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        257088,
+        0,
+        306240,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 23,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_17",
+          "length": 488896,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_17",
+          "length": 488896,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        306240,
+        0,
+        318528,
+        0,
+        256,
+        0
+      ],
+      "ordinal": 24,
+      "workgroups": [
+        4,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_17",
+          "length": 488896,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_15",
+          "length": 40960,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        318528,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 25,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_15",
+          "length": 40960,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_17",
+          "length": 488896,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        334912,
+        0,
+        256,
+        0
+      ],
+      "ordinal": 26,
+      "workgroups": [
+        3,
+        4,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_17",
+          "length": 488896,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_17",
+          "length": 488896,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        334912,
+        0,
+        34496,
+        34368,
+        433216,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 27,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_17",
+          "length": 488896,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_17",
+          "length": 488896,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        433216,
+        0,
+        1709312,
+        334912,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 28,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_17",
+          "length": 488896,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_17",
+          "length": 488896,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        1705472,
+        1733760,
+        33984,
+        33856,
+        334912,
+        0,
+        464320,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 29,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_17",
+          "length": 488896,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_17",
+          "length": 488896,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        464320,
+        0,
+        389376,
+        1705408,
+        1734144,
+        318528,
+        0,
+        256,
+        0
+      ],
+      "ordinal": 30,
+      "workgroups": [
+        4,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_17",
+          "length": 488896,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_15",
+          "length": 40960,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        318528,
+        0,
+        33792,
+        33728,
+        4096,
+        0,
+        8,
+        1,
+        0
+      ],
+      "ordinal": 31,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_15",
+          "length": 40960,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_15",
+          "length": 40960,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        8192,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 32,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_15",
+          "length": 40960,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_15",
+          "length": 40960,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        4096,
+        0,
+        24576,
+        0,
+        8,
+        1,
+        0
+      ],
+      "ordinal": 33,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_15",
+          "length": 40960,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_26",
+          "length": 32768,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        1,
+        0
+      ],
+      "ordinal": 34,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_15",
+          "length": 40960,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_26",
+          "length": 32768,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        4096,
+        0,
+        16384,
+        0,
+        8,
+        1,
+        0
+      ],
+      "ordinal": 35,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_26",
+          "length": 16384,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_26",
+          "length": 16384,
+          "offset": 16384,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_33",
+          "length": 40960,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        1569278542,
+        7,
+        1,
+        0
+      ],
+      "ordinal": 36,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_33",
+          "length": 40960,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_35",
+          "length": 170368,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        387840,
+        1705024,
+        1734208,
+        0,
+        0,
+        7,
+        256,
+        0
+      ],
+      "ordinal": 37,
+      "workgroups": [
+        3,
+        4,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_35",
+          "length": 170368,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_35",
+          "length": 170368,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        0,
+        0,
+        33344,
+        33216,
+        98304,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 27,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_35",
+          "length": 170368,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_35",
+          "length": 170368,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        98304,
+        0,
+        1710208,
+        0,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 28,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_35",
+          "length": 170368,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_35",
+          "length": 170368,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        1704640,
+        1734592,
+        32832,
+        32704,
+        0,
+        0,
+        129408,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 29,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_35",
+          "length": 170368,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_35",
+          "length": 170368,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        129408,
+        0,
+        386304,
+        1704576,
+        1734976,
+        153984,
+        0,
+        256,
+        0
+      ],
+      "ordinal": 30,
+      "workgroups": [
+        4,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_35",
+          "length": 170368,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_33",
+          "length": 40960,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        153984,
+        0,
+        32640,
+        32576,
+        4096,
+        0,
+        22,
+        1,
+        0
+      ],
+      "ordinal": 31,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_33",
+          "length": 40960,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_33",
+          "length": 40960,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        0,
+        0,
+        8192,
+        0,
+        7,
+        1,
+        0
+      ],
+      "ordinal": 33,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_33",
+          "length": 40960,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_33",
+          "length": 40960,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        4096,
+        0,
+        24576,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 38,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_33",
+          "length": 40960,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_44",
+          "length": 32768,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        0,
+        0,
+        0,
+        0,
+        7,
+        1,
+        0
+      ],
+      "ordinal": 35,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_33",
+          "length": 40960,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_44",
+          "length": 32768,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        4096,
+        0,
+        16384,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 39,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_44",
+          "length": 16384,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_44",
+          "length": 16384,
+          "offset": 16384,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_53",
+          "length": 227520,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        1634239609,
+        26,
+        1,
+        0
+      ],
+      "ordinal": 36,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_53",
+          "length": 227520,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_53",
+          "length": 227520,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        384768,
+        1704192,
+        1735040,
+        4096,
+        0,
+        26,
+        256,
+        0
+      ],
+      "ordinal": 37,
+      "workgroups": [
+        3,
+        4,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_53",
+          "length": 227520,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_53",
+          "length": 227520,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        4096,
+        0,
+        102400,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 40,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_53",
+          "length": 227520,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_53",
+          "length": 227520,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        102400,
+        0,
+        130176,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 41,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_53",
+          "length": 227520,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_53",
+          "length": 227520,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        130176,
+        0,
+        154752,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 42,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_53",
+          "length": 227520,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_53",
+          "length": 227520,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        154752,
+        0,
+        160896,
+        0,
+        64,
+        0
+      ],
+      "ordinal": 43,
+      "workgroups": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_53",
+          "length": 227520,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_51",
+          "length": 15360,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        160896,
+        0,
+        31424,
+        31360,
+        0,
+        0,
+        1,
+        1,
+        0
+      ],
+      "ordinal": 44,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_51",
+          "length": 15360,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_53",
+          "length": 227520,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        167040,
+        0,
+        64,
+        0
+      ],
+      "ordinal": 45,
+      "workgroups": [
+        6,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_53",
+          "length": 227520,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_53",
+          "length": 227520,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        167040,
+        0,
+        30784,
+        30592,
+        203904,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 46,
+      "workgroups": [
+        3,
+        4,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_53",
+          "length": 227520,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_53",
+          "length": 227520,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        203904,
+        0,
+        1712000,
+        167040,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 47,
+      "workgroups": [
+        9,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_53",
+          "length": 227520,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_53",
+          "length": 227520,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        1702528,
+        1736512,
+        30016,
+        29824,
+        167040,
+        0,
+        218304,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 48,
+      "workgroups": [
+        3,
+        4,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_53",
+          "length": 227520,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_53",
+          "length": 227520,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        218304,
+        0,
+        375552,
+        1702400,
+        1737088,
+        154752,
+        0,
+        64,
+        0
+      ],
+      "ordinal": 49,
+      "workgroups": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_53",
+          "length": 227520,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_51",
+          "length": 15360,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        154752,
+        0,
+        29696,
+        29632,
+        1536,
+        0,
+        4294967273,
+        1,
+        0
+      ],
+      "ordinal": 44,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_51",
+          "length": 15360,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_51",
+          "length": 15360,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        3072,
+        0,
+        1,
+        1,
+        0
+      ],
+      "ordinal": 50,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_51",
+          "length": 15360,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_51",
+          "length": 15360,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        1536,
+        0,
+        9216,
+        0,
+        4294967273,
+        1628176823,
+        1,
+        0
+      ],
+      "ordinal": 51,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_51",
+          "length": 15360,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_62",
+          "length": 12288,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        1,
+        1,
+        0
+      ],
+      "ordinal": 52,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_51",
+          "length": 15360,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_62",
+          "length": 12288,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        1536,
+        0,
+        6144,
+        0,
+        4294967273,
+        1628176823,
+        1,
+        0
+      ],
+      "ordinal": 53,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_62",
+          "length": 6144,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_62",
+          "length": 6144,
+          "offset": 6144,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_69",
+          "length": 15360,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        2119213934,
+        50,
+        4294967293,
+        1,
+        0
+      ],
+      "ordinal": 54,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_69",
+          "length": 15360,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_71",
+          "length": 66624,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        372096,
+        1701824,
+        1737216,
+        0,
+        0,
+        4294967293,
+        64,
+        0
+      ],
+      "ordinal": 55,
+      "workgroups": [
+        6,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_71",
+          "length": 66624,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_71",
+          "length": 66624,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        0,
+        0,
+        29056,
+        28864,
+        36864,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 46,
+      "workgroups": [
+        3,
+        4,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_71",
+          "length": 66624,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_71",
+          "length": 66624,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        36864,
+        0,
+        1713344,
+        0,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 47,
+      "workgroups": [
+        9,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_71",
+          "length": 66624,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_71",
+          "length": 66624,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        1701248,
+        1737792,
+        28288,
+        28096,
+        0,
+        0,
+        51264,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 48,
+      "workgroups": [
+        3,
+        4,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_71",
+          "length": 66624,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_71",
+          "length": 66624,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        51264,
+        0,
+        368640,
+        1701120,
+        1738368,
+        60480,
+        0,
+        64,
+        0
+      ],
+      "ordinal": 49,
+      "workgroups": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_71",
+          "length": 66624,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_69",
+          "length": 15360,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        60480,
+        0,
+        27968,
+        27904,
+        1536,
+        0,
+        4294967293,
+        1,
+        0
+      ],
+      "ordinal": 44,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_69",
+          "length": 15360,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_69",
+          "length": 15360,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        3072,
+        0,
+        4294967293,
+        1,
+        0
+      ],
+      "ordinal": 50,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_69",
+          "length": 15360,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_69",
+          "length": 15360,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        1536,
+        0,
+        9216,
+        0,
+        4294967293,
+        1640952491,
+        1,
+        0
+      ],
+      "ordinal": 51,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_69",
+          "length": 15360,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_80",
+          "length": 12288,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        4294967293,
+        1,
+        0
+      ],
+      "ordinal": 52,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_69",
+          "length": 15360,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_80",
+          "length": 12288,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        1536,
+        0,
+        6144,
+        0,
+        4294967293,
+        1640952491,
+        1,
+        0
+      ],
+      "ordinal": 53,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_80",
+          "length": 6144,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_80",
+          "length": 6144,
+          "offset": 6144,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_87",
+          "length": 15360,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        1882552943,
+        50,
+        4294967277,
+        1,
+        0
+      ],
+      "ordinal": 54,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_87",
+          "length": 15360,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_89",
+          "length": 66624,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        365184,
+        1700544,
+        1738496,
+        0,
+        0,
+        4294967277,
+        64,
+        0
+      ],
+      "ordinal": 55,
+      "workgroups": [
+        6,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_89",
+          "length": 66624,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_89",
+          "length": 66624,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        0,
+        0,
+        27328,
+        27136,
+        36864,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 46,
+      "workgroups": [
+        3,
+        4,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_89",
+          "length": 66624,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_89",
+          "length": 66624,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        36864,
+        0,
+        1714688,
+        0,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 47,
+      "workgroups": [
+        9,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_89",
+          "length": 66624,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_89",
+          "length": 66624,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        1699968,
+        1739072,
+        26560,
+        26368,
+        0,
+        0,
+        51264,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 48,
+      "workgroups": [
+        3,
+        4,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_89",
+          "length": 66624,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_89",
+          "length": 66624,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        51264,
+        0,
+        361728,
+        1699840,
+        1739648,
+        60480,
+        0,
+        64,
+        0
+      ],
+      "ordinal": 49,
+      "workgroups": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_89",
+          "length": 66624,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_87",
+          "length": 15360,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        60480,
+        0,
+        26240,
+        26176,
+        1536,
+        0,
+        31,
+        1,
+        0
+      ],
+      "ordinal": 44,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_87",
+          "length": 15360,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_87",
+          "length": 15360,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        3072,
+        0,
+        4294967277,
+        1,
+        0
+      ],
+      "ordinal": 50,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_87",
+          "length": 15360,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_87",
+          "length": 15360,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        1536,
+        0,
+        9216,
+        0,
+        31,
+        1381095854,
+        1,
+        0
+      ],
+      "ordinal": 51,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_87",
+          "length": 15360,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_98",
+          "length": 12288,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        4294967277,
+        1,
+        0
+      ],
+      "ordinal": 52,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_87",
+          "length": 15360,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_98",
+          "length": 12288,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        1536,
+        0,
+        6144,
+        0,
+        31,
+        1381095854,
+        1,
+        0
+      ],
+      "ordinal": 53,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_98",
+          "length": 6144,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_98",
+          "length": 6144,
+          "offset": 6144,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_107",
+          "length": 150848,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        1094680845,
+        49,
+        13,
+        1,
+        0
+      ],
+      "ordinal": 54,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_107",
+          "length": 150848,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_107",
+          "length": 150848,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        358272,
+        1699264,
+        1739776,
+        1536,
+        0,
+        13,
+        64,
+        0
+      ],
+      "ordinal": 55,
+      "workgroups": [
+        6,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_107",
+          "length": 150848,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_107",
+          "length": 150848,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        1536,
+        0,
+        25600,
+        25408,
+        38400,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 46,
+      "workgroups": [
+        3,
+        4,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_107",
+          "length": 150848,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_107",
+          "length": 150848,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        38400,
+        0,
+        1716032,
+        1536,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 47,
+      "workgroups": [
+        9,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_107",
+          "length": 150848,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_107",
+          "length": 150848,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        1698688,
+        1740352,
+        24832,
+        24640,
+        1536,
+        0,
+        52800,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 48,
+      "workgroups": [
+        3,
+        4,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_107",
+          "length": 150848,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_107",
+          "length": 150848,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        52800,
+        0,
+        62016,
+        0,
+        64,
+        0
+      ],
+      "ordinal": 56,
+      "workgroups": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_107",
+          "length": 150848,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_105",
+          "length": 20480,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        62016,
+        0,
+        24512,
+        24448,
+        0,
+        0,
+        4294967287,
+        1,
+        0
+      ],
+      "ordinal": 57,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_105",
+          "length": 20480,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_107",
+          "length": 150848,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        347520,
+        1697792,
+        1741056,
+        70208,
+        0,
+        4294967287,
+        64,
+        0
+      ],
+      "ordinal": 58,
+      "workgroups": [
+        6,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_107",
+          "length": 150848,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_107",
+          "length": 150848,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        70208,
+        0,
+        23680,
+        23488,
+        119360,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 59,
+      "workgroups": [
+        3,
+        4,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_107",
+          "length": 150848,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_107",
+          "length": 150848,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        119360,
+        0,
+        1717376,
+        70208,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 60,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_107",
+          "length": 150848,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_107",
+          "length": 150848,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        1697024,
+        1741824,
+        22720,
+        22528,
+        70208,
+        0,
+        138560,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 61,
+      "workgroups": [
+        3,
+        4,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_107",
+          "length": 150848,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_107",
+          "length": 150848,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        138560,
+        0,
+        341376,
+        1696896,
+        1742592,
+        62016,
+        0,
+        64,
+        0
+      ],
+      "ordinal": 62,
+      "workgroups": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_107",
+          "length": 150848,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_105",
+          "length": 20480,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        62016,
+        0,
+        22400,
+        22336,
+        2048,
+        0,
+        32,
+        1,
+        0
+      ],
+      "ordinal": 57,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_105",
+          "length": 20480,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_105",
+          "length": 20480,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        0,
+        0,
+        4096,
+        0,
+        4294967287,
+        1874603721,
+        1,
+        0
+      ],
+      "ordinal": 63,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_105",
+          "length": 20480,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_105",
+          "length": 20480,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        2048,
+        0,
+        12288,
+        0,
+        32,
+        1,
+        0
+      ],
+      "ordinal": 64,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_105",
+          "length": 20480,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_116",
+          "length": 16384,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        0,
+        0,
+        0,
+        0,
+        4294967287,
+        1874603721,
+        1,
+        0
+      ],
+      "ordinal": 65,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_105",
+          "length": 20480,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_116",
+          "length": 16384,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        2048,
+        0,
+        8192,
+        0,
+        32,
+        1,
+        0
+      ],
+      "ordinal": 66,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_116",
+          "length": 8192,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_116",
+          "length": 8192,
+          "offset": 8192,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_123",
+          "length": 20480,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        1772073271,
+        16,
+        1,
+        0
+      ],
+      "ordinal": 67,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_123",
+          "length": 20480,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_125",
+          "length": 88832,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        335232,
+        1696128,
+        1742720,
+        0,
+        0,
+        16,
+        64,
+        0
+      ],
+      "ordinal": 58,
+      "workgroups": [
+        6,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_125",
+          "length": 88832,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_125",
+          "length": 88832,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        0,
+        0,
+        21568,
+        21376,
+        49152,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 59,
+      "workgroups": [
+        3,
+        4,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_125",
+          "length": 88832,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_125",
+          "length": 88832,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        49152,
+        0,
+        1719104,
+        0,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 60,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_125",
+          "length": 88832,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_125",
+          "length": 88832,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        1695360,
+        1743488,
+        20608,
+        20416,
+        0,
+        0,
+        68352,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 61,
+      "workgroups": [
+        3,
+        4,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_125",
+          "length": 88832,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_125",
+          "length": 88832,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        68352,
+        0,
+        329088,
+        1695232,
+        1744256,
+        80640,
+        0,
+        64,
+        0
+      ],
+      "ordinal": 62,
+      "workgroups": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_125",
+          "length": 88832,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_123",
+          "length": 20480,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        80640,
+        0,
+        20288,
+        20224,
+        2048,
+        0,
+        4294967269,
+        1,
+        0
+      ],
+      "ordinal": 57,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_123",
+          "length": 20480,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_123",
+          "length": 20480,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        0,
+        0,
+        4096,
+        0,
+        16,
+        1,
+        0
+      ],
+      "ordinal": 64,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_123",
+          "length": 20480,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_123",
+          "length": 20480,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        2048,
+        0,
+        12288,
+        0,
+        4294967269,
+        1901228461,
+        1,
+        0
+      ],
+      "ordinal": 63,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_123",
+          "length": 20480,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_134",
+          "length": 16384,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        0,
+        0,
+        0,
+        0,
+        16,
+        1,
+        0
+      ],
+      "ordinal": 66,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_123",
+          "length": 20480,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_134",
+          "length": 16384,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        2048,
+        0,
+        8192,
+        0,
+        4294967269,
+        1901228461,
+        1,
+        0
+      ],
+      "ordinal": 65,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_134",
+          "length": 8192,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_134",
+          "length": 8192,
+          "offset": 8192,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_143",
+          "length": 124672,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        1943110203,
+        4294967279,
+        1,
+        0
+      ],
+      "ordinal": 67,
+      "workgroups": [
+        2,
+        8,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_143",
+          "length": 124672,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_143",
+          "length": 124672,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        322944,
+        1694464,
+        1744384,
+        2048,
+        0,
+        4294967279,
+        64,
+        0
+      ],
+      "ordinal": 58,
+      "workgroups": [
+        6,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_143",
+          "length": 124672,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_143",
+          "length": 124672,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        2048,
+        0,
+        51200,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 68,
+      "workgroups": [
+        3,
+        4,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_143",
+          "length": 124672,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_143",
+          "length": 124672,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        51200,
+        0,
+        66752,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 69,
+      "workgroups": [
+        2,
+        2,
+        4
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_143",
+          "length": 124672,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_143",
+          "length": 124672,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        66752,
+        0,
+        79040,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 70,
+      "workgroups": [
+        3,
+        4,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_143",
+          "length": 124672,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_143",
+          "length": 124672,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        79040,
+        0,
+        82112,
+        0,
+        16,
+        0
+      ],
+      "ordinal": 71,
+      "workgroups": [
+        2,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_143",
+          "length": 124672,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_141",
+          "length": 8960,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        82112,
+        0,
+        18048,
+        17984,
+        0,
+        0,
+        4294967295,
+        1,
+        0
+      ],
+      "ordinal": 72,
+      "workgroups": [
+        4,
+        4,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_141",
+          "length": 8960,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_143",
+          "length": 124672,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        293376,
+        1692096,
+        1746176,
+        85696,
+        0,
+        4294967295,
+        16,
+        0
+      ],
+      "ordinal": 73,
+      "workgroups": [
+        12,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_143",
+          "length": 124672,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_143",
+          "length": 124672,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        85696,
+        0,
+        16640,
+        16256,
+        107200,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 74,
+      "workgroups": [
+        7,
+        2,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_143",
+          "length": 124672,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_143",
+          "length": 124672,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        107200,
+        0,
+        1722560,
+        85696,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 75,
+      "workgroups": [
+        3,
+        4,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_143",
+          "length": 124672,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_143",
+          "length": 124672,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        1690752,
+        1747520,
+        14912,
+        14528,
+        85696,
+        0,
+        119296,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 76,
+      "workgroups": [
+        7,
+        2,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_143",
+          "length": 124672,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_143",
+          "length": 124672,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        119296,
+        0,
+        274560,
+        1690496,
+        1748864,
+        82112,
+        0,
+        16,
+        0
+      ],
+      "ordinal": 77,
+      "workgroups": [
+        2,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_143",
+          "length": 124672,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_141",
+          "length": 8960,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        82112,
+        0,
+        14272,
+        14208,
+        896,
+        0,
+        4294967292,
+        1,
+        0
+      ],
+      "ordinal": 72,
+      "workgroups": [
+        4,
+        4,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_141",
+          "length": 8960,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_141",
+          "length": 8960,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        0,
+        0,
+        1792,
+        0,
+        4294967295,
+        1,
+        0
+      ],
+      "ordinal": 78,
+      "workgroups": [
+        4,
+        4,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_141",
+          "length": 8960,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_141",
+          "length": 8960,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        896,
+        0,
+        5376,
+        0,
+        4294967292,
+        1986544438,
+        1,
+        0
+      ],
+      "ordinal": 79,
+      "workgroups": [
+        4,
+        4,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_141",
+          "length": 8960,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_152",
+          "length": 7168,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        0,
+        0,
+        0,
+        0,
+        4294967295,
+        1,
+        0
+      ],
+      "ordinal": 80,
+      "workgroups": [
+        4,
+        4,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_141",
+          "length": 8960,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_152",
+          "length": 7168,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        896,
+        0,
+        3584,
+        0,
+        4294967292,
+        1986544438,
+        1,
+        0
+      ],
+      "ordinal": 81,
+      "workgroups": [
+        4,
+        4,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_152",
+          "length": 3584,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_152",
+          "length": 3584,
+          "offset": 3584,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_159",
+          "length": 8960,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        1824924965,
+        5,
+        1,
+        0
+      ],
+      "ordinal": 82,
+      "workgroups": [
+        4,
+        4,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_159",
+          "length": 8960,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_161",
+          "length": 42560,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        255744,
+        1689152,
+        1749120,
+        0,
+        0,
+        5,
+        16,
+        0
+      ],
+      "ordinal": 73,
+      "workgroups": [
+        12,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_161",
+          "length": 42560,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_161",
+          "length": 42560,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        0,
+        0,
+        12864,
+        12480,
+        21504,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 74,
+      "workgroups": [
+        7,
+        2,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_161",
+          "length": 42560,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_161",
+          "length": 42560,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        21504,
+        0,
+        1725632,
+        0,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 75,
+      "workgroups": [
+        3,
+        4,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_161",
+          "length": 42560,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_161",
+          "length": 42560,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        1687808,
+        1750464,
+        11136,
+        10752,
+        0,
+        0,
+        33600,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 76,
+      "workgroups": [
+        7,
+        2,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_161",
+          "length": 42560,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_161",
+          "length": 42560,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        33600,
+        0,
+        236928,
+        1687552,
+        1751808,
+        38976,
+        0,
+        16,
+        0
+      ],
+      "ordinal": 77,
+      "workgroups": [
+        2,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_161",
+          "length": 42560,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_159",
+          "length": 8960,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        38976,
+        0,
+        10496,
+        10432,
+        896,
+        0,
+        4294967290,
+        1,
+        0
+      ],
+      "ordinal": 72,
+      "workgroups": [
+        4,
+        4,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_159",
+          "length": 8960,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_159",
+          "length": 8960,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        0,
+        0,
+        1792,
+        0,
+        5,
+        1615251381,
+        1,
+        0
+      ],
+      "ordinal": 79,
+      "workgroups": [
+        4,
+        4,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_159",
+          "length": 8960,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_159",
+          "length": 8960,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        896,
+        0,
+        5376,
+        0,
+        4294967290,
+        1,
+        0
+      ],
+      "ordinal": 78,
+      "workgroups": [
+        4,
+        4,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_159",
+          "length": 8960,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_170",
+          "length": 7168,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        0,
+        0,
+        0,
+        0,
+        5,
+        1615251381,
+        1,
+        0
+      ],
+      "ordinal": 81,
+      "workgroups": [
+        4,
+        4,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_159",
+          "length": 8960,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_170",
+          "length": 7168,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        896,
+        0,
+        3584,
+        0,
+        4294967290,
+        1,
+        0
+      ],
+      "ordinal": 80,
+      "workgroups": [
+        4,
+        4,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_170",
+          "length": 3584,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_170",
+          "length": 3584,
+          "offset": 3584,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_179",
+          "length": 152512,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        1819813163,
+        4294967290,
+        1,
+        0
+      ],
+      "ordinal": 82,
+      "workgroups": [
+        4,
+        4,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_179",
+          "length": 152512,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_179",
+          "length": 152512,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        218112,
+        1686208,
+        1752064,
+        896,
+        0,
+        4294967290,
+        16,
+        0
+      ],
+      "ordinal": 73,
+      "workgroups": [
+        12,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_179",
+          "length": 152512,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_179",
+          "length": 152512,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        896,
+        0,
+        9088,
+        8704,
+        22400,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 74,
+      "workgroups": [
+        7,
+        2,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_179",
+          "length": 152512,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_179",
+          "length": 152512,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        22400,
+        0,
+        1728704,
+        896,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 75,
+      "workgroups": [
+        3,
+        4,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_179",
+          "length": 152512,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_179",
+          "length": 152512,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        1684864,
+        1753408,
+        7360,
+        6976,
+        896,
+        0,
+        34496,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 76,
+      "workgroups": [
+        7,
+        2,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_179",
+          "length": 152512,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_179",
+          "length": 152512,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        34496,
+        0,
+        39872,
+        0,
+        16,
+        0
+      ],
+      "ordinal": 83,
+      "workgroups": [
+        4,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_179",
+          "length": 152512,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_179",
+          "length": 152512,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        39872,
+        0,
+        47040,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 84,
+      "workgroups": [
+        7,
+        2,
+        4
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_179",
+          "length": 152512,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_179",
+          "length": 152512,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        47040,
+        0,
+        48832,
+        0,
+        16,
+        0
+      ],
+      "ordinal": 85,
+      "workgroups": [
+        20,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_179",
+          "length": 152512,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_179",
+          "length": 152512,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        48832,
+        0,
+        130752,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 86,
+      "workgroups": [
+        40,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_179",
+          "length": 152512,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_179",
+          "length": 152512,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        130752,
+        0,
+        151232,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 87,
+      "workgroups": [
+        40,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_179",
+          "length": 152512,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "__constant_tensor_1280xi8",
+          "length": 1764352,
+          "offset": 0,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_177",
+          "length": 4096,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        151232,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 88,
+      "workgroups": [
+        25,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_177",
+          "length": 4096,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_177",
+          "length": 4096,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        4032,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 89,
+      "workgroups": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_177",
+          "length": 4096,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_188",
+          "length": 4096,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        1,
+        0
+      ],
+      "ordinal": 90,
+      "workgroups": [
+        25,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_177",
+          "length": 4096,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_188",
+          "length": 4096,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        4032,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 91,
+      "workgroups": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_188",
+          "length": 4000,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_188",
+          "length": 4,
+          "offset": 4032,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_195",
+          "length": 4096,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        1,
+        0
+      ],
+      "ordinal": 92,
+      "workgroups": [
+        25,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_195",
+          "length": 4096,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_195",
+          "length": 4096,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        4032,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 93,
+      "workgroups": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_195",
+          "length": 4096,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_202",
+          "length": 4096,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        1,
+        0
+      ],
+      "ordinal": 90,
+      "workgroups": [
+        25,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_195",
+          "length": 4096,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_202",
+          "length": 4096,
+          "offset": 0,
+          "ordinal": 1
+        }
+      ],
+      "constants": [
+        4032,
+        0,
+        1,
+        0
+      ],
+      "ordinal": 91,
+      "workgroups": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "bindings": [
+        {
+          "access": "rw",
+          "base": "transient_buffer_202",
+          "length": 4000,
+          "offset": 0,
+          "ordinal": 0
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_202",
+          "length": 4,
+          "offset": 4032,
+          "ordinal": 1
+        },
+        {
+          "access": "rw",
+          "base": "transient_buffer_209",
+          "length": 4000,
+          "offset": 0,
+          "ordinal": 2
+        }
+      ],
+      "constants": [
+        1,
+        0
+      ],
+      "ordinal": 94,
+      "workgroups": [
+        25,
+        1,
+        1
+      ]
+    }
+  ],
+  "fixed_shape": true,
+  "is_linear": true,
+  "max_transient_allocation_bytes": 1901696,
+  "peak_transient_bytes": 1983616,
+  "schema": "rrtos.iree_hal_schedule.v1",
+  "source": "mobilenetv2_a035_128_int8.11.hal.mlir",
+  "warnings": [
+    "assumed batch_size=1 for 1 hal.buffer_view.dim value(s)"
+  ]
+}

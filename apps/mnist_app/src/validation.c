@@ -89,6 +89,8 @@ mnist_validation_status_t mnist_validation_check(
     observation->hash = mnist_validation_output_hash(output);
     observation->top_score_q = mnist_validation_top_score_q(output);
     observation->latency_us = stats ? (uint32_t)stats->latency_last_us : 0u;
+    observation->latency_cycles = stats ? stats->latency_last_cycles : 0u;
+    observation->latency_instructions = stats ? stats->latency_last_instructions : 0u;
     observation->total_inferences = stats ? (uint32_t)stats->total_inferences : 0u;
     observation->arena_peak = stats ? (uint32_t)stats->arena_peak_bytes : 0u;
 
@@ -104,7 +106,8 @@ mnist_validation_status_t mnist_validation_check(
         return MNIST_VALIDATION_INFERENCE_COUNT_MISMATCH;
     }
 
-    if (stats->latency_last_us == 0) {
+    if (stats->latency_last_us == 0 || stats->latency_last_cycles == 0 ||
+        stats->latency_last_instructions == 0) {
         return MNIST_VALIDATION_LATENCY_MISSING;
     }
 

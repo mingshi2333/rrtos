@@ -11,10 +11,13 @@ This file is the normative support-status registry for the repository. The repos
   - API: `ai/include/ai_model_registry.h`
   - App: `apps/mnist_app`
   - Model: `st_mnist_28` from `ai_models.yaml`
+  - Quantized model: `st_mnistv1_28_tfs_int8` from `ai_models_mnist_quant.yaml`
   - Proof path: `apps/mnist_app/src/validation_main.c` uses the registry contract directly; generated wrappers remain convenience-only glue
+  - Quantized proof path: `apps/mnist_app/src/quant_validation_main.c` links `generated_quant/` separately so it does not change the FP32 registry baseline
 - Validation lanes:
   - `pixi run -e rv32 validate-supported-rv32` as the normative supported rv32 gate
   - `pixi run -e rv32 validate-supported-ai` as the canonical AI contract check before the full supported rv32 gate
+  - `pixi run -e rv32 validate-mnist-quant-runtime` as the explicit ST MNISTv1 INT8 QEMU validation lane
   - `pixi run -e rv32 observe-mnist-runtime-renode` and `pixi run -e rv32 compare-mnist-runtime-platforms` as optional cross-platform AI observation lanes
   - `pixi run -e be-u1000 validate-supported` as the normative supported BE-U1000 gate
   - `pixi run -e be-u1000 validate-hal-apps` as an explicit BE-U1000 HAL app matrix observation lane; it is not part of the blocking supported gate until promoted here
@@ -34,7 +37,7 @@ This file is the normative support-status registry for the repository. The repos
 - Historical RV64 and model-specific simulation workflows not covered by current automation
 - Optional `zoo/` model conversion artifacts until they are promoted through `ai_models.yaml`, the registry contract, and a validation lane
 - BE-U1000 HAL app matrix entries outside `apps/be_u1000_demo`; these are useful regression and bring-up evidence, but they remain observation lanes until promoted
-- BE-U1000 AI micro app lanes, including `apps/be_u1000_ai_micro_demo` and the C++ app-layer variant `apps/be_u1000_ai_micro_demo_cpp`; these are useful AI bring-up evidence but are not the blocking supported BE-U1000 lane
+- BE-U1000 AI micro app lanes, including `apps/be_u1000_ai_micro_demo`, the C++ app-layer variant `apps/be_u1000_ai_micro_demo_cpp`, and the no-VM static direct probe `apps/be_u1000_ai_static_direct_probe`; these are useful AI bring-up evidence but are not the blocking supported BE-U1000 lane
 
 ## Rules
 
@@ -42,5 +45,5 @@ This file is the normative support-status registry for the repository. The repos
 - Experimental paths may stay in-tree, but they are not the main evidence of correctness.
 - Optional observation or comparison lanes do not promote a path to supported status.
 - New supported boards or AI entrypoints must update this file and the validation matrix together.
-- New supported AI models must update `ai_models.yaml`, generated artifacts, deterministic runtime validation, and the maintained pixi task surface together.
+- New supported AI models must update the relevant `ai_models*.yaml`, generated artifacts, deterministic runtime validation, and the maintained pixi task surface together.
 - Supported CI must not use recursive IREE submodule checkout unless the supported matrix is deliberately expanded to require the full upstream IREE dependency graph.

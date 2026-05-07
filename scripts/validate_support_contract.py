@@ -158,7 +158,7 @@ def main() -> None:
     )
     require(
         pixi,
-        'validate-supported-rv32 = { depends-on = ["validate-config-authority", "validate-smp-config-matrix", "validate-bsp-seam", "validate-support-contract", "validate-supported-ai", "configure", "build", "report-footprint", "report-ai-footprint", "validate-mnist-runtime"] }',
+        'validate-supported-rv32 = { depends-on = ["validate-config-authority", "validate-smp-config-matrix", "validate-bsp-seam", "validate-support-contract", "validate-supported-ai", "configure", "build", "report-footprint", "report-ai-footprint", "validate-mnist-runtime", "validate-mnist-quant-runtime"] }',
         "pixi.toml",
     )
     require(
@@ -256,6 +256,11 @@ def main() -> None:
     require(
         workflow,
         '      - "ai_models.yaml"',
+        ".github/workflows/firmware-supported-matrix.yml",
+    )
+    require(
+        workflow,
+        '      - "ai_models_mnist_quant.yaml"',
         ".github/workflows/firmware-supported-matrix.yml",
     )
     require(

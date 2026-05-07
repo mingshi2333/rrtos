@@ -21,6 +21,8 @@ typedef struct {
     uint32_t hash;
     int32_t top_score_q;
     uint32_t latency_us;
+    uint64_t latency_cycles;
+    uint64_t latency_instructions;
     uint32_t total_inferences;
     uint32_t arena_peak;
 } mnist_validation_observation_t;

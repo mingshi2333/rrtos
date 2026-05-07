@@ -6,6 +6,7 @@
 #include "ai_models.h"
 #include "hal_board.h"
 #include "os_kernel.h"
+#include "os_mem.h"
 #include "validation.h"
 
 static os_tcb_t validation_tcb;
@@ -27,6 +28,41 @@ _Static_assert(
     AI_TENSOR_SHAPE_CAPACITY ==
         (sizeof(((ai_tensor_spec_t *)0)->dims) / sizeof(((ai_tensor_spec_t *)0)->dims[0])),
     "AI_TENSOR_SHAPE_CAPACITY must match ai_tensor_spec_t.dims capacity");
+
+static const char *u64_to_dec(uint64_t value, char *buffer, size_t buffer_size) {
+    char reversed[21];
+    size_t length = 0;
+    size_t i;
+
+    if (!buffer || buffer_size == 0) {
+        return "";
+    }
+
+    if (value == 0) {
+        if (buffer_size > 1) {
+            buffer[0] = '0';
+            buffer[1] = '\0';
+        } else {
+            buffer[0] = '\0';
+        }
+        return buffer;
+    }
+
+    while (value > 0 && length < sizeof(reversed)) {
+        reversed[length++] = (char)('0' + (value % 10u));
+        value /= 10u;
+    }
+
+    if (length >= buffer_size) {
+        length = buffer_size - 1u;
+    }
+
+    for (i = 0; i < length; ++i) {
+        buffer[i] = reversed[length - 1u - i];
+    }
+    buffer[length] = '\0';
+    return buffer;
+}
 
 static void ai_tensor_from_spec(ai_tensor_t *tensor,
                                 const ai_tensor_spec_t *spec,
@@ -50,6 +86,22 @@ static void ai_validation_halt(void) {
     while (1) {
         os_task_delay(1000);
     }
+}
+
+static os_size_t stats_delta(os_size_t value, os_size_t baseline) {
+    return value >= baseline ? value - baseline : 0u;
+}
+
+static void print_heap_peak(const char *phase, const os_heap_stats_t *baseline) {
+    os_heap_stats_t stats = os_heap_stats_get();
+
+    printf(
+        "AI_VALIDATION_MODEL_PEAK: phase=%s heap_current_bytes=%u heap_peak_bytes=%u heap_alloc_count=%u heap_free_count=%u\n",
+        phase,
+        (unsigned)stats.current_used_bytes,
+        (unsigned)stats_delta(stats.peak_used_bytes, baseline->current_used_bytes),
+        (unsigned)stats_delta(stats.allocation_count, baseline->allocation_count),
+        (unsigned)stats_delta(stats.free_count, baseline->free_count));
 }
 
 static void validation_timer_cb(void *arg) {
@@ -87,6 +139,9 @@ static void ai_validation_task(void *arg) {
     size_t sample_count;
     size_t sample_index;
     uint32_t failure_count = 0;
+    char latency_cycles_text[21];
+    char latency_instructions_text[21];
+    os_heap_stats_t baseline;
     int ret;
 
     (void)arg;
@@ -102,11 +157,14 @@ static void ai_validation_task(void *arg) {
         ai_validation_halt();
     }
 
+    baseline = os_heap_stats_get();
+    os_heap_stats_reset_peak();
     ret = ai_runtime_init();
     if (ret != 0) {
         printf("AI_VALIDATION_FAIL: runtime init failed (%d)\n", ret);
         ai_validation_halt();
     }
+    print_heap_peak("init", &baseline);
 
     validation_timer_callbacks = 0;
     validation_timer_last_tick = 0;
@@ -154,6 +212,8 @@ static void ai_validation_task(void *arg) {
         ai_tensor_from_spec(&output_tensor, &output_spec, output.tensor_0,
                             sizeof(output.tensor_0));
 
+        baseline = os_heap_stats_get();
+        os_heap_stats_reset_peak();
         ret = ai_infer_sync(handle, &input_tensor, 1u, &output_tensor, 1u, 0u);
         if (ret != 0) {
             printf("AI_VALIDATION_FAIL: sample=%s inference failed (%d)\n",
@@ -161,6 +221,7 @@ static void ai_validation_task(void *arg) {
                    ret);
             ai_validation_halt();
         }
+        print_heap_peak("invoke", &baseline);
 
         if (ai_model_get_perf_stats(handle, &stats) != 0) {
             printf("AI_VALIDATION_FAIL: sample=%s perf stats unavailable\n", sample->id);
@@ -169,7 +230,7 @@ static void ai_validation_task(void *arg) {
 
         validation_status = mnist_validation_check(sample, &output, &stats, &observation);
         printf(
-            "AI_VALIDATION_METRICS: sample=%s idx=%u label=%u argmax=%u hash=%u top_score_q=%d latency_us=%u total=%u arena_peak=%u\n",
+            "AI_VALIDATION_METRICS: sample=%s idx=%u label=%u argmax=%u hash=%u top_score_q=%d latency_us=%u latency_cycles=%s latency_instructions=%s total=%u arena_peak=%u\n",
             sample->id,
             sample->dataset_index,
             sample->label,
@@ -177,6 +238,12 @@ static void ai_validation_task(void *arg) {
             observation.hash,
             observation.top_score_q,
             observation.latency_us,
+            u64_to_dec(observation.latency_cycles,
+                       latency_cycles_text,
+                       sizeof(latency_cycles_text)),
+            u64_to_dec(observation.latency_instructions,
+                       latency_instructions_text,
+                       sizeof(latency_instructions_text)),
             observation.total_inferences,
             observation.arena_peak);
 

@@ -38,9 +38,27 @@ This is the normative supported RV32 gate. It runs:
 - `report-footprint`
 - `report-ai-footprint`
 - `validate-mnist-runtime`
+- `validate-mnist-quant-runtime`
 
 The runtime validation runs QEMU and expects the committed five-sample MNIST
 batch to classify correctly.
+
+The AI validation metrics expose `latency_us`, `latency_cycles`, and
+`latency_instructions`. The MNIST QEMU runners use
+`-icount shift=0,align=off,sleep=off` so counters advance from guest execution
+instead of host wall-clock speed. `latency_us` is still CLINT `mtime` based
+simulator time, not target-board inference time. Use `latency_instructions` for
+simulator-side relative comparison, and treat
+`latency_cycles / OS_CFG_CPU_FREQ_HZ` as a rough target-time estimate.
+
+The separated quantized MNIST lane can be run explicitly:
+
+```bash
+pixi run -e rv32 validate-mnist-quant-runtime
+```
+
+It runs QEMU against `mnist_quant_validation` and checks the ST MNISTv1 INT8
+digit-7 sample without changing the FP32 baseline target.
 
 ### Supported BE-U1000 Firmware Lane
 
@@ -130,4 +148,3 @@ evidence is the purpose of the change.
    the `AI_VALIDATION_METRICS` labels/argmax values.
 4. If BE-U1000 Renode validation fails, inspect `logs/be_u1000_boot_sim.log` and
    the checker output from `scripts/be_u1000/check_boot_log.py`.
-

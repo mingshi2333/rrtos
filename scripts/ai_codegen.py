@@ -16,9 +16,16 @@ TOOLCHECK_CACHE = {}
 def run_command(cmd, cwd=None, env=None):
     """Runs a shell command and raises exception on failure."""
     print(f"Running: {' '.join(cmd)}")
-    result = subprocess.run(
-        cmd, cwd=cwd, env=env, check=True, capture_output=True, text=True
-    )
+    try:
+        result = subprocess.run(
+            cmd, cwd=cwd, env=env, check=True, capture_output=True, text=True
+        )
+    except subprocess.CalledProcessError as exc:
+        if exc.stdout:
+            print(exc.stdout, end="")
+        if exc.stderr:
+            print(exc.stderr, end="", file=sys.stderr)
+        raise
     return result.stdout
 
 
@@ -70,30 +77,74 @@ def candidate_toolchain_roots(config, preferred_env_name=None):
     return candidates
 
 
+def compiler_override_root(config):
+    toolchain_cfg = config.get("toolchain", {})
+    compiler_root_env = toolchain_cfg.get("compiler_root_env")
+    if not compiler_root_env:
+        return None
+    root_value = os.environ.get(compiler_root_env, "")
+    if not root_value:
+        return None
+    return Path(root_value).expanduser()
+
+
+def resolve_tool_from_root(root, tool_name):
+    candidate = root / tool_name
+    if candidate.exists() and tool_is_usable(candidate):
+        return str(candidate)
+    return None
+
+
 def resolve_iree_tools(config, required_tools, preferred_env_name=None):
     resolved = {}
+    local_compiler_root = compiler_override_root(config)
+    if local_compiler_root:
+        missing_local_tools = []
+        for tool_name in required_tools:
+            if tool_name not in ("iree-compile", "iree-opt"):
+                continue
+            resolved_tool = resolve_tool_from_root(local_compiler_root, tool_name)
+            if resolved_tool:
+                resolved[tool_name] = resolved_tool
+            else:
+                missing_local_tools.append(str(local_compiler_root / tool_name))
+        if missing_local_tools:
+            print(
+                "Error: Missing usable local IREE compiler tools: "
+                + ", ".join(missing_local_tools)
+            )
+            sys.exit(1)
+
+    remaining_tools = [
+        tool_name for tool_name in required_tools if tool_name not in resolved
+    ]
+    if not remaining_tools:
+        return resolved
 
     for root in candidate_toolchain_roots(config, preferred_env_name):
+        root_resolved = {}
         missing = []
-        for tool_name in required_tools:
-            candidate = root / tool_name
-            if not candidate.exists() or not tool_is_usable(candidate):
+        for tool_name in remaining_tools:
+            resolved_tool = resolve_tool_from_root(root, tool_name)
+            if not resolved_tool:
                 missing.append(tool_name)
             else:
-                resolved[tool_name] = str(candidate)
+                root_resolved[tool_name] = resolved_tool
         if not missing:
+            resolved.update(root_resolved)
             return resolved
 
     path_resolved = {}
     missing = []
-    for tool_name in required_tools:
+    for tool_name in remaining_tools:
         candidate = shutil.which(tool_name)
         if not candidate or not tool_is_usable(candidate):
             missing.append(tool_name)
         else:
             path_resolved[tool_name] = candidate
     if not missing:
-        return path_resolved
+        resolved.update(path_resolved)
+        return resolved
 
     if missing:
         print("Error: Missing usable IREE toolchain components: " + ", ".join(missing))
@@ -151,6 +202,7 @@ def parse_mlir_info(mlir_text):
             type_map = {
                 "f32": {"c": "float", "dtype": "AI_DTYPE_FP32"},
                 "ui8": {"c": "uint8_t", "dtype": "AI_DTYPE_UINT8"},
+                "i8": {"c": "int8_t", "dtype": "AI_DTYPE_INT8"},
                 "si8": {"c": "int8_t", "dtype": "AI_DTYPE_INT8"},
                 "i16": {"c": "int16_t", "dtype": "AI_DTYPE_INT16"},
                 "i32": {"c": "int32_t", "dtype": "AI_DTYPE_INT32"},
@@ -174,8 +226,30 @@ def parse_mlir_info(mlir_text):
     }
 
 
-def compile_model(config, config_path, model, defaults, output_dir):
+def collect_extra_iree_compile_flags(defaults, model):
+    flags = []
+    for source in (defaults, model):
+        value = source.get("extra_iree_compile_flags", [])
+        if value is None:
+            continue
+        if isinstance(value, str):
+            flags.append(value)
+        else:
+            flags.extend(str(flag) for flag in value)
+    return flags
+
+
+def compile_model(
+    config,
+    config_path,
+    model,
+    defaults,
+    output_dir,
+    dump_compile_phases_to=None,
+    dump_executable_intermediates_to=None,
+):
     name = model["name"]
+    backend = defaults.get("iree_backend", "llvmcpu_static")
     model_path = resolve_model_path(config, model, config_path)
     source_suffix = model_path.suffix.lower()
     required_tools = ["iree-compile"]
@@ -258,52 +332,101 @@ def compile_model(config, config_path, model, defaults, output_dir):
         output_obj = f"{name}.o"
 
     cpu_features = defaults.get("cpu_features", "+m,+a,+f,+d,+zicsr")
+    extra_iree_compile_flags = collect_extra_iree_compile_flags(defaults, model)
 
-    compile_cmd = [
-        iree_tools["iree-compile"],
-        "--iree-hal-target-device=local",
-        "--iree-hal-local-target-device-backends=llvm-cpu",
-        f"--iree-llvmcpu-target-triple={target_triple}",
-        f"--iree-llvmcpu-target-cpu-features={cpu_features}",
-        f"--iree-llvmcpu-target-abi={target_abi}",
-        "--output-format=vm-c",
-        f"--iree-vm-target-index-bits={vm_index_bits}",
-        "--iree-llvmcpu-link-embedded=false",
-        "--iree-llvmcpu-link-static",
-        f"--iree-llvmcpu-static-library-output-path={output_dir}/{output_obj}",
-        "--iree-llvmcpu-loop-unrolling=false",
-    ]
+    if backend == "llvmcpu_static":
+        compile_cmd = [
+            iree_tools["iree-compile"],
+            "--iree-hal-target-device=local",
+            "--iree-hal-local-target-device-backends=llvm-cpu",
+            f"--iree-llvmcpu-target-triple={target_triple}",
+            f"--iree-llvmcpu-target-cpu-features={cpu_features}",
+            f"--iree-llvmcpu-target-abi={target_abi}",
+            "--output-format=vm-c",
+            f"--iree-vm-target-index-bits={vm_index_bits}",
+            "--iree-llvmcpu-link-embedded=false",
+            "--iree-llvmcpu-link-static",
+            f"--iree-llvmcpu-static-library-output-path={output_dir}/{output_obj}",
+            "--iree-llvmcpu-loop-unrolling=false",
+        ]
 
-    if defaults.get("enable_llvmcpu_microkernels", True):
-        compile_cmd.append("--iree-llvmcpu-enable-ukernels=all")
+        if defaults.get("enable_llvmcpu_microkernels", True):
+            compile_cmd.append("--iree-llvmcpu-enable-ukernels=all")
 
-    if defaults.get("enable_data_tiling", True):
-        compile_cmd.append("--iree-opt-data-tiling")
+        if defaults.get("enable_data_tiling", True):
+            compile_cmd.append("--iree-opt-data-tiling")
 
-    if defaults.get("enable_stream_memory_flags", True):
+        if defaults.get("enable_stream_memory_flags", True):
+            compile_cmd.extend(
+                [
+                    "--iree-stream-partitioning-favor=min-peak-memory",
+                    "--iree-stream-resource-alias-mutable-bindings",
+                    "--iree-stream-resource-index-bits=32",
+                    "--iree-stream-resource-memory-model=unified",
+                    "--iree-stream-resource-max-allocation-size=1048576",
+                ]
+            )
+
+        if dump_compile_phases_to:
+            dump_compile_phases_to.mkdir(parents=True, exist_ok=True)
+            compile_cmd.append(
+                f"--dump-compilation-phases-to={dump_compile_phases_to}"
+            )
+
+        if dump_executable_intermediates_to:
+            dump_executable_intermediates_to.mkdir(parents=True, exist_ok=True)
+            compile_cmd.append(
+                "--iree-hal-dump-executable-intermediates-to="
+                f"{dump_executable_intermediates_to}"
+            )
+
+        compile_cmd.extend(extra_iree_compile_flags)
         compile_cmd.extend(
             [
-                "--iree-stream-partitioning-favor=min-peak-memory",
-                "--iree-stream-resource-alias-mutable-bindings",
-                "--iree-stream-resource-index-bits=32",
-                "--iree-stream-resource-memory-model=unified",
-                "--iree-stream-resource-max-allocation-size=1048576",
+                "--iree-flow-inline-constants-max-byte-length=0",
+                "--iree-llvmcpu-debug-symbols=false",
+                str(opt_mlir_path),
+                "-o",
+                f"{output_dir}/{name}.h",
             ]
         )
-
-    compile_cmd.extend(
-        [
+    elif backend == "vmvx_inline":
+        output_obj = None
+        compile_cmd = [
+            iree_tools["iree-compile"],
+            "--iree-execution-model=inline-static",
+            "--iree-hal-target-backends=vmvx-inline",
+            "--output-format=vm-c",
+            f"--iree-vm-target-index-bits={vm_index_bits}",
             "--iree-flow-inline-constants-max-byte-length=0",
-            "--iree-llvmcpu-debug-symbols=false",
-            str(opt_mlir_path),
-            "-o",
-            f"{output_dir}/{name}.h",
         ]
-    )
+        if dump_compile_phases_to:
+            dump_compile_phases_to.mkdir(parents=True, exist_ok=True)
+            compile_cmd.append(f"--dump-compilation-phases-to={dump_compile_phases_to}")
+        if dump_executable_intermediates_to:
+            dump_executable_intermediates_to.mkdir(parents=True, exist_ok=True)
+            compile_cmd.append(
+                "--iree-hal-dump-executable-intermediates-to="
+                f"{dump_executable_intermediates_to}",
+            )
+        compile_cmd.extend(extra_iree_compile_flags)
+        compile_cmd.extend(
+            [
+                str(opt_mlir_path),
+                "-o",
+                f"{output_dir}/{name}.h",
+            ]
+        )
+    else:
+        print(
+            "Error: Unsupported defaults.iree_backend: "
+            f"{backend} (expected llvmcpu_static or vmvx_inline)"
+        )
+        sys.exit(1)
 
     run_command(compile_cmd)
 
-    return output_obj, metadata
+    return output_obj, metadata, backend
 
 
 def get_symbol_name(obj_path, pattern="library_query"):
@@ -325,6 +448,9 @@ def get_symbol_name(obj_path, pattern="library_query"):
 
 
 def generate_code(config, models_metadata, output_dir):
+    has_static_library_models = any(
+        meta["iree_backend"] == "llvmcpu_static" for meta in models_metadata
+    )
 
     # 1. ai_models.h
     h_content = """#ifndef AI_MODELS_GEN_H
@@ -379,8 +505,12 @@ def generate_code(config, models_metadata, output_dir):
     c_content = """#include "ai_models.h"
 #include "ai_model_registry.h"
 #include "iree/vm/api.h"
-#include "iree/hal/local/executable_library.h"
-#include <string.h>
+"""
+
+    if has_static_library_models:
+        c_content += '#include "iree/hal/local/executable_library.h"\n'
+
+    c_content += """#include <string.h>
 
 /* --- Wrappers and Descriptors --- */
 """
@@ -398,7 +528,8 @@ static iree_status_t {name}_create_wrapper(
 }}
 """
         symbol = meta["symbol"]
-        c_content += f"""
+        if meta["iree_backend"] == "llvmcpu_static":
+            c_content += f"""
 extern const iree_hal_executable_library_header_t** {symbol}(
     iree_hal_executable_library_version_t max_version,
     const iree_hal_executable_environment_v0_t* environment);
@@ -415,7 +546,12 @@ extern const iree_hal_executable_library_header_t** {symbol}(
         c_content += f'    .name = "{name}",\n'
         c_content += f'    .entry_function = "{metadata["entry_function"]}",\n'
         c_content += f"    .module_create_fn = {name}_create_wrapper,\n"
-        c_content += f"    .library_query_fn = (const void*){symbol},\n"
+        if meta["iree_backend"] == "llvmcpu_static":
+            c_content += f"    .library_query_fn = (const void*){symbol},\n"
+            c_content += "    .hal_backend = AI_IREE_HAL_BACKEND_STATIC_LIBRARY,\n"
+        else:
+            c_content += "    .library_query_fn = NULL,\n"
+            c_content += "    .hal_backend = AI_IREE_HAL_BACKEND_INLINE,\n"
         c_content += "    .inputs = {\n"
         for inp in metadata["inputs"]:
             dims = ", ".join(map(str, inp["shape"]))
@@ -480,29 +616,31 @@ int ai_{name}_run(const ai_{name}_input_t *input, ai_{name}_output_t *output) {{
 
 
 def generate_cmake(config, models_metadata, output_dir):
+    model_library_name = config.get("model_library_name", "rv_aios_models")
     cmake_content = f"""# Auto-generated CMakeLists.txt for AI Models
 # This library encapsulates the generated C registry and compiled model object files.
 
-add_library(rv_aios_models STATIC
+add_library({model_library_name} STATIC
     ai_models.c
 """
 
     for meta in models_metadata:
-        cmake_content += f"    {meta['obj_file']}\n"
+        if meta["obj_file"]:
+            cmake_content += f"    {meta['obj_file']}\n"
 
     cmake_content += ")\n\n"
 
-    cmake_content += """target_include_directories(rv_aios_models PUBLIC ${CMAKE_CURRENT_LIST_DIR})
+    cmake_content += f"""target_include_directories({model_library_name} PUBLIC ${{CMAKE_CURRENT_LIST_DIR}})
 
 # Link against the core AI runtime (rv_aios_ai) to inherit IREE headers and configuration
-target_link_libraries(rv_aios_models PUBLIC rv_aios_ai)
+target_link_libraries({model_library_name} PUBLIC rv_aios_ai)
 
 # Apply compilation flags required for IREE on bare-metal
-target_compile_options(rv_aios_models PRIVATE
+target_compile_options({model_library_name} PRIVATE
     -Wno-type-limits -Wno-unused-variable -Wno-unused-function
     -Wno-unused-parameter -Wno-cast-function-type
     -Wno-implicit-function-declaration -Wno-sign-compare -Wno-pointer-sign
-    -include${CMAKE_SOURCE_DIR}/ai/iree_bare_metal_config.h
+    -include${{CMAKE_SOURCE_DIR}}/ai/iree_bare_metal_config.h
 )
 """
 
@@ -512,6 +650,7 @@ target_compile_options(rv_aios_models PRIVATE
 
 def generate_app_scaffolding(config, app_dir):
     app_name = config.get("app_name", "ai_app")
+    model_library_name = config.get("model_library_name", "rv_aios_models")
     src_dir = app_dir / "src"
     src_dir.mkdir(parents=True, exist_ok=True)
 
@@ -627,7 +766,7 @@ add_subdirectory(generated)
 add_executable({app_name} src/main.c src/hooks.c)
 
 target_link_libraries({app_name}
-    rv_aios_models
+    {model_library_name}
     rv_aios_libc_shim
     rv_aios_drivers
     rv_aios_kernel
@@ -668,6 +807,14 @@ def main():
         default=str(PROJECT_ROOT / "ai_models.yaml"),
         help="Path to AI model YAML configuration.",
     )
+    parser.add_argument(
+        "--dump-compile-phases-to",
+        help="Optional directory for iree-compile --dump-compilation-phases-to output.",
+    )
+    parser.add_argument(
+        "--dump-executable-intermediates-to",
+        help="Optional directory for IREE HAL executable intermediate dumps.",
+    )
     args = parser.parse_args()
 
     config_path = Path(args.config).expanduser()
@@ -682,9 +829,15 @@ def main():
         config = yaml.safe_load(f)
 
     app_name = config.get("app_name")
+    explicit_output_dir = config.get("output_dir")
     if app_name:
         app_dir = PROJECT_ROOT / "apps" / app_name
-        output_dir = app_dir / "generated"
+        if explicit_output_dir:
+            output_dir = Path(explicit_output_dir).expanduser()
+            if not output_dir.is_absolute():
+                output_dir = PROJECT_ROOT / output_dir
+        else:
+            output_dir = app_dir / "generated"
     else:
         output_dir = PROJECT_ROOT / config.get("output_dir", "generated")
         app_dir = None
@@ -692,27 +845,49 @@ def main():
     output_dir.mkdir(parents=True, exist_ok=True)
 
     models_metadata = []
+    multi_model_config = len(config["models"]) > 1
+
+    def model_dump_dir(value, model_name):
+        if not value:
+            return None
+        path = Path(value).expanduser()
+        if not path.is_absolute():
+            path = PROJECT_ROOT / path
+        return path / model_name if multi_model_config else path
 
     for model in config["models"]:
         # Compile
-        obj_file, metadata = compile_model(
-            config, config_path, model, config["defaults"], output_dir
+        obj_file, metadata, backend = compile_model(
+            config,
+            config_path,
+            model,
+            config["defaults"],
+            output_dir,
+            dump_compile_phases_to=model_dump_dir(
+                args.dump_compile_phases_to, model["name"]
+            ),
+            dump_executable_intermediates_to=model_dump_dir(
+                args.dump_executable_intermediates_to, model["name"]
+            ),
         )
 
         # Find Symbol
-        full_obj_path = output_dir / obj_file
-        symbol = get_symbol_name(full_obj_path)
-        if not symbol:
-            print(f"Error: Could not find library_query symbol in {obj_file}")
-            sys.exit(1)
+        symbol = None
+        if backend == "llvmcpu_static":
+            full_obj_path = output_dir / obj_file
+            symbol = get_symbol_name(full_obj_path)
+            if not symbol:
+                print(f"Error: Could not find library_query symbol in {obj_file}")
+                sys.exit(1)
 
-        print(f"  -> Symbol found: {symbol}")
+            print(f"  -> Symbol found: {symbol}")
 
         models_metadata.append(
             {
                 "name": model["name"],
                 "symbol": symbol,
                 "obj_file": obj_file,
+                "iree_backend": backend,
                 "metadata": metadata,
             }
         )

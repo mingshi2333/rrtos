@@ -1,0 +1,158 @@
+{
+  "allocation_count": 17,
+  "arena_bytes": 539968,
+  "arena_kib": 527.312,
+  "command_count": 56,
+  "dispatch_count": 49,
+  "effective_arena_source": "peak_transient",
+  "max_arena_allocation_bytes": 163840,
+  "max_arena_allocation_kib": 160.0,
+  "packed_arena_bytes": 404672,
+  "packed_arena_kib": 395.188,
+  "packed_vs_effective_delta_bytes": 135296,
+  "packed_vs_effective_delta_kib": 132.125,
+  "peak_transient_bytes": 539968,
+  "peak_transient_kib": 527.312,
+  "placements": {
+    "transient_buffer": {
+      "interval": [
+        3,
+        15
+      ],
+      "offset": 0,
+      "size": 163840,
+      "size_kib": 160.0
+    },
+    "transient_buffer_1": {
+      "interval": [
+        0,
+        11
+      ],
+      "offset": 163840,
+      "size": 106048,
+      "size_kib": 103.562
+    },
+    "transient_buffer_15": {
+      "interval": [
+        22,
+        29
+      ],
+      "offset": 0,
+      "size": 81920,
+      "size_kib": 80.0
+    },
+    "transient_buffer_17": {
+      "interval": [
+        15,
+        25
+      ],
+      "offset": 294912,
+      "size": 109760,
+      "size_kib": 107.188
+    },
+    "transient_buffer_26": {
+      "interval": [
+        27,
+        30
+      ],
+      "offset": 81920,
+      "size": 65536,
+      "size_kib": 64.0
+    },
+    "transient_buffer_33": {
+      "interval": [
+        36,
+        43
+      ],
+      "offset": 0,
+      "size": 40960,
+      "size_kib": 40.0
+    },
+    "transient_buffer_35": {
+      "interval": [
+        29,
+        39
+      ],
+      "offset": 147456,
+      "size": 56640,
+      "size_kib": 55.312
+    },
+    "transient_buffer_44": {
+      "interval": [
+        41,
+        44
+      ],
+      "offset": 40960,
+      "size": 32768,
+      "size_kib": 32.0
+    },
+    "transient_buffer_51": {
+      "interval": [
+        46,
+        51
+      ],
+      "offset": 0,
+      "size": 192,
+      "size_kib": 0.188
+    },
+    "transient_buffer_53": {
+      "interval": [
+        43,
+        47
+      ],
+      "offset": 192,
+      "size": 4416,
+      "size_kib": 4.312
+    },
+    "transient_buffer_62": {
+      "interval": [
+        49,
+        52
+      ],
+      "offset": 192,
+      "size": 128,
+      "size_kib": 0.125
+    },
+    "transient_buffer_69": {
+      "interval": [
+        51,
+        55
+      ],
+      "offset": 0,
+      "size": 128,
+      "size_kib": 0.125
+    },
+    "transient_buffer_76": {
+      "interval": [
+        53,
+        56
+      ],
+      "offset": 128,
+      "size": 128,
+      "size_kib": 0.125
+    },
+    "transient_buffer_8": {
+      "interval": [
+        13,
+        16
+      ],
+      "offset": 163840,
+      "size": 131072,
+      "size_kib": 128.0
+    },
+    "transient_buffer_83": {
+      "interval": [
+        55,
+        56
+      ],
+      "offset": 0,
+      "size": 40,
+      "size_kib": 0.039
+    }
+  },
+  "source": "resnet8_32_tfs_int8.11.hal.mlir",
+  "status": "ok",
+  "warnings": [
+    "assumed batch_size=1 for 1 hal.buffer_view.dim value(s)"
+  ]
+}

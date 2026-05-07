@@ -82,6 +82,7 @@ pixi run validate-kernel-semantics
 pixi run validate-support-contract
 pixi run -e rv32 validate-supported-ai
 pixi run -e rv32 validate-mnist-runtime
+pixi run -e rv32 validate-mnist-quant-runtime
 pixi run -e be-u1000 validate-hal-apps
 ```
 
@@ -123,4 +124,3 @@ cmake -B build-be_u1000 \
 - `docs/TESTING.md` for validation lanes.
 - `docs/AI_CANONICAL_PATH.md` for the supported AI contract.
 - `docs/HAL_CONFIGURATION.md` for BE-U1000 HAL feature selection.
-

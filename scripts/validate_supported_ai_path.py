@@ -75,13 +75,13 @@ def main() -> None:
 
     maintained_task_surface = (
         "The maintained AI task surface intentionally stays small: "
-        "`validate-supported-ai`, `validate-mnist-runtime`, `observe-mnist-runtime-renode`, and `compare-mnist-runtime-platforms`."
+        "`validate-supported-ai`, `validate-mnist-runtime`, `validate-mnist-quant-runtime`, `observe-mnist-runtime-renode`, and `compare-mnist-runtime-platforms`."
     )
     if maintained_task_surface not in mnist_readme:
         fail("apps/mnist_app/README.md does not lock the maintained AI task surface")
 
     if (
-        "The maintained pixi AI task surface is `validate-supported-ai`, `validate-mnist-runtime`, `observe-mnist-runtime-renode`, and `compare-mnist-runtime-platforms`; redundant composite aliases should not be reintroduced."
+        "The maintained pixi AI task surface is `validate-supported-ai`, `validate-mnist-runtime`, `validate-mnist-quant-runtime`, `observe-mnist-runtime-renode`, and `compare-mnist-runtime-platforms`; redundant composite aliases should not be reintroduced."
         not in ai_canonical
     ):
         fail(
@@ -91,6 +91,7 @@ def main() -> None:
     required_pixi_markers = [
         'validate-supported-ai = "python scripts/validate_supported_ai_path.py"',
         'validate-mnist-runtime = "python scripts/run_mnist_validation.py --kernel build/apps/mnist_app/mnist_validation --log logs/mnist_validation_qemu.log"',
+        'validate-mnist-quant-runtime = "python scripts/run_mnist_quant_validation.py --kernel build/apps/mnist_app/mnist_quant_validation --log logs/mnist_quant_validation_qemu.log"',
         'observe-mnist-runtime-renode = "python scripts/run_mnist_validation_renode.py --kernel build/apps/mnist_app/mnist_validation --log logs/mnist_validation_renode.log"',
         'compare-mnist-runtime-platforms = "python scripts/compare_mnist_validation_logs.py --qemu-log logs/mnist_validation_qemu.log --renode-log logs/mnist_validation_renode.log"',
     ]
@@ -116,11 +117,27 @@ def main() -> None:
             "apps/mnist_app/generated/ai_models.c is missing the canonical st_mnist_28 model"
         )
 
+    generated_quant_models = (
+        REPO_ROOT / "apps/mnist_app/generated_quant/ai_models.c"
+    ).read_text(encoding="utf-8")
+    if '"st_mnistv1_28_tfs_int8"' not in generated_quant_models:
+        fail(
+            "apps/mnist_app/generated_quant/ai_models.c is missing the quantized st_mnistv1_28_tfs_int8 model"
+        )
+
     root_cmake = (REPO_ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
     if "add_subdirectory(apps/mnist_app)" not in root_cmake:
         fail("supported mnist app is not built in the default non-board path")
     if "RRTOS_BUILD_EXPERIMENTAL_APPS" not in root_cmake:
         fail("experimental app gating is missing from CMakeLists.txt")
+
+    mnist_cmake = (REPO_ROOT / "apps/mnist_app/CMakeLists.txt").read_text(
+        encoding="utf-8"
+    )
+    if "mnist_quant_validation" not in mnist_cmake:
+        fail("apps/mnist_app/CMakeLists.txt is missing mnist_quant_validation")
+    if "rv_aios_mnist_quant_models" not in mnist_cmake:
+        fail("apps/mnist_app/CMakeLists.txt is missing the separated quantized model library")
 
     validation_samples = (
         REPO_ROOT / "apps/mnist_app/src/mnist_validation_samples.h"

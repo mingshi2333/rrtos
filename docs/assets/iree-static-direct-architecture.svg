@@ -1,0 +1,150 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1320" height="760" viewBox="0 0 1320 760" role="img" aria-labelledby="title desc">
+  <title id="title">IREE static direct architecture</title>
+  <desc id="desc">Comparison of the normal IREE static VM path, the current BE-U1000 static direct probe, and the reusable generated static direct design.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#2f3b52"/>
+    </marker>
+    <style>
+      .bg { fill: #f7f9fc; }
+      .panel { fill: #ffffff; stroke: #b8c2d4; stroke-width: 1.5; rx: 12; }
+      .panel-title { font: 700 22px Arial, sans-serif; fill: #172033; }
+      .panel-subtitle { font: 15px Arial, sans-serif; fill: #506078; }
+      .box { fill: #eef4ff; stroke: #6f8fc8; stroke-width: 1.5; rx: 8; }
+      .box-green { fill: #edf8f2; stroke: #5c9b75; stroke-width: 1.5; rx: 8; }
+      .box-red { fill: #fff0f0; stroke: #c47171; stroke-width: 1.5; rx: 8; }
+      .box-gold { fill: #fff8e8; stroke: #c69a42; stroke-width: 1.5; rx: 8; }
+      .box-purple { fill: #f4f0ff; stroke: #8a73c9; stroke-width: 1.5; rx: 8; }
+      .box-title { font: 700 16px Arial, sans-serif; fill: #172033; }
+      .box-text { font: 13px Arial, sans-serif; fill: #3f4c61; }
+      .small { font: 12px Arial, sans-serif; fill: #536176; }
+      .lane-label { font: 700 14px Arial, sans-serif; fill: #2f3b52; }
+      .arrow { stroke: #2f3b52; stroke-width: 2; fill: none; marker-end: url(#arrow); }
+      .arrow-muted { stroke: #7e8ca5; stroke-width: 1.7; fill: none; marker-end: url(#arrow); stroke-dasharray: 5 5; }
+      .cut { stroke: #c74343; stroke-width: 2; fill: none; stroke-dasharray: 8 6; }
+    </style>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1320" height="760"/>
+  <text x="40" y="44" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#172033">IREE Static Direct Architecture</text>
+  <text x="40" y="72" class="panel-subtitle">Normal static VM path vs current BE-U1000 no-VM probe vs reusable generated direct runner</text>
+
+  <rect class="panel" x="40" y="105" width="1240" height="165"/>
+  <text x="65" y="138" class="panel-title">1. Normal IREE static-library runtime path</text>
+  <text x="65" y="160" class="panel-subtitle">Small model object is still driven through IREE VM, HAL module, and static-library loader.</text>
+
+  <rect class="box" x="70" y="185" width="150" height="55"/>
+  <text x="92" y="207" class="box-title">App</text>
+  <text x="92" y="226" class="box-text">ai_infer_sync</text>
+
+  <rect class="box" x="270" y="185" width="165" height="55"/>
+  <text x="292" y="207" class="box-title">Registry</text>
+  <text x="292" y="226" class="box-text">ai_model_registry.c</text>
+
+  <rect class="box-red" x="485" y="185" width="150" height="55"/>
+  <text x="518" y="207" class="box-title">IREE VM</text>
+  <text x="505" y="226" class="box-text">context + invoke</text>
+
+  <rect class="box-red" x="685" y="185" width="155" height="55"/>
+  <text x="720" y="207" class="box-title">HAL module</text>
+  <text x="711" y="226" class="box-text">buffers + allocator</text>
+
+  <rect class="box-red" x="890" y="185" width="165" height="55"/>
+  <text x="917" y="207" class="box-title">Static loader</text>
+  <text x="918" y="226" class="box-text">resolves library</text>
+
+  <rect class="box-green" x="1105" y="185" width="145" height="55"/>
+  <text x="1127" y="207" class="box-title">Native .o</text>
+  <text x="1125" y="226" class="box-text">dispatch exports</text>
+
+  <path class="arrow" d="M220 213 H270"/>
+  <path class="arrow" d="M435 213 H485"/>
+  <path class="arrow" d="M635 213 H685"/>
+  <path class="arrow" d="M840 213 H890"/>
+  <path class="arrow" d="M1055 213 H1105"/>
+
+  <rect class="panel" x="40" y="305" width="1240" height="185"/>
+  <text x="65" y="338" class="panel-title">2. Current BE-U1000 static direct probe</text>
+  <text x="65" y="360" class="panel-subtitle">The probe links the same native object but bypasses registry, VM, HAL module, and loader.</text>
+
+  <rect class="box-green" x="70" y="390" width="185" height="65"/>
+  <text x="92" y="414" class="box-title">Probe app</text>
+  <text x="92" y="433" class="box-text">OS_AI_EN=OFF</text>
+  <text x="92" y="449" class="box-text">main.c</text>
+
+  <rect class="box-green" x="320" y="390" width="185" height="65"/>
+  <text x="342" y="414" class="box-title">Query ABI</text>
+  <text x="342" y="433" class="box-text">linked_library_query</text>
+  <text x="342" y="449" class="box-text">executable_library.h</text>
+
+  <rect class="box-green" x="570" y="390" width="195" height="65"/>
+  <text x="592" y="414" class="box-title">Export table</text>
+  <text x="592" y="433" class="box-text">dispatch 0, 1, 2</text>
+  <text x="592" y="449" class="box-text">attrs validated</text>
+
+  <rect class="box-green" x="830" y="390" width="205" height="65"/>
+  <text x="852" y="414" class="box-title">Direct runner</text>
+  <text x="852" y="433" class="box-text">probe_issue_dispatch</text>
+  <text x="852" y="449" class="box-text">workgroup loop</text>
+
+  <rect class="box-gold" x="1095" y="390" width="150" height="65"/>
+  <text x="1117" y="414" class="box-title">UART gates</text>
+  <text x="1117" y="433" class="box-text">PROBE_PASS</text>
+  <text x="1117" y="449" class="box-text">INFER_PASS</text>
+
+  <path class="arrow" d="M255 423 H320"/>
+  <path class="arrow" d="M505 423 H570"/>
+  <path class="arrow" d="M765 423 H830"/>
+  <path class="arrow" d="M1035 423 H1095"/>
+
+  <path class="cut" d="M292 373 C430 305, 765 305, 915 373"/>
+  <text x="425" y="326" class="lane-label">Bypassed: registry, IREE VM, HAL module, static loader</text>
+
+  <rect class="panel" x="40" y="525" width="1240" height="185"/>
+  <text x="65" y="558" class="panel-title">3. Reusable generated static direct design</text>
+  <text x="65" y="580" class="panel-subtitle">Keep a shared direct runner; generate only model metadata, weights, and wrapper glue.</text>
+
+  <rect class="box-purple" x="70" y="610" width="180" height="65"/>
+  <text x="92" y="634" class="box-title">ai_codegen.py</text>
+  <text x="92" y="653" class="box-text">static_direct mode</text>
+  <text x="92" y="669" class="box-text">model-specific</text>
+
+  <rect class="box-gold" x="315" y="600" width="170" height="85"/>
+  <text x="337" y="624" class="box-title">Descriptor</text>
+  <text x="337" y="643" class="box-text">ordinals</text>
+  <text x="337" y="659" class="box-text">constants</text>
+  <text x="337" y="675" class="box-text">binding roles</text>
+
+  <rect class="box-gold" x="525" y="600" width="170" height="85"/>
+  <text x="547" y="624" class="box-title">Weights</text>
+  <text x="547" y="643" class="box-text">const span</text>
+  <text x="547" y="659" class="box-text">alignment</text>
+  <text x="547" y="675" class="box-text">no VM-C include</text>
+
+  <rect class="box-green" x="735" y="600" width="195" height="85"/>
+  <text x="757" y="624" class="box-title">Shared runner</text>
+  <text x="757" y="643" class="box-text">query + validate</text>
+  <text x="757" y="659" class="box-text">dispatch state</text>
+  <text x="757" y="675" class="box-text">workgroup loop</text>
+
+  <rect class="box-green" x="970" y="600" width="145" height="85"/>
+  <text x="992" y="624" class="box-title">Board app</text>
+  <text x="992" y="643" class="box-text">input/output</text>
+  <text x="992" y="659" class="box-text">scratch</text>
+  <text x="992" y="675" class="box-text">run()</text>
+
+  <rect class="box-red" x="1160" y="600" width="90" height="85"/>
+  <text x="1182" y="624" class="box-title">Gate</text>
+  <text x="1179" y="643" class="box-text">no VM</text>
+  <text x="1179" y="659" class="box-text">map</text>
+  <text x="1179" y="675" class="box-text">Renode</text>
+
+  <path class="arrow" d="M250 642 H315"/>
+  <path class="arrow-muted" d="M250 642 C305 715, 470 715, 525 675"/>
+  <path class="arrow" d="M485 642 H735"/>
+  <path class="arrow-muted" d="M695 642 H735"/>
+  <path class="arrow" d="M930 642 H970"/>
+  <path class="arrow" d="M1115 642 H1160"/>
+
+  <text x="40" y="738" class="small">Generated from the repository design on 2026-05-06. SVG is intentionally hand-authored so it can be viewed without Mermaid tooling.</text>
+</svg>

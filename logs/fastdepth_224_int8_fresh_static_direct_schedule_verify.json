@@ -1,0 +1,39 @@
+{
+  "allocation_count": 4,
+  "arena_bytes": 5570432,
+  "arena_kib": 5439.875,
+  "command_count": 101,
+  "dispatch_count": 82,
+  "effective_arena_source": "packed_liveness",
+  "max_arena_allocation_bytes": 5520256,
+  "max_arena_allocation_kib": 5390.875,
+  "packed_arena_bytes": 5570432,
+  "packed_arena_kib": 5439.875,
+  "packed_vs_effective_delta_bytes": 0,
+  "packed_vs_effective_delta_kib": 0.0,
+  "peak_transient_bytes": 5570432,
+  "peak_transient_kib": 5439.875,
+  "placements": {
+    "transient_buffer": {
+      "interval": [
+        100,
+        101
+      ],
+      "offset": 0,
+      "size": 50176,
+      "size_kib": 49.0
+    },
+    "transient_buffer_1": {
+      "interval": [
+        0,
+        101
+      ],
+      "offset": 50176,
+      "size": 5520256,
+      "size_kib": 5390.875
+    }
+  },
+  "source": "fastdepth_224_int8.11.hal.mlir",
+  "status": "ok",
+  "warnings": []
+}

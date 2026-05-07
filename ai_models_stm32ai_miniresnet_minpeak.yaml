@@ -1,0 +1,21 @@
+project_name: "rrtos_stm32ai_miniresnet_minpeak"
+output_dir: "apps/mnist_app/generated_miniresnet_minpeak"
+model_library_name: "rv_aios_miniresnet_minpeak_models"
+
+defaults:
+  target_arch: "rv32"
+  target_abi: "ilp32f"
+  cpu_features: "+m,+a,+f,+zicsr"
+  enable_llvmcpu_microkernels: false
+  enable_data_tiling: false
+  enable_stream_memory_flags: true
+  optimization: "size"
+  memory_strategy: "static"
+
+toolchain:
+  root_env: "IREE_TOOLCHAIN_ROOT"
+  tflite_toolchain_env: "iree-toolchain310"
+
+models:
+  - name: "miniresnetv1_s1_64x50_tl_int8"
+    file: "models/stm32ai_zoo/miniresnetv1_s1_64x50_tl_int8.tflite"

@@ -24,7 +24,7 @@
 #define BE_U1000_NUM_CORES          3         /* Core0, Core1 (main), Core2 (monitor) */
 #define BE_U1000_NUM_MAIN_CORES     2         /* Core0 + Core1 lane available to RTOS scheduling */
 #define BE_U1000_TIMER_FREQ         1000000UL /* 1 MHz mtime clock (F_TIMER_PULSE) */
-#define BE_U1000_CPU_FREQ           200000000UL /* 200 MHz core clock (typical) */
+#define BE_U1000_CPU_FREQ           250000000UL /* 250 MHz core clock */
 
 /* ============================================================================
  * Interrupt Controller — CLIC (NOT PLIC)

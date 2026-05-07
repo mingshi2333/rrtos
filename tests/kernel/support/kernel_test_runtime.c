@@ -15,8 +15,7 @@ static uint64_t g_fake_mtime;
 static uint64_t g_fake_mtimecmp;
 static uint64_t g_cycle_fallback;
 uint8_t os_test_heap[64 * 1024];
-uint8_t *_heap_start = os_test_heap;
-uint8_t *_heap_end = os_test_heap + sizeof(os_test_heap);
+uint8_t *os_test_heap_end = os_test_heap + sizeof(os_test_heap);
 
 void os_context_switch(void **from_sp, void **to_sp) {
     (void)from_sp;

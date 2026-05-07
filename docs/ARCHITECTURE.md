@@ -155,6 +155,12 @@ The BE-U1000 AI micro apps are experimental board bring-up lanes. The C lane is
 objects and should be linked with `BE_U1000_MEMORY_MODEL=flash`, because the
 IREE-backed runtime does not fit the TCM-only text layout.
 
+`apps/be_u1000_ai_static_direct_probe` is a separate no-VM experiment. It links
+the generated IREE static object directly, keeps `OS_AI_EN=OFF`, and invokes the
+IREE executable-library dispatch table without `ai_model_registry.c`, IREE VM,
+HAL module, or the static-library loader. The design notes and current size
+comparison are in `docs/AI_IREE_STATIC_DIRECT_PROBE.md`.
+
 ## Validation Architecture
 
 The blocking firmware workflow is `.github/workflows/firmware-supported-matrix.yml`.

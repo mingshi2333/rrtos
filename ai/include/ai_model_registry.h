@@ -29,6 +29,11 @@ typedef iree_status_t (*ai_module_create_fn_t)(
     iree_vm_module_t** out_module
 );
 
+typedef enum {
+    AI_IREE_HAL_BACKEND_STATIC_LIBRARY = 0,
+    AI_IREE_HAL_BACKEND_INLINE = 1,
+} ai_iree_hal_backend_t;
+
 /**
  * @brief EmitC model descriptor (defined at compile time)
  */
@@ -38,6 +43,7 @@ typedef struct {
     const char *entry_function;             ///< Exported entry function name
     ai_module_create_fn_t module_create_fn; ///< EmitC module creation function
     const void *library_query_fn;           ///< Static library query function
+    ai_iree_hal_backend_t hal_backend;      ///< HAL ABI required by the generated module
     
     ai_tensor_spec_t inputs[4];             ///< Input specifications (up to 4)
     ai_tensor_spec_t outputs[4];            ///< Output specifications (up to 4)
@@ -52,12 +58,41 @@ typedef struct {
  * @brief Performance statistics
  */
 typedef struct {
-    uint64_t latency_min_us;                ///< Minimum latency
-    uint64_t latency_max_us;                ///< Maximum latency
-    uint64_t latency_last_us;               ///< Last latency
+    uint64_t latency_min_us;                ///< Minimum CLINT/mtime latency
+    uint64_t latency_max_us;                ///< Maximum CLINT/mtime latency
+    uint64_t latency_last_us;               ///< Last CLINT/mtime latency
+    uint64_t latency_min_cycles;            ///< Minimum CPU cycle latency
+    uint64_t latency_max_cycles;            ///< Maximum CPU cycle latency
+    uint64_t latency_last_cycles;           ///< Last CPU cycle latency
+    uint64_t latency_min_instructions;      ///< Minimum retired instruction count
+    uint64_t latency_max_instructions;      ///< Maximum retired instruction count
+    uint64_t latency_last_instructions;     ///< Last retired instruction count
     uint64_t total_inferences;              ///< Total inferences
     size_t arena_peak_bytes;                ///< Arena peak usage
 } ai_perf_stats_t;
+
+enum {
+    AI_HAL_ALLOCATION_TRACE_TOP_CAPACITY = 8,
+};
+
+typedef struct {
+    uint64_t allocation_size;
+    uint32_t requested_memory_type;
+    uint32_t requested_usage;
+    uint32_t requested_access;
+    uint32_t compat_memory_type;
+    uint32_t compat_usage;
+    uint32_t compat_access;
+    uint64_t min_alignment;
+    uintptr_t buffer_ptr;
+    uint32_t sequence;
+} ai_hal_allocation_trace_record_t;
+
+typedef struct {
+    ai_hal_allocation_trace_record_t largest_allocations[AI_HAL_ALLOCATION_TRACE_TOP_CAPACITY];
+    ai_hal_allocation_trace_record_t peak_event;
+    uint32_t sequence;
+} ai_hal_allocation_trace_t;
 
 /*===========================================================================*/
 /*                        Model registration API                                        */
@@ -91,6 +126,9 @@ int ai_model_get_perf_stats(ai_model_handle_t handle, ai_perf_stats_t *stats);
  * @param handle Model handle
  */
 void ai_model_reset_perf_stats(ai_model_handle_t handle);
+
+void ai_hal_allocation_trace_reset(void);
+ai_hal_allocation_trace_t ai_hal_allocation_trace_get(void);
 
 /**
  * @brief List all registered models

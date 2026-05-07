@@ -120,6 +120,20 @@ OS_INLINE uint64_t os_cycle_get(void) {
 #endif
 }
 
+OS_INLINE uint64_t os_instret_get(void) {
+#if OS_CFG_ARCH_BITS == 64
+    return csr_read(minstret);
+#else
+    uint32_t hi, lo, hi2;
+    do {
+        hi = csr_read(minstreth);
+        lo = csr_read(minstret);
+        hi2 = csr_read(minstreth);
+    } while (hi != hi2);
+    return ((uint64_t)hi << 32) | lo;
+#endif
+}
+
 OS_INLINE void os_wfi(void) {
     __asm__ volatile("wfi");
 }

@@ -132,6 +132,7 @@ pwma_timebase
 usb_runtime
 ai_micro_demo
 ai_micro_demo_cpp
+ai_static_direct_probe
 etl_smoke
 ```
 
@@ -161,6 +162,19 @@ The C++ app includes `ai/include/ai_model_registry_c_api.h`, a narrow C ABI that
 exposes model lookup, tensor metadata, and synchronous inference without pulling
 IREE headers into freestanding C++ translation units. The full registry header
 remains `ai/include/ai_model_registry.h` for runtime/model descriptor code.
+
+`ai_static_direct_probe` is an experimental C app that links the generated IREE
+static object directly and keeps `OS_AI_EN=OFF`. It is not a supported generic
+AI runtime path; it exists to prove the no-VM fixed-shape dispatch design:
+
+```bash
+pixi run -e be-u1000 configure-ai-static-direct
+pixi run -e be-u1000 build-ai-static-direct
+pixi run -e be-u1000 validate-ai-static-direct
+```
+
+See `docs/AI_IREE_STATIC_DIRECT_PROBE.md` for the architecture and current
+footprint comparison.
 
 ## RISC-V Toolchain And Libgcc
 

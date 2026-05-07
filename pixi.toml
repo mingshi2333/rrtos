@@ -28,6 +28,7 @@ pyyaml = ">=6.0.3,<7"
 init-iree = "git submodule update --init --depth=1 third_party/iree && git -C third_party/iree submodule update --init --depth=1 third_party/benchmark third_party/cpuinfo third_party/flatcc third_party/googletest"
 
 clean = "rm -rf build"
+build-local-iree-compiler = "bash scripts/build_local_iree_compiler.sh"
 
 # === Model Conversion Tasks ===
 # Usage: pixi run convert-model <tflite_path> <output_name>
@@ -56,10 +57,13 @@ validate-kernel-health-policy = "python scripts/validate_kernel_health_policy.py
 measure-kernel-microbench = "python scripts/measure_kernel_microbench.py"
 measure-kernel-baseline = "python scripts/validate_kernel_semantics.py && pixi run -e rv32 validate-supported-rv32 && python scripts/validate_preemption_integration.py && pixi run -e be-u1000 validate-supported && python scripts/measure_kernel_baseline.py"
 validate-mnist-runtime = "python scripts/run_mnist_validation.py --kernel build/apps/mnist_app/mnist_validation --log logs/mnist_validation_qemu.log"
+build-mnist-static-direct = "cmake --build build --target mnist_static_direct_validation"
+validate-mnist-static-direct-runtime = "python scripts/run_mnist_static_direct_validation.py --kernel build/apps/mnist_app/mnist_static_direct_validation --log logs/mnist_static_direct_validation_qemu.log"
+validate-mnist-quant-runtime = "python scripts/run_mnist_quant_validation.py --kernel build/apps/mnist_app/mnist_quant_validation --log logs/mnist_quant_validation_qemu.log"
 observe-mnist-runtime-renode = "python scripts/run_mnist_validation_renode.py --kernel build/apps/mnist_app/mnist_validation --log logs/mnist_validation_renode.log"
 compare-mnist-runtime-platforms = "python scripts/compare_mnist_validation_logs.py --qemu-log logs/mnist_validation_qemu.log --renode-log logs/mnist_validation_renode.log"
 # Supported rv32 gate; Renode comparison remains observation-only and is invoked explicitly.
-validate-supported-rv32 = { depends-on = ["validate-config-authority", "validate-smp-config-matrix", "validate-bsp-seam", "validate-support-contract", "validate-supported-ai", "configure", "build", "report-footprint", "report-ai-footprint", "validate-mnist-runtime"] }
+validate-supported-rv32 = { depends-on = ["validate-config-authority", "validate-smp-config-matrix", "validate-bsp-seam", "validate-support-contract", "validate-supported-ai", "configure", "build", "report-footprint", "report-ai-footprint", "validate-mnist-runtime", "validate-mnist-quant-runtime"] }
 
 [feature.rv32.dependencies]
 picolibc-rv32 = { path = "packages/picolibc-rv32" }
@@ -69,7 +73,16 @@ compiler-rt = ">=21.1.8,<22"
 [feature.rv32.tasks]
 configure = "cmake -B build -DCMAKE_TOOLCHAIN_FILE=cmake/riscv32-pixi.cmake -DARCH_BITS=32 -DARCH=riscv -DRISCV_MABI=ilp32f -DRISCV_ABI=ilp32d -DCMAKE_BUILD_TYPE=MinSizeRel -DOS_SMP_EN=OFF -DOS_AI_EN=ON"
 configure-flash = "cmake -B build -DCMAKE_TOOLCHAIN_FILE=cmake/riscv32-pixi.cmake -DARCH_BITS=32 -DARCH=riscv -DRISCV_MABI=ilp32f -DRISCV_ABI=ilp32d -DCMAKE_BUILD_TYPE=MinSizeRel -DLINKER_SCRIPT=arch/riscv/link_flash.ld -DOS_SMP_EN=OFF -DOS_AI_EN=ON"
+configure-qemu-test = "cmake -B build-qemu-test -DCMAKE_TOOLCHAIN_FILE=cmake/riscv32-pixi.cmake -DARCH_BITS=32 -DARCH=riscv -DCONFIG_BOARD=qemu_virt -DRISCV_MABI=ilp32f -DRISCV_ABI=ilp32d -DCMAKE_BUILD_TYPE=MinSizeRel -DLINKER_SCRIPT=arch/riscv/link_qemu_test.ld -DOS_SMP_EN=OFF -DOS_AI_EN=ON"
 build = "cmake --build build"
+build-miniresnet-qemu-test = "cmake --build build-qemu-test --target miniresnet_validation --parallel 5"
+validate-miniresnet-qemu-test = "python scripts/run_miniresnet_validation.py --kernel build-qemu-test/apps/mnist_app/miniresnet_validation --log logs/miniresnet_validation_qemu_test.log --memory 64M"
+build-miniresnet-static-direct-qemu-test = "cmake --build build-qemu-test --target miniresnet_static_direct_validation --parallel 5"
+validate-miniresnet-static-direct-qemu-test = "python scripts/run_miniresnet_static_direct_validation.py --kernel build-qemu-test/apps/mnist_app/miniresnet_static_direct_validation --log logs/miniresnet_static_direct_validation_qemu_test.log --memory 64M"
+build-miniresnet-patch-qemu-test = "cmake --build build-qemu-test --target miniresnet_patch_validation --parallel 5"
+validate-miniresnet-patch-qemu-test = "python scripts/run_miniresnet_patch_validation.py --kernel build-qemu-test/apps/mnist_app/miniresnet_patch_validation --log logs/miniresnet_patch_validation_qemu_test.log --memory 64M"
+build-mnist-descriptor-qemu-test = "cmake --build build-qemu-test --target mnist_descriptor_validation --parallel 5"
+validate-mnist-descriptor-qemu-test = "python scripts/run_mnist_descriptor_validation.py --kernel build-qemu-test/apps/mnist_app/mnist_descriptor_validation --log logs/mnist_descriptor_validation_qemu_test.log --memory 64M"
 report-footprint = "python scripts/report_build_footprint.py --label mnist_validation --image build/apps/mnist_app/mnist_validation --kernel-archive build/kernel/librv_aios_kernel.a --cache build/CMakeCache.txt --linker-script arch/riscv/link.ld --map build/apps/mnist_app/mnist_validation.map --output build/apps/mnist_app/mnist_validation_footprint.md"
 report-ai-footprint = "sh scripts/report_ai_footprint_attribution.sh --label mnist_validation --image build/apps/mnist_app/mnist_validation --map build/apps/mnist_app/mnist_validation.map --model-wrapper-obj build/apps/mnist_app/generated/CMakeFiles/rv_aios_models.dir/ai_models.c.obj --dispatch-obj apps/mnist_app/generated/st_mnist_28.o --ai-runtime-obj build/ai/CMakeFiles/rv_aios_ai.dir/src/ai_model_registry.c.obj --iree-root build/third_party/iree/runtime/src --output build/apps/mnist_app/mnist_validation_ai_footprint.md"
 ai-gen = { cmd = "python3 scripts/ai_codegen.py", description = "Generate AI model registry and wrappers from ai_models.yaml" }
@@ -86,6 +99,16 @@ configure-etl-smoke = "cmake -B build-be_u1000_etl_smoke -DCMAKE_TOOLCHAIN_FILE=
 build-etl-smoke = "cmake --build build-be_u1000_etl_smoke"
 configure-ai-micro-cpp = "cmake -B build-be_u1000_ai_micro_cpp -DCMAKE_TOOLCHAIN_FILE=cmake/riscv32-pixi.cmake -DARCH_BITS=32 -DCONFIG_BOARD=be_u1000 -DBE_U1000_MEMORY_MODEL=flash -DRISCV_MARCH=rv32imafc_zifencei -DRISCV_MABI=ilp32f -DRISCV_ABI=ilp32d -DCMAKE_BUILD_TYPE=MinSizeRel -DOS_SMP_EN=OFF -DOS_AI_EN=ON -DRRTOS_CXX_EN=ON -DBE_U1000_APP=ai_micro_demo_cpp"
 build-ai-micro-cpp = "cmake --build build-be_u1000_ai_micro_cpp"
+configure-ai-static-direct = "cmake -B build-be_u1000_ai_static_direct_probe -DCMAKE_TOOLCHAIN_FILE=cmake/riscv32-pixi.cmake -DARCH_BITS=32 -DCONFIG_BOARD=be_u1000 -DBE_U1000_MEMORY_MODEL=flash -DRISCV_MARCH=rv32imafc_zifencei -DRISCV_MABI=ilp32f -DRISCV_ABI=ilp32d -DCMAKE_BUILD_TYPE=MinSizeRel -DOS_SMP_EN=OFF -DOS_AI_EN=OFF -DRRTOS_CXX_EN=OFF -DBE_U1000_APP=ai_static_direct_probe"
+build-ai-static-direct = "cmake --build build-be_u1000_ai_static_direct_probe"
+validate-ai-static-direct-map = "python scripts/check_no_iree_vm_symbols.py --map build-be_u1000_ai_static_direct_probe/rrtos_be_u1000.map"
+validate-ai-static-direct-renode = "python scripts/be_u1000/run_smp_runtime.py --kernel build-be_u1000_ai_static_direct_probe/rrtos_be_u1000.elf --binary build-be_u1000_ai_static_direct_probe/rrtos_be_u1000.bin --log logs/be_u1000_ai_static_direct_probe.uart.log --summary logs/be_u1000_ai_static_direct_probe_runtime.md --sleep-seconds 5 --expect-uart-marker BE_U1000_STATIC_DIRECT_PROBE_PASS --expect-uart-marker BE_U1000_STATIC_DIRECT_INFER_PASS"
+validate-ai-static-direct = { depends-on = ["validate-ai-static-direct-map", "validate-ai-static-direct-renode"] }
+configure-ai-static-direct-mnist = "cmake -B build-be_u1000_ai_static_direct_mnist_probe -DCMAKE_TOOLCHAIN_FILE=cmake/riscv32-pixi.cmake -DARCH_BITS=32 -DCONFIG_BOARD=be_u1000 -DBE_U1000_MEMORY_MODEL=flash -DRISCV_MARCH=rv32imafc_zifencei -DRISCV_MABI=ilp32f -DRISCV_ABI=ilp32d -DCMAKE_BUILD_TYPE=MinSizeRel -DOS_SMP_EN=OFF -DOS_AI_EN=OFF -DRRTOS_CXX_EN=OFF -DBE_U1000_APP=ai_static_direct_mnist_probe"
+build-ai-static-direct-mnist = "cmake --build build-be_u1000_ai_static_direct_mnist_probe"
+validate-ai-static-direct-mnist-map = "python scripts/check_no_iree_vm_symbols.py --map build-be_u1000_ai_static_direct_mnist_probe/rrtos_be_u1000.map"
+validate-ai-static-direct-mnist-renode = "python scripts/be_u1000/run_smp_runtime.py --kernel build-be_u1000_ai_static_direct_mnist_probe/rrtos_be_u1000.elf --binary build-be_u1000_ai_static_direct_mnist_probe/rrtos_be_u1000.bin --log logs/be_u1000_ai_static_direct_mnist_probe.uart.log --summary logs/be_u1000_ai_static_direct_mnist_probe_runtime.md --sleep-seconds 8 --expect-uart-marker BE_U1000_STATIC_DIRECT_MNIST_PROBE_PASS --expect-uart-marker BE_U1000_STATIC_DIRECT_MNIST_INFER_PASS"
+validate-ai-static-direct-mnist = { depends-on = ["validate-ai-static-direct-mnist-map", "validate-ai-static-direct-mnist-renode"] }
 report-footprint = "python scripts/report_build_footprint.py --label rrtos_be_u1000 --image build-be_u1000/rrtos_be_u1000.elf --kernel-archive build-be_u1000/kernel/librv_aios_kernel.a --cache build-be_u1000/CMakeCache.txt --linker-script boards/be_u1000/link_be_u1000_tcm.ld --map build-be_u1000/rrtos_be_u1000.map --output build-be_u1000/rrtos_be_u1000_footprint.md"
 validate-irq-map = "python scripts/be_u1000/validate_interrupt_consistency.py --board-config boards/be_u1000/board_config.h --repl scripts/simulation/be_u1000.repl"
 validate-selftest-sim = "python scripts/be_u1000/run_smp_runtime.py --kernel build-be_u1000/rrtos_be_u1000.elf --binary build-be_u1000/rrtos_be_u1000.bin --log logs/be_u1000_boot_sim.log --summary logs/be_u1000_selftest_runtime.md --sleep-seconds 4 --check-bootlog --expect-irq-model CLIC --expect-single-core-fallback --expect-qspi-signature 0x31505351 0x5F4C444D 0x00010010 0xA55A3CC3"

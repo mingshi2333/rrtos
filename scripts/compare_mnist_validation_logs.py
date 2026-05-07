@@ -8,7 +8,7 @@ import re
 
 
 METRICS_RE = re.compile(
-    r"AI_VALIDATION_METRICS: sample=(?P<sample>\S+) idx=(?P<idx>\d+) label=(?P<label>\d+) argmax=(?P<argmax>\d+) hash=(?P<hash>\d+) top_score_q=(?P<top_score_q>-?\d+) latency_us=(?P<latency_us>\d+) total=(?P<total>\d+) arena_peak=(?P<arena_peak>\d+)"
+    r"AI_VALIDATION_METRICS: sample=(?P<sample>\S+) idx=(?P<idx>\d+) label=(?P<label>\d+) argmax=(?P<argmax>\d+) hash=(?P<hash>\d+) top_score_q=(?P<top_score_q>-?\d+) latency_us=(?P<latency_us>\d+) latency_cycles=(?P<latency_cycles>\d+) latency_instructions=(?P<latency_instructions>\d+) total=(?P<total>\d+) arena_peak=(?P<arena_peak>\d+)"
 )
 
 
@@ -20,7 +20,18 @@ def parse_log(path: Path) -> list[dict[str, int | str]]:
     records: list[dict[str, int | str]] = []
     for match in METRICS_RE.finditer(text):
         record: dict[str, int | str] = {"sample": match.group("sample")}
-        for key in ("idx", "label", "argmax", "hash", "top_score_q", "latency_us", "total", "arena_peak"):
+        for key in (
+            "idx",
+            "label",
+            "argmax",
+            "hash",
+            "top_score_q",
+            "latency_us",
+            "latency_cycles",
+            "latency_instructions",
+            "total",
+            "arena_peak",
+        ):
             record[key] = int(match.group(key))
         records.append(record)
 

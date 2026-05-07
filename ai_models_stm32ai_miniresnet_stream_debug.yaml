@@ -1,0 +1,24 @@
+project_name: "rrtos_stm32ai_miniresnet_stream_debug"
+output_dir: "apps/mnist_app/generated_miniresnet_stream_debug"
+model_library_name: "rv_aios_miniresnet_stream_debug_models"
+
+defaults:
+  target_arch: "rv32"
+  target_abi: "ilp32f"
+  cpu_features: "+m,+a,+f,+zicsr"
+  enable_llvmcpu_microkernels: false
+  enable_data_tiling: false
+  enable_stream_memory_flags: false
+  extra_iree_compile_flags:
+    - "--iree-stream-partitioning-favor=debug"
+  optimization: "size"
+  memory_strategy: "static"
+
+toolchain:
+  root_env: "IREE_TOOLCHAIN_ROOT"
+  compiler_root_env: "IREE_LOCAL_COMPILER_ROOT"
+  tflite_toolchain_env: "iree-toolchain310"
+
+models:
+  - name: "miniresnetv1_s1_64x50_tl_int8"
+    file: "models/stm32ai_zoo/miniresnetv1_s1_64x50_tl_int8.tflite"

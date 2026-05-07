@@ -72,6 +72,15 @@ typedef struct ai_model_entry_s* ai_model_handle_t;
 int ai_runtime_init(void);
 
 /**
+ * @brief Get monotonic AI runtime time in microseconds.
+ *
+ * This is exposed for app-level latency logging without leaking IREE headers.
+ *
+ * @return Monotonic timestamp in microseconds
+ */
+uint64_t ai_get_time_us(void);
+
+/**
  * @brief Find model by name.
  *
  * @param name Model name

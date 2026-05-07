@@ -1,0 +1,898 @@
+[
+  {
+    "allocation_count": 12,
+    "best_tiling_candidate": {
+      "allocation": "transient_buffer_1",
+      "external_spill_bytes": 0,
+      "external_spill_kib": 0.0,
+      "interval": [
+        0,
+        13
+      ],
+      "new_bytes": 101152,
+      "new_kib": 98.781,
+      "original_bytes": 404608,
+      "original_kib": 395.125,
+      "projected_effective_bytes": 239616,
+      "projected_effective_kib": 234.0,
+      "savings_basis": "command_liveness_model",
+      "savings_bytes": 298112,
+      "savings_kib": 291.125,
+      "transform": "tile4"
+    },
+    "command_liveness_effective_bytes": 537728,
+    "command_liveness_effective_kib": 525.125,
+    "current_effective_bytes": 537728,
+    "current_effective_kib": 525.125,
+    "model_base_effective_bytes": 537728,
+    "model_base_effective_kib": 525.125,
+    "name": "miniresnetv2_s1_64x50_tl_int8",
+    "top_candidates": [
+      {
+        "allocation": "transient_buffer_1",
+        "external_spill_bytes": 404608,
+        "external_spill_kib": 395.125,
+        "interval": [
+          0,
+          13
+        ],
+        "new_bytes": 0,
+        "new_kib": 0.0,
+        "original_bytes": 404608,
+        "original_kib": 395.125,
+        "projected_effective_bytes": 239616,
+        "projected_effective_kib": 234.0,
+        "savings_basis": "command_liveness_model",
+        "savings_bytes": 298112,
+        "savings_kib": 291.125,
+        "transform": "elide_or_external_spill"
+      },
+      {
+        "allocation": "transient_buffer_1",
+        "external_spill_bytes": 0,
+        "external_spill_kib": 0.0,
+        "interval": [
+          0,
+          13
+        ],
+        "new_bytes": 101152,
+        "new_kib": 98.781,
+        "original_bytes": 404608,
+        "original_kib": 395.125,
+        "projected_effective_bytes": 239616,
+        "projected_effective_kib": 234.0,
+        "savings_basis": "command_liveness_model",
+        "savings_bytes": 298112,
+        "savings_kib": 291.125,
+        "transform": "tile4"
+      },
+      {
+        "allocation": "transient_buffer",
+        "external_spill_bytes": 133120,
+        "external_spill_kib": 130.0,
+        "interval": [
+          7,
+          17
+        ],
+        "new_bytes": 0,
+        "new_kib": 0.0,
+        "original_bytes": 133120,
+        "original_kib": 130.0,
+        "projected_effective_bytes": 404608,
+        "projected_effective_kib": 395.125,
+        "savings_basis": "command_liveness_model",
+        "savings_bytes": 133120,
+        "savings_kib": 130.0,
+        "transform": "elide_or_external_spill"
+      },
+      {
+        "allocation": "transient_buffer",
+        "external_spill_bytes": 0,
+        "external_spill_kib": 0.0,
+        "interval": [
+          7,
+          17
+        ],
+        "new_bytes": 33280,
+        "new_kib": 32.5,
+        "original_bytes": 133120,
+        "original_kib": 130.0,
+        "projected_effective_bytes": 437888,
+        "projected_effective_kib": 427.625,
+        "savings_basis": "command_liveness_model",
+        "savings_bytes": 99840,
+        "savings_kib": 97.5,
+        "transform": "tile4"
+      },
+      {
+        "allocation": "transient_buffer_1",
+        "external_spill_bytes": 0,
+        "external_spill_kib": 0.0,
+        "interval": [
+          0,
+          13
+        ],
+        "new_bytes": 202304,
+        "new_kib": 197.562,
+        "original_bytes": 404608,
+        "original_kib": 395.125,
+        "projected_effective_bytes": 441920,
+        "projected_effective_kib": 431.562,
+        "savings_basis": "command_liveness_model",
+        "savings_bytes": 95808,
+        "savings_kib": 93.562,
+        "transform": "tile2"
+      }
+    ],
+    "verified_to_model_gap_bytes": 0,
+    "verified_to_model_gap_kib": 0.0
+  },
+  {
+    "allocation_count": 36,
+    "best_tiling_candidate": {
+      "allocation": "transient_buffer_1",
+      "external_spill_bytes": 0,
+      "external_spill_kib": 0.0,
+      "interval": [
+        0,
+        23
+      ],
+      "new_bytes": 475424,
+      "new_kib": 464.281,
+      "original_bytes": 1901696,
+      "original_kib": 1857.125,
+      "projected_effective_bytes": 622912,
+      "projected_effective_kib": 608.312,
+      "savings_basis": "command_liveness_model",
+      "savings_bytes": 1360704,
+      "savings_kib": 1328.812,
+      "transform": "tile4"
+    },
+    "command_liveness_effective_bytes": 1983616,
+    "command_liveness_effective_kib": 1937.125,
+    "current_effective_bytes": 1983616,
+    "current_effective_kib": 1937.125,
+    "model_base_effective_bytes": 1983616,
+    "model_base_effective_kib": 1937.125,
+    "name": "mobilenetv2_a035_128_int8",
+    "top_candidates": [
+      {
+        "allocation": "transient_buffer_1",
+        "external_spill_bytes": 1901696,
+        "external_spill_kib": 1857.125,
+        "interval": [
+          0,
+          23
+        ],
+        "new_bytes": 0,
+        "new_kib": 0.0,
+        "original_bytes": 1901696,
+        "original_kib": 1857.125,
+        "projected_effective_bytes": 554432,
+        "projected_effective_kib": 541.438,
+        "savings_basis": "command_liveness_model",
+        "savings_bytes": 1429184,
+        "savings_kib": 1395.688,
+        "transform": "elide_or_external_spill"
+      },
+      {
+        "allocation": "transient_buffer_1",
+        "external_spill_bytes": 0,
+        "external_spill_kib": 0.0,
+        "interval": [
+          0,
+          23
+        ],
+        "new_bytes": 475424,
+        "new_kib": 464.281,
+        "original_bytes": 1901696,
+        "original_kib": 1857.125,
+        "projected_effective_bytes": 622912,
+        "projected_effective_kib": 608.312,
+        "savings_basis": "command_liveness_model",
+        "savings_bytes": 1360704,
+        "savings_kib": 1328.812,
+        "transform": "tile4"
+      },
+      {
+        "allocation": "transient_buffer_1",
+        "external_spill_bytes": 0,
+        "external_spill_kib": 0.0,
+        "interval": [
+          0,
+          23
+        ],
+        "new_bytes": 950848,
+        "new_kib": 928.562,
+        "original_bytes": 1901696,
+        "original_kib": 1857.125,
+        "projected_effective_bytes": 1032768,
+        "projected_effective_kib": 1008.562,
+        "savings_basis": "command_liveness_model",
+        "savings_bytes": 950848,
+        "savings_kib": 928.562,
+        "transform": "tile2"
+      },
+      {
+        "allocation": "transient_buffer",
+        "external_spill_bytes": 81920,
+        "external_spill_kib": 80.0,
+        "interval": [
+          15,
+          27
+        ],
+        "new_bytes": 0,
+        "new_kib": 0.0,
+        "original_bytes": 81920,
+        "original_kib": 80.0,
+        "projected_effective_bytes": 1901696,
+        "projected_effective_kib": 1857.125,
+        "savings_basis": "command_liveness_model",
+        "savings_bytes": 81920,
+        "savings_kib": 80.0,
+        "transform": "elide_or_external_spill"
+      },
+      {
+        "allocation": "transient_buffer",
+        "external_spill_bytes": 0,
+        "external_spill_kib": 0.0,
+        "interval": [
+          15,
+          27
+        ],
+        "new_bytes": 20480,
+        "new_kib": 20.0,
+        "original_bytes": 81920,
+        "original_kib": 80.0,
+        "projected_effective_bytes": 1922176,
+        "projected_effective_kib": 1877.125,
+        "savings_basis": "command_liveness_model",
+        "savings_bytes": 61440,
+        "savings_kib": 60.0,
+        "transform": "tile4"
+      }
+    ],
+    "verified_to_model_gap_bytes": 0,
+    "verified_to_model_gap_kib": 0.0
+  },
+  {
+    "allocation_count": 15,
+    "best_tiling_candidate": {
+      "allocation": "transient_buffer",
+      "external_spill_bytes": 0,
+      "external_spill_kib": 0.0,
+      "interval": [
+        3,
+        15
+      ],
+      "new_bytes": 81920,
+      "new_kib": 80.0,
+      "original_bytes": 163840,
+      "original_kib": 160.0,
+      "projected_effective_bytes": 240832,
+      "projected_effective_kib": 235.188,
+      "savings_basis": "command_liveness_model",
+      "savings_bytes": 54080,
+      "savings_kib": 52.812,
+      "transform": "tile2"
+    },
+    "command_liveness_effective_bytes": 294912,
+    "command_liveness_effective_kib": 288.0,
+    "current_effective_bytes": 539968,
+    "current_effective_kib": 527.312,
+    "model_base_effective_bytes": 294912,
+    "model_base_effective_kib": 288.0,
+    "name": "resnet8_32_tfs_int8",
+    "top_candidates": [
+      {
+        "allocation": "transient_buffer",
+        "external_spill_bytes": 163840,
+        "external_spill_kib": 160.0,
+        "interval": [
+          3,
+          15
+        ],
+        "new_bytes": 0,
+        "new_kib": 0.0,
+        "original_bytes": 163840,
+        "original_kib": 160.0,
+        "projected_effective_bytes": 240832,
+        "projected_effective_kib": 235.188,
+        "savings_basis": "command_liveness_model",
+        "savings_bytes": 54080,
+        "savings_kib": 52.812,
+        "transform": "elide_or_external_spill"
+      },
+      {
+        "allocation": "transient_buffer",
+        "external_spill_bytes": 0,
+        "external_spill_kib": 0.0,
+        "interval": [
+          3,
+          15
+        ],
+        "new_bytes": 81920,
+        "new_kib": 80.0,
+        "original_bytes": 163840,
+        "original_kib": 160.0,
+        "projected_effective_bytes": 240832,
+        "projected_effective_kib": 235.188,
+        "savings_basis": "command_liveness_model",
+        "savings_bytes": 54080,
+        "savings_kib": 52.812,
+        "transform": "tile2"
+      },
+      {
+        "allocation": "transient_buffer",
+        "external_spill_bytes": 0,
+        "external_spill_kib": 0.0,
+        "interval": [
+          3,
+          15
+        ],
+        "new_bytes": 40960,
+        "new_kib": 40.0,
+        "original_bytes": 163840,
+        "original_kib": 160.0,
+        "projected_effective_bytes": 240832,
+        "projected_effective_kib": 235.188,
+        "savings_basis": "command_liveness_model",
+        "savings_bytes": 54080,
+        "savings_kib": 52.812,
+        "transform": "tile4"
+      },
+      {
+        "allocation": "transient_buffer_8",
+        "external_spill_bytes": 131072,
+        "external_spill_kib": 128.0,
+        "interval": [
+          13,
+          16
+        ],
+        "new_bytes": 0,
+        "new_kib": 0.0,
+        "original_bytes": 131072,
+        "original_kib": 128.0,
+        "projected_effective_bytes": 269888,
+        "projected_effective_kib": 263.562,
+        "savings_basis": "command_liveness_model",
+        "savings_bytes": 25024,
+        "savings_kib": 24.438,
+        "transform": "elide_or_external_spill"
+      },
+      {
+        "allocation": "transient_buffer_8",
+        "external_spill_bytes": 0,
+        "external_spill_kib": 0.0,
+        "interval": [
+          13,
+          16
+        ],
+        "new_bytes": 65536,
+        "new_kib": 64.0,
+        "original_bytes": 131072,
+        "original_kib": 128.0,
+        "projected_effective_bytes": 269888,
+        "projected_effective_kib": 263.562,
+        "savings_basis": "command_liveness_model",
+        "savings_bytes": 25024,
+        "savings_kib": 24.438,
+        "transform": "tile2"
+      }
+    ],
+    "verified_to_model_gap_bytes": 245056,
+    "verified_to_model_gap_kib": 239.312
+  },
+  {
+    "allocation_count": 6,
+    "best_tiling_candidate": {
+      "allocation": "transient_buffer_1",
+      "external_spill_bytes": 0,
+      "external_spill_kib": 0.0,
+      "interval": [
+        0,
+        89
+      ],
+      "new_bytes": 570624,
+      "new_kib": 557.25,
+      "original_bytes": 2282496,
+      "original_kib": 2229.0,
+      "projected_effective_bytes": 570752,
+      "projected_effective_kib": 557.375,
+      "savings_basis": "command_liveness_model",
+      "savings_bytes": 1711872,
+      "savings_kib": 1671.75,
+      "transform": "tile4"
+    },
+    "command_liveness_effective_bytes": 2282624,
+    "command_liveness_effective_kib": 2229.125,
+    "current_effective_bytes": 2282624,
+    "current_effective_kib": 2229.125,
+    "model_base_effective_bytes": 2282624,
+    "model_base_effective_kib": 2229.125,
+    "name": "squeezenetv11_128_tfs_int8",
+    "top_candidates": [
+      {
+        "allocation": "transient_buffer_1",
+        "external_spill_bytes": 2282496,
+        "external_spill_kib": 2229.0,
+        "interval": [
+          0,
+          89
+        ],
+        "new_bytes": 0,
+        "new_kib": 0.0,
+        "original_bytes": 2282496,
+        "original_kib": 2229.0,
+        "projected_effective_bytes": 256,
+        "projected_effective_kib": 0.25,
+        "savings_basis": "command_liveness_model",
+        "savings_bytes": 2282368,
+        "savings_kib": 2228.875,
+        "transform": "elide_or_external_spill"
+      },
+      {
+        "allocation": "transient_buffer_1",
+        "external_spill_bytes": 0,
+        "external_spill_kib": 0.0,
+        "interval": [
+          0,
+          89
+        ],
+        "new_bytes": 570624,
+        "new_kib": 557.25,
+        "original_bytes": 2282496,
+        "original_kib": 2229.0,
+        "projected_effective_bytes": 570752,
+        "projected_effective_kib": 557.375,
+        "savings_basis": "command_liveness_model",
+        "savings_bytes": 1711872,
+        "savings_kib": 1671.75,
+        "transform": "tile4"
+      },
+      {
+        "allocation": "transient_buffer_1",
+        "external_spill_bytes": 0,
+        "external_spill_kib": 0.0,
+        "interval": [
+          0,
+          89
+        ],
+        "new_bytes": 1141248,
+        "new_kib": 1114.5,
+        "original_bytes": 2282496,
+        "original_kib": 2229.0,
+        "projected_effective_bytes": 1141376,
+        "projected_effective_kib": 1114.625,
+        "savings_basis": "command_liveness_model",
+        "savings_bytes": 1141248,
+        "savings_kib": 1114.5,
+        "transform": "tile2"
+      },
+      {
+        "allocation": "transient_buffer",
+        "external_spill_bytes": 128,
+        "external_spill_kib": 0.125,
+        "interval": [
+          88,
+          92
+        ],
+        "new_bytes": 0,
+        "new_kib": 0.0,
+        "original_bytes": 128,
+        "original_kib": 0.125,
+        "projected_effective_bytes": 2282496,
+        "projected_effective_kib": 2229.0,
+        "savings_basis": "command_liveness_model",
+        "savings_bytes": 128,
+        "savings_kib": 0.125,
+        "transform": "elide_or_external_spill"
+      },
+      {
+        "allocation": "transient_buffer",
+        "external_spill_bytes": 0,
+        "external_spill_kib": 0.0,
+        "interval": [
+          88,
+          92
+        ],
+        "new_bytes": 32,
+        "new_kib": 0.031,
+        "original_bytes": 128,
+        "original_kib": 0.125,
+        "projected_effective_bytes": 2282528,
+        "projected_effective_kib": 2229.031,
+        "savings_basis": "command_liveness_model",
+        "savings_bytes": 96,
+        "savings_kib": 0.094,
+        "transform": "tile4"
+      }
+    ],
+    "verified_to_model_gap_bytes": 0,
+    "verified_to_model_gap_kib": 0.0
+  },
+  {
+    "allocation_count": 2,
+    "best_tiling_candidate": {
+      "allocation": "transient_buffer_1",
+      "external_spill_bytes": 0,
+      "external_spill_kib": 0.0,
+      "interval": [
+        0,
+        37
+      ],
+      "new_bytes": 419072,
+      "new_kib": 409.25,
+      "original_bytes": 1676288,
+      "original_kib": 1637.0,
+      "projected_effective_bytes": 436352,
+      "projected_effective_kib": 426.125,
+      "savings_basis": "command_liveness_model",
+      "savings_bytes": 1257216,
+      "savings_kib": 1227.75,
+      "transform": "tile4"
+    },
+    "command_liveness_effective_bytes": 1693568,
+    "command_liveness_effective_kib": 1653.875,
+    "current_effective_bytes": 1693568,
+    "current_effective_kib": 1653.875,
+    "model_base_effective_bytes": 1693568,
+    "model_base_effective_kib": 1653.875,
+    "name": "st_yololcv1_192_int8",
+    "top_candidates": [
+      {
+        "allocation": "transient_buffer_1",
+        "external_spill_bytes": 1676288,
+        "external_spill_kib": 1637.0,
+        "interval": [
+          0,
+          37
+        ],
+        "new_bytes": 0,
+        "new_kib": 0.0,
+        "original_bytes": 1676288,
+        "original_kib": 1637.0,
+        "projected_effective_bytes": 17280,
+        "projected_effective_kib": 16.875,
+        "savings_basis": "command_liveness_model",
+        "savings_bytes": 1676288,
+        "savings_kib": 1637.0,
+        "transform": "elide_or_external_spill"
+      },
+      {
+        "allocation": "transient_buffer_1",
+        "external_spill_bytes": 0,
+        "external_spill_kib": 0.0,
+        "interval": [
+          0,
+          37
+        ],
+        "new_bytes": 419072,
+        "new_kib": 409.25,
+        "original_bytes": 1676288,
+        "original_kib": 1637.0,
+        "projected_effective_bytes": 436352,
+        "projected_effective_kib": 426.125,
+        "savings_basis": "command_liveness_model",
+        "savings_bytes": 1257216,
+        "savings_kib": 1227.75,
+        "transform": "tile4"
+      },
+      {
+        "allocation": "transient_buffer_1",
+        "external_spill_bytes": 0,
+        "external_spill_kib": 0.0,
+        "interval": [
+          0,
+          37
+        ],
+        "new_bytes": 838144,
+        "new_kib": 818.5,
+        "original_bytes": 1676288,
+        "original_kib": 1637.0,
+        "projected_effective_bytes": 855424,
+        "projected_effective_kib": 835.375,
+        "savings_basis": "command_liveness_model",
+        "savings_bytes": 838144,
+        "savings_kib": 818.5,
+        "transform": "tile2"
+      },
+      {
+        "allocation": "transient_buffer",
+        "external_spill_bytes": 17280,
+        "external_spill_kib": 16.875,
+        "interval": [
+          36,
+          37
+        ],
+        "new_bytes": 0,
+        "new_kib": 0.0,
+        "original_bytes": 17280,
+        "original_kib": 16.875,
+        "projected_effective_bytes": 1676288,
+        "projected_effective_kib": 1637.0,
+        "savings_basis": "command_liveness_model",
+        "savings_bytes": 17280,
+        "savings_kib": 16.875,
+        "transform": "elide_or_external_spill"
+      },
+      {
+        "allocation": "transient_buffer",
+        "external_spill_bytes": 0,
+        "external_spill_kib": 0.0,
+        "interval": [
+          36,
+          37
+        ],
+        "new_bytes": 4320,
+        "new_kib": 4.219,
+        "original_bytes": 17280,
+        "original_kib": 16.875,
+        "projected_effective_bytes": 1680608,
+        "projected_effective_kib": 1641.219,
+        "savings_basis": "command_liveness_model",
+        "savings_bytes": 12960,
+        "savings_kib": 12.656,
+        "transform": "tile4"
+      }
+    ],
+    "verified_to_model_gap_bytes": 0,
+    "verified_to_model_gap_kib": 0.0
+  },
+  {
+    "allocation_count": 2,
+    "best_tiling_candidate": {
+      "allocation": "transient_buffer_1",
+      "external_spill_bytes": 0,
+      "external_spill_kib": 0.0,
+      "interval": [
+        0,
+        101
+      ],
+      "new_bytes": 1380064,
+      "new_kib": 1347.719,
+      "original_bytes": 5520256,
+      "original_kib": 5390.875,
+      "projected_effective_bytes": 1430272,
+      "projected_effective_kib": 1396.75,
+      "savings_basis": "command_liveness_model",
+      "savings_bytes": 4140160,
+      "savings_kib": 4043.125,
+      "transform": "tile4"
+    },
+    "command_liveness_effective_bytes": 5570432,
+    "command_liveness_effective_kib": 5439.875,
+    "current_effective_bytes": 5570432,
+    "current_effective_kib": 5439.875,
+    "model_base_effective_bytes": 5570432,
+    "model_base_effective_kib": 5439.875,
+    "name": "fastdepth_224_int8",
+    "top_candidates": [
+      {
+        "allocation": "transient_buffer_1",
+        "external_spill_bytes": 5520256,
+        "external_spill_kib": 5390.875,
+        "interval": [
+          0,
+          101
+        ],
+        "new_bytes": 0,
+        "new_kib": 0.0,
+        "original_bytes": 5520256,
+        "original_kib": 5390.875,
+        "projected_effective_bytes": 50176,
+        "projected_effective_kib": 49.0,
+        "savings_basis": "command_liveness_model",
+        "savings_bytes": 5520256,
+        "savings_kib": 5390.875,
+        "transform": "elide_or_external_spill"
+      },
+      {
+        "allocation": "transient_buffer_1",
+        "external_spill_bytes": 0,
+        "external_spill_kib": 0.0,
+        "interval": [
+          0,
+          101
+        ],
+        "new_bytes": 1380064,
+        "new_kib": 1347.719,
+        "original_bytes": 5520256,
+        "original_kib": 5390.875,
+        "projected_effective_bytes": 1430272,
+        "projected_effective_kib": 1396.75,
+        "savings_basis": "command_liveness_model",
+        "savings_bytes": 4140160,
+        "savings_kib": 4043.125,
+        "transform": "tile4"
+      },
+      {
+        "allocation": "transient_buffer_1",
+        "external_spill_bytes": 0,
+        "external_spill_kib": 0.0,
+        "interval": [
+          0,
+          101
+        ],
+        "new_bytes": 2760128,
+        "new_kib": 2695.438,
+        "original_bytes": 5520256,
+        "original_kib": 5390.875,
+        "projected_effective_bytes": 2810304,
+        "projected_effective_kib": 2744.438,
+        "savings_basis": "command_liveness_model",
+        "savings_bytes": 2760128,
+        "savings_kib": 2695.438,
+        "transform": "tile2"
+      },
+      {
+        "allocation": "transient_buffer",
+        "external_spill_bytes": 50176,
+        "external_spill_kib": 49.0,
+        "interval": [
+          100,
+          101
+        ],
+        "new_bytes": 0,
+        "new_kib": 0.0,
+        "original_bytes": 50176,
+        "original_kib": 49.0,
+        "projected_effective_bytes": 5520256,
+        "projected_effective_kib": 5390.875,
+        "savings_basis": "command_liveness_model",
+        "savings_bytes": 50176,
+        "savings_kib": 49.0,
+        "transform": "elide_or_external_spill"
+      },
+      {
+        "allocation": "transient_buffer",
+        "external_spill_bytes": 0,
+        "external_spill_kib": 0.0,
+        "interval": [
+          100,
+          101
+        ],
+        "new_bytes": 12544,
+        "new_kib": 12.25,
+        "original_bytes": 50176,
+        "original_kib": 49.0,
+        "projected_effective_bytes": 5532800,
+        "projected_effective_kib": 5403.125,
+        "savings_basis": "command_liveness_model",
+        "savings_bytes": 37632,
+        "savings_kib": 36.75,
+        "transform": "tile4"
+      }
+    ],
+    "verified_to_model_gap_bytes": 0,
+    "verified_to_model_gap_kib": 0.0
+  },
+  {
+    "allocation_count": 2,
+    "best_tiling_candidate": {
+      "allocation": "transient_buffer_1",
+      "external_spill_bytes": 0,
+      "external_spill_kib": 0.0,
+      "interval": [
+        0,
+        106
+      ],
+      "new_bytes": 704400,
+      "new_kib": 687.891,
+      "original_bytes": 2817600,
+      "original_kib": 2751.562,
+      "projected_effective_bytes": 705088,
+      "projected_effective_kib": 688.562,
+      "savings_basis": "command_liveness_model",
+      "savings_bytes": 2113152,
+      "savings_kib": 2063.625,
+      "transform": "tile4"
+    },
+    "command_liveness_effective_bytes": 2818240,
+    "command_liveness_effective_kib": 2752.188,
+    "current_effective_bytes": 2818240,
+    "current_effective_kib": 2752.188,
+    "model_base_effective_bytes": 2818240,
+    "model_base_effective_kib": 2752.188,
+    "name": "handlandmarks_full_224_int8",
+    "top_candidates": [
+      {
+        "allocation": "transient_buffer_1",
+        "external_spill_bytes": 2817600,
+        "external_spill_kib": 2751.562,
+        "interval": [
+          0,
+          106
+        ],
+        "new_bytes": 0,
+        "new_kib": 0.0,
+        "original_bytes": 2817600,
+        "original_kib": 2751.562,
+        "projected_effective_bytes": 640,
+        "projected_effective_kib": 0.625,
+        "savings_basis": "command_liveness_model",
+        "savings_bytes": 2817600,
+        "savings_kib": 2751.562,
+        "transform": "elide_or_external_spill"
+      },
+      {
+        "allocation": "transient_buffer_1",
+        "external_spill_bytes": 0,
+        "external_spill_kib": 0.0,
+        "interval": [
+          0,
+          106
+        ],
+        "new_bytes": 704400,
+        "new_kib": 687.891,
+        "original_bytes": 2817600,
+        "original_kib": 2751.562,
+        "projected_effective_bytes": 705088,
+        "projected_effective_kib": 688.562,
+        "savings_basis": "command_liveness_model",
+        "savings_bytes": 2113152,
+        "savings_kib": 2063.625,
+        "transform": "tile4"
+      },
+      {
+        "allocation": "transient_buffer_1",
+        "external_spill_bytes": 0,
+        "external_spill_kib": 0.0,
+        "interval": [
+          0,
+          106
+        ],
+        "new_bytes": 1408800,
+        "new_kib": 1375.781,
+        "original_bytes": 2817600,
+        "original_kib": 2751.562,
+        "projected_effective_bytes": 1409472,
+        "projected_effective_kib": 1376.438,
+        "savings_basis": "command_liveness_model",
+        "savings_bytes": 1408768,
+        "savings_kib": 1375.75,
+        "transform": "tile2"
+      },
+      {
+        "allocation": "transient_buffer",
+        "external_spill_bytes": 640,
+        "external_spill_kib": 0.625,
+        "interval": [
+          100,
+          106
+        ],
+        "new_bytes": 0,
+        "new_kib": 0.0,
+        "original_bytes": 640,
+        "original_kib": 0.625,
+        "projected_effective_bytes": 2817600,
+        "projected_effective_kib": 2751.562,
+        "savings_basis": "command_liveness_model",
+        "savings_bytes": 640,
+        "savings_kib": 0.625,
+        "transform": "elide_or_external_spill"
+      },
+      {
+        "allocation": "transient_buffer",
+        "external_spill_bytes": 0,
+        "external_spill_kib": 0.0,
+        "interval": [
+          100,
+          106
+        ],
+        "new_bytes": 160,
+        "new_kib": 0.156,
+        "original_bytes": 640,
+        "original_kib": 0.625,
+        "projected_effective_bytes": 2817760,
+        "projected_effective_kib": 2751.719,
+        "savings_basis": "command_liveness_model",
+        "savings_bytes": 480,
+        "savings_kib": 0.469,
+        "transform": "tile4"
+      }
+    ],
+    "verified_to_model_gap_bytes": 0,
+    "verified_to_model_gap_kib": 0.0
+  }
+]

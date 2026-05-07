@@ -72,14 +72,15 @@ observation evidence until promoted in `docs/SUPPORTED_MATRIX.md`.
 
 ## Adding AI Models
 
-The supported path currently declares only `st_mnist_28`.
+The supported path currently declares canonical FP32 `st_mnist_28` and the
+separated ST MNISTv1 INT8 validation model `st_mnistv1_28_tfs_int8`.
 
 To promote another model:
 
-1. Update `ai_models.yaml`.
+1. Update the relevant `ai_models*.yaml`.
 2. Regenerate model code through `scripts/ai_codegen.py` or the documented model
    conversion workflow.
-3. Commit generated artifacts under `apps/mnist_app/generated/`.
+3. Commit generated artifacts under the matching `apps/mnist_app/generated*/` directory.
 4. Add deterministic validation fixtures.
 5. Update `docs/AI_CANONICAL_PATH.md` and `docs/SUPPORTED_MATRIX.md`.
 6. Run:
@@ -116,4 +117,3 @@ Keep commits scoped:
 
 Do not mix unrelated generated build logs or timestamp-only report churn into a
 source fix.
-

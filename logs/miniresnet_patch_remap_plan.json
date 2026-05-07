@@ -1,0 +1,87 @@
+{
+  "arena_bytes": 142336,
+  "arena_kib": 139.0,
+  "constant_remaps": [
+    {
+      "addend": -208768,
+      "allocation": "transient_buffer_1",
+      "command_range": [
+        5,
+        13
+      ],
+      "old_value_begin": 208768,
+      "old_value_end": 315264
+    }
+  ],
+  "continuation_command_index": 5,
+  "fail_closed_rules": [
+    "Only remap constants in the declared allocation value range.",
+    "Only shrink bindings that exactly match the declared original window.",
+    "Reject slices that fall between the original binding base and rebased region.",
+    "Reject retained commands after a remap end unless they use an explicit scratch rule."
+  ],
+  "name": "miniresnet_first_layer_patch",
+  "original_arena_bytes": 351104,
+  "original_arena_kib": 342.875,
+  "rebased_region": {
+    "allocation": "transient_buffer_1",
+    "bytes": 106496,
+    "command_range": [
+      5,
+      13
+    ],
+    "new_offset": 0,
+    "old_actual_base": 244608,
+    "old_binding_bytes": 315264,
+    "old_binding_offset": 35840,
+    "old_internal_base": 208768,
+    "produced_bytes": 58752
+  },
+  "replaced_command_range": [
+    0,
+    5
+  ],
+  "savings_bytes": 208768,
+  "savings_kib": 203.875,
+  "schema": "rrtos.static_direct_remap_plan.v1",
+  "scratch_remaps": [
+    {
+      "allocation": "transient_buffer",
+      "command_range": [
+        5,
+        17
+      ],
+      "new_length": 35840,
+      "new_offset": 106496,
+      "old_length": 35840,
+      "old_offset": 0
+    }
+  ],
+  "slice_remaps": [
+    {
+      "allocation": "transient_buffer_1",
+      "command_range": [
+        5,
+        13
+      ],
+      "kind": "binding_window_rebase",
+      "new_length": 106496,
+      "new_offset": 0,
+      "old_length": 315264,
+      "old_offset": 35840,
+      "requires_exact_binding": true
+    },
+    {
+      "addend": -244608,
+      "allocation": "transient_buffer_1",
+      "command_range": [
+        5,
+        13
+      ],
+      "kind": "absolute_arena_range_shift",
+      "old_offset_begin": 244608,
+      "old_offset_end": 351104
+    }
+  ],
+  "source": "miniresnetv1_s1_64x50_tl_int8.11.hal.mlir"
+}

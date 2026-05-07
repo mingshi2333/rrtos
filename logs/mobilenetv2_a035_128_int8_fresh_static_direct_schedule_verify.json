@@ -1,0 +1,347 @@
+{
+  "allocation_count": 38,
+  "arena_bytes": 1983616,
+  "arena_kib": 1937.125,
+  "command_count": 183,
+  "dispatch_count": 165,
+  "effective_arena_source": "packed_liveness",
+  "max_arena_allocation_bytes": 1901696,
+  "max_arena_allocation_kib": 1857.125,
+  "packed_arena_bytes": 1983616,
+  "packed_arena_kib": 1937.125,
+  "packed_vs_effective_delta_bytes": 0,
+  "packed_vs_effective_delta_kib": 0.0,
+  "peak_transient_bytes": 1983616,
+  "peak_transient_kib": 1937.125,
+  "placements": {
+    "transient_buffer": {
+      "interval": [
+        15,
+        27
+      ],
+      "offset": 0,
+      "size": 81920,
+      "size_kib": 80.0
+    },
+    "transient_buffer_1": {
+      "interval": [
+        0,
+        23
+      ],
+      "offset": 81920,
+      "size": 1901696,
+      "size_kib": 1857.125
+    },
+    "transient_buffer_105": {
+      "interval": [
+        108,
+        120
+      ],
+      "offset": 0,
+      "size": 20480,
+      "size_kib": 20.0
+    },
+    "transient_buffer_107": {
+      "interval": [
+        101,
+        116
+      ],
+      "offset": 27648,
+      "size": 150848,
+      "size_kib": 147.312
+    },
+    "transient_buffer_116": {
+      "interval": [
+        118,
+        121
+      ],
+      "offset": 20480,
+      "size": 16384,
+      "size_kib": 16.0
+    },
+    "transient_buffer_123": {
+      "interval": [
+        120,
+        132
+      ],
+      "offset": 0,
+      "size": 20480,
+      "size_kib": 20.0
+    },
+    "transient_buffer_125": {
+      "interval": [
+        121,
+        128
+      ],
+      "offset": 20480,
+      "size": 88832,
+      "size_kib": 86.75
+    },
+    "transient_buffer_134": {
+      "interval": [
+        130,
+        133
+      ],
+      "offset": 20480,
+      "size": 16384,
+      "size_kib": 16.0
+    },
+    "transient_buffer_141": {
+      "interval": [
+        139,
+        151
+      ],
+      "offset": 0,
+      "size": 8960,
+      "size_kib": 8.75
+    },
+    "transient_buffer_143": {
+      "interval": [
+        132,
+        147
+      ],
+      "offset": 36864,
+      "size": 124672,
+      "size_kib": 121.75
+    },
+    "transient_buffer_15": {
+      "interval": [
+        34,
+        46
+      ],
+      "offset": 0,
+      "size": 40960,
+      "size_kib": 40.0
+    },
+    "transient_buffer_152": {
+      "interval": [
+        149,
+        152
+      ],
+      "offset": 8960,
+      "size": 7168,
+      "size_kib": 7.0
+    },
+    "transient_buffer_159": {
+      "interval": [
+        151,
+        163
+      ],
+      "offset": 0,
+      "size": 8960,
+      "size_kib": 8.75
+    },
+    "transient_buffer_161": {
+      "interval": [
+        152,
+        159
+      ],
+      "offset": 8960,
+      "size": 42560,
+      "size_kib": 41.562
+    },
+    "transient_buffer_17": {
+      "interval": [
+        27,
+        42
+      ],
+      "offset": 147456,
+      "size": 488896,
+      "size_kib": 477.438
+    },
+    "transient_buffer_170": {
+      "interval": [
+        161,
+        164
+      ],
+      "offset": 8960,
+      "size": 7168,
+      "size_kib": 7.0
+    },
+    "transient_buffer_177": {
+      "interval": [
+        174,
+        178
+      ],
+      "offset": 0,
+      "size": 4096,
+      "size_kib": 4.0
+    },
+    "transient_buffer_179": {
+      "interval": [
+        163,
+        175
+      ],
+      "offset": 16128,
+      "size": 152512,
+      "size_kib": 148.938
+    },
+    "transient_buffer_188": {
+      "interval": [
+        176,
+        179
+      ],
+      "offset": 4096,
+      "size": 4096,
+      "size_kib": 4.0
+    },
+    "transient_buffer_195": {
+      "interval": [
+        178,
+        182
+      ],
+      "offset": 0,
+      "size": 4096,
+      "size_kib": 4.0
+    },
+    "transient_buffer_202": {
+      "interval": [
+        180,
+        183
+      ],
+      "offset": 4096,
+      "size": 4096,
+      "size_kib": 4.0
+    },
+    "transient_buffer_209": {
+      "interval": [
+        182,
+        183
+      ],
+      "offset": 0,
+      "size": 4000,
+      "size_kib": 3.906
+    },
+    "transient_buffer_26": {
+      "interval": [
+        44,
+        47
+      ],
+      "offset": 40960,
+      "size": 32768,
+      "size_kib": 32.0
+    },
+    "transient_buffer_33": {
+      "interval": [
+        46,
+        58
+      ],
+      "offset": 0,
+      "size": 40960,
+      "size_kib": 40.0
+    },
+    "transient_buffer_35": {
+      "interval": [
+        47,
+        54
+      ],
+      "offset": 40960,
+      "size": 170368,
+      "size_kib": 166.375
+    },
+    "transient_buffer_44": {
+      "interval": [
+        56,
+        59
+      ],
+      "offset": 40960,
+      "size": 32768,
+      "size_kib": 32.0
+    },
+    "transient_buffer_51": {
+      "interval": [
+        65,
+        77
+      ],
+      "offset": 0,
+      "size": 15360,
+      "size_kib": 15.0
+    },
+    "transient_buffer_53": {
+      "interval": [
+        58,
+        73
+      ],
+      "offset": 73728,
+      "size": 227520,
+      "size_kib": 222.188
+    },
+    "transient_buffer_62": {
+      "interval": [
+        75,
+        78
+      ],
+      "offset": 15360,
+      "size": 12288,
+      "size_kib": 12.0
+    },
+    "transient_buffer_69": {
+      "interval": [
+        77,
+        89
+      ],
+      "offset": 0,
+      "size": 15360,
+      "size_kib": 15.0
+    },
+    "transient_buffer_71": {
+      "interval": [
+        78,
+        85
+      ],
+      "offset": 15360,
+      "size": 66624,
+      "size_kib": 65.062
+    },
+    "transient_buffer_8": {
+      "interval": [
+        25,
+        28
+      ],
+      "offset": 81920,
+      "size": 65536,
+      "size_kib": 64.0
+    },
+    "transient_buffer_80": {
+      "interval": [
+        87,
+        90
+      ],
+      "offset": 15360,
+      "size": 12288,
+      "size_kib": 12.0
+    },
+    "transient_buffer_87": {
+      "interval": [
+        89,
+        101
+      ],
+      "offset": 0,
+      "size": 15360,
+      "size_kib": 15.0
+    },
+    "transient_buffer_89": {
+      "interval": [
+        90,
+        97
+      ],
+      "offset": 15360,
+      "size": 66624,
+      "size_kib": 65.062
+    },
+    "transient_buffer_98": {
+      "interval": [
+        99,
+        102
+      ],
+      "offset": 15360,
+      "size": 12288,
+      "size_kib": 12.0
+    }
+  },
+  "source": "mobilenetv2_a035_128_int8.11.hal.mlir",
+  "status": "ok",
+  "warnings": [
+    "assumed batch_size=1 for 1 hal.buffer_view.dim value(s)"
+  ]
+}

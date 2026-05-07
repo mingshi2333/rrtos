@@ -1,0 +1,24 @@
+project_name: "rrtos_mnist_vmvx"
+output_dir: "apps/mnist_app/generated_mnist_vmvx"
+model_library_name: "rv_aios_mnist_vmvx_models"
+
+defaults:
+  iree_backend: "vmvx_inline"
+  target_arch: "rv32"
+  target_abi: "ilp32f"
+  cpu_features: "+m,+a,+f,+zicsr"
+  enable_llvmcpu_microkernels: false
+  enable_data_tiling: false
+  enable_stream_memory_flags: false
+  optimization: "size"
+  memory_strategy: "static"
+
+toolchain:
+  root_env: "IREE_TOOLCHAIN_ROOT"
+
+model_sources:
+  root_env: "RRTOS_AI_MODEL_DIR"
+
+models:
+  - name: "st_mnist_28"
+    file: "third_party/iree/samples/models/mnist.mlir"

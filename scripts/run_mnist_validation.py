@@ -10,7 +10,14 @@ import sys
 
 
 AI_VALIDATION_PASS_RE = re.compile(r"^AI_VALIDATION_PASS count=(?P<count>\d+)\s*$", re.MULTILINE)
-AI_VALIDATION_METRICS_RE = re.compile(r"^AI_VALIDATION_METRICS:", re.MULTILINE)
+AI_VALIDATION_METRICS_RE = re.compile(
+    r"^AI_VALIDATION_METRICS: .* latency_us=\d+ latency_cycles=\d+ latency_instructions=\d+ total=\d+ arena_peak=\d+\s*$",
+    re.MULTILINE,
+)
+AI_VALIDATION_MODEL_PEAK_RE = re.compile(
+    r"^AI_VALIDATION_MODEL_PEAK: phase=(?P<phase>init|invoke) heap_current_bytes=\d+ heap_peak_bytes=\d+ heap_alloc_count=\d+ heap_free_count=\d+\s*$",
+    re.MULTILINE,
+)
 OS_TIMER_CALLBACK_PASS_RE = re.compile(r"^OS_TIMER_CALLBACK_PASS count=\d+ tick=\d+\s*$", re.MULTILINE)
 
 
@@ -39,6 +46,11 @@ def validate_ai_validation_output(output: str) -> list[str]:
     elif pass_count is None and metrics_count == 0:
         errors.append("missing AI_VALIDATION_METRICS lines")
 
+    peak_phases = {match.group("phase") for match in AI_VALIDATION_MODEL_PEAK_RE.finditer(output)}
+    for phase in ("init", "invoke"):
+        if phase not in peak_phases:
+            errors.append(f"missing AI_VALIDATION_MODEL_PEAK phase={phase}")
+
     if not OS_TIMER_CALLBACK_PASS_RE.search(output):
         errors.append("missing OS_TIMER_CALLBACK_PASS line")
 
@@ -63,6 +75,11 @@ def main() -> int:
         default=20,
         help="Timeout for the QEMU run",
     )
+    parser.add_argument(
+        "--memory",
+        default="4M",
+        help='QEMU RAM size; use "--memory 64M" for large QEMU-only tests',
+    )
     args = parser.parse_args()
 
     repo_root = Path(__file__).resolve().parent.parent
@@ -81,9 +98,11 @@ def main() -> int:
         "qemu-system-riscv32",
         "-machine",
         "virt",
+        "-icount",
+        "shift=0,align=off,sleep=off",
         "-nographic",
         "-m",
-        "4M",
+        args.memory,
         "-bios",
         "none",
         "-kernel",

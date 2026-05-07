@@ -1,0 +1,131 @@
+{
+  "allocation_count": 14,
+  "arena_bytes": 537728,
+  "arena_kib": 525.125,
+  "command_count": 38,
+  "dispatch_count": 34,
+  "effective_arena_source": "packed_liveness",
+  "max_arena_allocation_bytes": 404608,
+  "max_arena_allocation_kib": 395.125,
+  "packed_arena_bytes": 537728,
+  "packed_arena_kib": 525.125,
+  "packed_vs_effective_delta_bytes": 0,
+  "packed_vs_effective_delta_kib": 0.0,
+  "peak_transient_bytes": 537728,
+  "peak_transient_kib": 525.125,
+  "placements": {
+    "transient_buffer": {
+      "interval": [
+        7,
+        17
+      ],
+      "offset": 0,
+      "size": 133120,
+      "size_kib": 130.0
+    },
+    "transient_buffer_1": {
+      "interval": [
+        0,
+        13
+      ],
+      "offset": 133120,
+      "size": 404608,
+      "size_kib": 395.125
+    },
+    "transient_buffer_15": {
+      "interval": [
+        22,
+        28
+      ],
+      "offset": 0,
+      "size": 35840,
+      "size_kib": 35.0
+    },
+    "transient_buffer_17": {
+      "interval": [
+        17,
+        24
+      ],
+      "offset": 239616,
+      "size": 111488,
+      "size_kib": 108.875
+    },
+    "transient_buffer_26": {
+      "interval": [
+        26,
+        29
+      ],
+      "offset": 35840,
+      "size": 28672,
+      "size_kib": 28.0
+    },
+    "transient_buffer_33": {
+      "interval": [
+        29,
+        33
+      ],
+      "offset": 0,
+      "size": 128,
+      "size_kib": 0.125
+    },
+    "transient_buffer_35": {
+      "interval": [
+        28,
+        30
+      ],
+      "offset": 128,
+      "size": 3584,
+      "size_kib": 3.5
+    },
+    "transient_buffer_44": {
+      "interval": [
+        31,
+        34
+      ],
+      "offset": 128,
+      "size": 128,
+      "size_kib": 0.125
+    },
+    "transient_buffer_51": {
+      "interval": [
+        33,
+        37
+      ],
+      "offset": 0,
+      "size": 128,
+      "size_kib": 0.125
+    },
+    "transient_buffer_58": {
+      "interval": [
+        35,
+        38
+      ],
+      "offset": 128,
+      "size": 128,
+      "size_kib": 0.125
+    },
+    "transient_buffer_65": {
+      "interval": [
+        37,
+        38
+      ],
+      "offset": 0,
+      "size": 40,
+      "size_kib": 0.039
+    },
+    "transient_buffer_8": {
+      "interval": [
+        15,
+        18
+      ],
+      "offset": 133120,
+      "size": 106496,
+      "size_kib": 104.0
+    }
+  },
+  "source": "miniresnetv2_s1_64x50_tl_int8.11.hal.mlir",
+  "status": "ok",
+  "warnings": [
+    "assumed batch_size=1 for 1 hal.buffer_view.dim value(s)"
+  ]
+}
