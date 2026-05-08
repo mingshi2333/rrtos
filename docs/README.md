@@ -13,6 +13,7 @@
 - `docs/AI_IREE_STATIC_DIRECT_PROBE.md` - experimental no-VM IREE static-direct probe, reuse boundary, and generator contract
 - `docs/AI_GRAPH_AWARE_STATIC_DIRECT_RESEARCH.md` - research design for graph-aware TinyML memory scheduling on the static-direct backend
 - `docs/STATIC_DIRECT_DEPLOYMENT.md` - static-direct package generation and deploy gate workflow
+- `docs/IREE_FORK_MAINTENANCE.md` - forked IREE submodule branches, carried patches, and update validation commands
 - `docs/CURRENT_FOOTPRINT_BASELINE.md` - current supported-lane footprint summary from generated build artifacts
 - `docs/FOOTPRINT_OPTIMIZATION_BACKLOG.md` - ranked low-risk and medium-risk footprint work with expected gain, risk, and dependency
 - `docs/KERNEL_BENCHMARK_GATE_DECISION_TABLE.md` - maintainer decision table for routing new kernel metrics into correctness, baseline, runtime-proof, footprint, or microbench lanes
