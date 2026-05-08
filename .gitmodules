@@ -1,4 +1,4 @@
 [submodule "third_party/iree"]
 	path = third_party/iree
 	url = https://github.com/mingshi2333/iree.git
-	branch = rrtos/v3.4-patches
+	branch = rrtos/v3.1-local-patches

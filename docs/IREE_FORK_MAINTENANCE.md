@@ -9,8 +9,8 @@ normal Git commits instead of dirty files under `third_party/iree`.
 - IREE fork: `https://github.com/mingshi2333/iree.git`
 - Upstream IREE: `https://github.com/iree-org/iree.git`
 - Submodule path: `third_party/iree`
-- Active branch: `rrtos/v3.4-patches`
-- Pinned commit: `87a3f1d6f05f92a402ac4d84ef24b613fadc91e8`
+- Active branch: `rrtos/v3.1-local-patches`
+- Pinned commit: `c1c8b34c8ae31d3bb0e9325c53e2ffd0cdd65e45`
 
 The parent repository pins the exact IREE commit. The branch in `.gitmodules`
 is a convenience for `git submodule update --remote`; it is not a replacement
@@ -21,16 +21,19 @@ for the pinned gitlink in the parent commit.
 - `rrtos/v3.1-local-patches`
   - Base: previous local IREE commit `d2242207764230ad398585a5771f9d54ce91b4c8`
   - Commit: `c1c8b34c8ae31d3bb0e9325c53e2ffd0cdd65e45`
-  - Purpose: archival branch preserving the original local dirty patches.
+  - Purpose: active branch preserving the tested IREE 3.1 baseline plus the
+    local embedded patches.
 
 - `rrtos/v3.4-patches`
   - Base: IREE `v3.4.0`
   - Commit: `87a3f1d6f05f92a402ac4d84ef24b613fadc91e8`
-  - Purpose: active branch used by this repository.
+  - Purpose: future migration candidate. Do not repin the parent repository to
+    this branch until the compiler/toolchain and firmware validation lanes have
+    been rerun against IREE 3.4.
 
 ## Carried Patches
 
-The active v3.4 branch carries two RRTOS-specific changes:
+The active v3.1 branch carries three RRTOS-specific changes:
 
 1. `build_tools/cmake/iree_bitcode_library.cmake`
    - Adds cache variables for RISC-V ukernel bitcode ABI and optional `-march`.
@@ -42,8 +45,12 @@ The active v3.4 branch carries two RRTOS-specific changes:
    - This preserves the old HAL heap allocation tracing path without requiring
      every firmware build to define the hook.
 
-The previous Winograd constructor fix is not carried on the v3.4 branch because
-IREE `v3.4.0` already contains the corrected constructor spelling.
+3. `compiler/src/iree/compiler/Dialect/LinalgExt/Transforms/ConvertConv2DToWinograd.cpp`
+   - Fixes the template constructor spelling that caused the local compiler
+     build to reject the inline constructor form.
+
+The v3.4 candidate branch carries only the first two changes because IREE
+`v3.4.0` already contains the corrected Winograd constructor spelling.
 
 ## Local Remote Setup
 
@@ -65,16 +72,19 @@ for compatibility with older commands.
 
 ## Updating The Fork
 
-To rebase the active patch branch onto a newer IREE release:
+To update the active 3.1 patch branch:
 
 ```bash
-git -C third_party/iree fetch --no-recurse-submodules upstream --tags
-git -C third_party/iree switch rrtos/v3.4-patches
-git -C third_party/iree rebase <new-iree-tag>
-git -C third_party/iree push --force-with-lease origin rrtos/v3.4-patches
+git -C third_party/iree fetch --no-recurse-submodules origin rrtos/v3.1-local-patches
+git -C third_party/iree switch rrtos/v3.1-local-patches
+git -C third_party/iree push origin rrtos/v3.1-local-patches
 git add third_party/iree
 git commit -m "chore(iree): update forked patch branch"
 ```
+
+To continue the IREE 3.4 migration candidate, use the separate
+`rrtos/v3.4-patches` branch and repin the parent repository only after a fresh
+compiler/toolchain validation pass.
 
 Use `--no-recurse-submodules` when fetching IREE unless you explicitly need the
 nested IREE dependency checkouts. IREE `v3.4.0` records a nested

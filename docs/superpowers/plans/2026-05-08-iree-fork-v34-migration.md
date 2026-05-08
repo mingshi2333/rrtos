@@ -8,6 +8,10 @@
 
 **Tech Stack:** Git submodules, GitHub CLI, IREE CMake/runtime/compiler sources, existing RRTOS QEMU/static-direct validation scripts.
 
+**Current decision:** The forked IREE 3.4 branch was created as a migration
+candidate, but the parent repository is intentionally pinned back to the tested
+IREE 3.1 fork branch until 3.4 receives full compiler/toolchain validation.
+
 ---
 
 ### Task 1: Create Or Locate The IREE Fork
